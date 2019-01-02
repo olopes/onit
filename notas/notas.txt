@@ -1,0 +1,29 @@
+quero assembly para botar coisas no stack :-(
+    
+list_to_str_array()
+
+preciso de outro tipo: code!
+No dump imprime como uma lista normal
+No eval retorna o code e no final retorna o value.
+
+(/bin/sh -i sasd -v33 -g --help)
+
+como o '/bin/sh' não existe na tabela de cenas, retorna o lambda do código.
+o lambda do código consome os argumentos até ter construido o array para o exec.
+
+depois vou precisar de redireccionar o input/output
+talvez inteligente o suficiente para isto?
+(cut -d " " -f 3 (grep abc (cat file1 file2 file3)))
+
+deve produzir o equivalente a isto:
+cat file1 file2 file3 | grep abc | cut -d " " -f 3
+
+para já definir estes operadores:
+- lambda (através de lambda e ou define)
+- execve (para a shell)
+- aritmérica add sub mul div mod neg abs
+- lógica = not
+
+eval pode ser imediato ou nao -> faz sentido? se o execve for chamado fora de outro execve retorna o quê? NIL ou o exit code ?
+
+    
