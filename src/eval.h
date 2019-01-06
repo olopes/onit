@@ -8,22 +8,22 @@ extern struct sexpr * global_context;
 /**
  * Eval a S-Expression Object
  */
-struct sexpr_obj * 
-eval_sexpr(struct sexpr_obj *);
+struct sobj * 
+eval_sexpr(struct sobj *);
 
 /**
  * Search for a symbol in the context hierarchy and return the 
  * corresponding value
  */
-struct sexpr_obj * 
-eval_lookup_sym_value(struct sexpr_obj *name, struct sexpr *context);
+struct sobj * 
+eval_lookup_sym_value(struct sobj *name, struct sexpr *context);
 
 /**
  * Search for a symbol in the context hierarchy and return the 
  * corresponding node
  */
 struct sexpr * 
-eval_lookup_sym_node(struct sexpr_obj *name, struct sexpr *context);
+eval_lookup_sym_node(struct sobj *name, struct sexpr *context);
 
 
 #endif /* __EVAL__H__ */

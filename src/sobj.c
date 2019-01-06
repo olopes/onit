@@ -9,7 +9,7 @@ struct sobj * NIL = &NIL_OBJ;
 /**
  * Create a S-Expression object from a string
  */
-struct sobj * 
+struct sobj * WEAK_FOR_UNIT_TEST
 sobj_from_string(wchar_t * value, size_t len) {
     struct sobj * obj;
     
@@ -29,7 +29,7 @@ sobj_from_string(wchar_t * value, size_t len) {
 /**
  * Create a S-Expression object from a symbol
  */
-struct sobj * 
+struct sobj * WEAK_FOR_UNIT_TEST
 sobj_from_symbol(wchar_t * value, size_t len) {
     struct sobj * obj;
     
@@ -46,7 +46,7 @@ sobj_from_symbol(wchar_t * value, size_t len) {
 /**
  * Create a S-Expression object from a S-Expression
  */
-struct sobj * 
+struct sobj * WEAK_FOR_UNIT_TEST
 sobj_from_cons(struct sexpr * value) {
     struct sobj * obj;
     
@@ -65,7 +65,7 @@ sobj_from_cons(struct sexpr * value) {
 /**
  * Release a S-Expression Object created by sobj_from_*
  */
-void
+void WEAK_FOR_UNIT_TEST
 sobj_free(struct sobj * obj) {
     if(sobj_is_nil(obj)) {
         return;
@@ -76,7 +76,7 @@ sobj_free(struct sobj * obj) {
 /**
  * Fetch the S-Expression object value as a string
  */
-struct sexpr_str * 
+struct sexpr_str * WEAK_FOR_UNIT_TEST
 sobj_to_string(struct sobj * obj) {
     if(sobj_is_string(obj)) {
         return (struct sexpr_str *) obj;
@@ -87,7 +87,7 @@ sobj_to_string(struct sobj * obj) {
 /**
  * Fetch the S-Expression object value as a symbol
  */
-struct sexpr_str * 
+struct sexpr_str * WEAK_FOR_UNIT_TEST
 sobj_to_symbol(struct sobj * obj) {
     if(sobj_is_symbol(obj)) {
         return (struct sexpr_str *) obj;
@@ -98,7 +98,7 @@ sobj_to_symbol(struct sobj * obj) {
 /**
  * Fetch the S-Expression object value as a S-Expression
  */
-struct sexpr * 
+struct sexpr * WEAK_FOR_UNIT_TEST
 sobj_to_cons(struct sobj * obj) {
     if(sobj_is_cons(obj)) {
         return (struct sexpr *) obj->data;
@@ -109,7 +109,7 @@ sobj_to_cons(struct sobj * obj) {
 /**
  * Get the object sobj_get_type
  */
-enum stype
+enum stype WEAK_FOR_UNIT_TEST
 sobj_get_type(struct sobj * obj) {
     return obj->type;
 }
@@ -117,7 +117,7 @@ sobj_get_type(struct sobj * obj) {
 /**
  * Return TRUE if the given object is NIL
  */
-int
+int WEAK_FOR_UNIT_TEST
 sobj_is_nil(struct sobj * obj) {
     return obj && obj->type==T_NIL;
 }
@@ -125,7 +125,7 @@ sobj_is_nil(struct sobj * obj) {
 /**
  * Return TRUE if the given object is a CONS pair
  */
-int
+int WEAK_FOR_UNIT_TEST
 sobj_is_cons(struct sobj * obj) {
     return obj && obj->type==T_CONS;
 }
@@ -133,7 +133,7 @@ sobj_is_cons(struct sobj * obj) {
 /**
  * Return TRUE if the given object is a string
  */
-int
+int WEAK_FOR_UNIT_TEST
 sobj_is_string(struct sobj * obj) {
     return obj && obj->type==T_STRING;
 }
@@ -141,7 +141,7 @@ sobj_is_string(struct sobj * obj) {
 /**
  * Return TRUE if the given object is a symbol
  */
-int
+int WEAK_FOR_UNIT_TEST
 sobj_is_symbol(struct sobj * obj) {
     return obj && obj->type==T_SYMBOL;
 }

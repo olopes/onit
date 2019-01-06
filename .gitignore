@@ -1,3 +1,7 @@
 onit
 bin/
 build/
+
+*.gcda
+*.gcno
+

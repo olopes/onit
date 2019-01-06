@@ -8,7 +8,6 @@
 #include "sexpr_stack.h"
 #include "svisitor.h"
 
-
 /* TODO Implementar um visitor */
 /*
 Esse visitor recebe como parametros um objecto e um pointer para funcao.
@@ -36,7 +35,7 @@ empty_cb (struct sobj * obj, struct scallback * callback) {
 /**
  * S-Expression visitor
  */
-void 
+void WEAK_FOR_UNIT_TEST
 svisitor(struct sobj * obj, struct scallback * callback) {
     fn_holder cb_enter;
     fn_holder cb_visit;
@@ -147,7 +146,7 @@ static void cb_leave(struct sobj *obj, struct scallback *cb) {
 /**
  * Dump S-Expression
  */
-void 
+void WEAK_FOR_UNIT_TEST
 dump_sexpr(struct sexpr * sexpr, FILE * out) {
     struct sobj dummy;
     if(sexpr == NULL)
@@ -163,7 +162,7 @@ dump_sexpr(struct sexpr * sexpr, FILE * out) {
 /**
  * Dump S-Expression Object
  */
-void 
+void WEAK_FOR_UNIT_TEST
 dump_sobj(struct sobj * sobj, FILE * out) {
     struct scallback print_callback = {
         &cb_enter,
@@ -180,7 +179,7 @@ dump_sobj(struct sobj * sobj, FILE * out) {
 /**
  * Dump S-Expression
  */
-void 
+void WEAK_FOR_UNIT_TEST
 dump_sexpr_r(struct sexpr * sexpr, FILE * out) {
     struct sobj dummy;
     if(sexpr == NULL)
@@ -196,7 +195,7 @@ dump_sexpr_r(struct sexpr * sexpr, FILE * out) {
 /**
  * Dump S-Expression Object
  */
-void 
+void WEAK_FOR_UNIT_TEST
 dump_sobj_r(struct sobj * value, FILE * out) {
     struct sexpr * data;
     

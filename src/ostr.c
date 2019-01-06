@@ -55,7 +55,7 @@ ostr_new_node(wchar_t *str) {
 /**
  * Creates a new ostr from a wchar_t struct
  */
-struct ostr * 
+struct ostr * WEAK_FOR_UNIT_TEST
 ostr_new(wchar_t *str) {
     struct ostr *ostr;
     
@@ -85,7 +85,7 @@ ostr_new(wchar_t *str) {
 /**
  * Destroys an existing ostr.
  */
-void 
+void WEAK_FOR_UNIT_TEST
 ostr_destroy(struct ostr * ostr) {
     struct ostr_token * token;
     struct ostr_token * next;
@@ -108,7 +108,7 @@ ostr_destroy(struct ostr * ostr) {
 /**
  * Get the size (length) of an ostr
  */
-size_t 
+size_t WEAK_FOR_UNIT_TEST
 ostr_length(struct ostr * ostr) {
     return ostr->length;
 }
@@ -116,7 +116,7 @@ ostr_length(struct ostr * ostr) {
 /**
  * Append a wchar to an existing ostr
  */
-struct ostr * 
+struct ostr * WEAK_FOR_UNIT_TEST
 ostr_append(struct ostr * ostr, wchar_t chr) {
     struct ostr_token * token;
     
@@ -167,7 +167,7 @@ ostr_merge(struct ostr * first, struct ostr * second) {
 /**
  * Concatenate two ostrs
  */
-struct ostr * 
+struct ostr * WEAK_FOR_UNIT_TEST
 ostr_concat(struct ostr * first, struct ostr * second) {
     struct ostr *ostr;
     struct ostr *copy;
@@ -190,7 +190,7 @@ ostr_concat(struct ostr * first, struct ostr * second) {
 /**
  * Compact a multi node ostr into a single node ostr.
  */
-struct ostr * 
+struct ostr * WEAK_FOR_UNIT_TEST
 ostr_compact(struct ostr *src) {
     struct ostr_token *token;
     struct ostr_token *next;
@@ -223,7 +223,7 @@ ostr_compact(struct ostr *src) {
 /**
  * Duplicates a ostr like compact but returns a new ostr instance
  */
-struct ostr * 
+struct ostr * WEAK_FOR_UNIT_TEST
 ostr_dup(struct ostr * src) {
     struct ostr *ostr;
     struct ostr_token *token;
@@ -257,7 +257,7 @@ ostr_dup(struct ostr * src) {
 /**
  * Convert a ostr into a NULL terminated string
  */
-wchar_t * 
+wchar_t * WEAK_FOR_UNIT_TEST
 ostr_str(struct ostr * ostr) {
     struct ostr_token * token;
     wchar_t * str;
@@ -283,7 +283,7 @@ ostr_str(struct ostr * ostr) {
 /**
  * Print a ostr to stdout
  */
-int 
+int WEAK_FOR_UNIT_TEST
 ostr_puts(struct ostr * ostr) {
     return ostr_fputs(ostr, stdout);
 }
@@ -291,7 +291,7 @@ ostr_puts(struct ostr * ostr) {
 /**
  * Convert a ostr into a NULL terminated string
  */
-int 
+int WEAK_FOR_UNIT_TEST
 ostr_fputs(struct ostr * ostr, FILE * out) {
     struct ostr_token * token;
     int total;

@@ -41,6 +41,12 @@ struct ostr *
 ostr_append(struct ostr *, wchar_t);
 
 /**
+ * Replace last wchar with given wchar. If str length is zero, returns NULL.
+ */
+struct ostr * 
+ostr_replace_last(struct ostr *, wchar_t);
+
+/**
  * Get the size (length) of an ostr
  */
 size_t 

@@ -1,26 +1,37 @@
 
-CFLAGS=-g -ansi -std=c99 -Wall -pedantic -finput-charset=UTF-8
+CFLAGS=-g -ansi -std=c99 -Wall -pedantic -finput-charset=UTF-8 -DWEAK_FOR_UNIT_TEST
 LDFLAGS=-static 
 
-all: build/onit build/ostr build/sexpr
-# all: run-tests build/onit
+TEST_CFLAGS=-g -ansi -std=c99 -Wall -pedantic -finput-charset=UTF-8 -Isrc -DUNIT_TEST "-DWEAK_FOR_UNIT_TEST=__attribute__((weak))" -fprofile-arcs -ftest-coverage
+TEST_LDFLAGS=-lcmocka 
+#PROD_CODE_TO_TEST=src/ostr.c src/sexpr.c src/sexpr_stack.c src/sobj.c src/svisitor.c src/sparser.c src/eval.c
+TESTS_PROD_SRC=src/ostr.c src/sexpr.c src/sexpr_stack.c src/sobj.c src/svisitor.c
+TESTS_PROD_OBJ := $(patsubst %.c,build/%.o,$(subst src/,test/,$(TESTS_PROD_SRC)))
+TESTS := $(patsubst %.c,build/%.t,$(wildcard test/*.c))
+
+all: build/onit build/ostr build/sexpr run-tests 
 
 build/onit: src/onit.c
-	gcc $(LDFLAGS) $(CFLAGS) -o $@ $^
+	cc $(LDFLAGS) $(CFLAGS) -o $@ $^
 
 build/ostr: src/ostr.c src/ostr_main.c
-	gcc $(LDFLAGS) $(CFLAGS) -o $@ $^
+	cc $(LDFLAGS) $(CFLAGS) -o $@ $^
 
 build/sexpr: src/sexpr.c src/sexpr_main.c src/sexpr_stack.c src/sobj.c src/svisitor.c
-	gcc $(LDFLAGS) $(CFLAGS) -o $@ $^
+	cc $(LDFLAGS) $(CFLAGS) -o $@ $^
 
 clean:
-	rm -f build/sexpr build/onit build/ostr build/*.o
+	rm -r -f -- build/sexpr build/onit build/ostr build/*.o build/test
 
-run-tests: build/test1 bin/test2 bin/test3
-	build/test1
-	build/test2
-	build/test3
+# Unit tests
+run-tests: $(TESTS)
+
+build/test/%.o: src/%.c
+	cc $(TEST_CFLAGS) -fPIC -c -o $@ $<
+
+build/test/%.t: test/%.c $(TESTS_PROD_OBJ)
+	cc $(TEST_LDFLAGS) $(TEST_CFLAGS) -o $@ $^
+	$@
 
 .PHONY: all run-tests clean
 

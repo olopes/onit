@@ -1,7 +1,6 @@
-
-#include "eval.h";
-#include "sexpr.h";
-#include "ostr.h";
+#include "eval.h"
+#include "sexpr.h"
+#include "ostr.h"
 
 /*
 O objectivo é passar disto:
@@ -17,9 +16,9 @@ para isto:
 
 static struct sexpr * 
 sexpr_eval_expand(struct sexpr * list, struct sexpr * accum) {
-    struct sexpr_obj * value;
-    if(list->car->type == sexpr) {
-        value = sexpr_eval(sexpr_obj_to_sexpr(list->car));
+    struct sobj * value;
+    if(list->car->type == T_CONS) {
+        value = sexpr_eval(sobj_to_sexpr(list->car));
     } else {
         value = list->car;
     }
@@ -27,7 +26,7 @@ sexpr_eval_expand(struct sexpr * list, struct sexpr * accum) {
     return sexpr_cons(value, list->cdr);
 }
 
-static struct sexpr_obj * 
+static struct sobj * 
 sexpr_eval_reduce(struct sexpr * list) {
     /* TODO oh dear... please help me Mr. Sussman!! */
     
@@ -39,13 +38,13 @@ sexpr_eval_reduce(struct sexpr * list) {
 /**
  * Eval a S-Expression
  */
-struct sexpr_obj * 
-eval_sexpr(struct sexpr_obj * sexpr) {
+struct sobj * WEAK_FOR_UNIT_TEST
+eval_sexpr(struct sobj * sexpr) {
     struct sexpr * accum;
-    struct sexpr_obj * result;
+    struct sobj * result;
     
-    if(obj == NULL || obj->type != lst) {
-        return obj;
+    if(sexpr == NULL || sexpr->type != T_CONS) {
+        return sexpr;
     }
     
     accum = sexpr_cons(NULL, NULL);

@@ -8,7 +8,7 @@
 /**
  * Constructs a pair (A . B)
  */
-struct sexpr * 
+struct sexpr * WEAK_FOR_UNIT_TEST
 sexpr_cons(struct sobj * car, struct sobj * cdr) {
     struct sexpr * sexpr;
     
@@ -23,7 +23,7 @@ sexpr_cons(struct sobj * car, struct sobj * cdr) {
     return sexpr;
 }
 
-void
+void WEAK_FOR_UNIT_TEST
 sexpr_free(struct sexpr * sexpr) {
     free(sexpr);
 }
@@ -31,7 +31,7 @@ sexpr_free(struct sexpr * sexpr) {
 /**
  * Get the CAR part
  */
-struct sobj * 
+struct sobj * WEAK_FOR_UNIT_TEST
 sexpr_car(struct sexpr *sexpr) {
     return sexpr->car;
 }
@@ -39,7 +39,7 @@ sexpr_car(struct sexpr *sexpr) {
 /**
  * Get the CDR part
  */
-struct sobj * 
+struct sobj * WEAK_FOR_UNIT_TEST
 sexpr_cdr(struct sexpr *sexpr) {
     return sexpr->cdr;
 }
