@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <wchar.h>
 #include <wctype.h>
+#include <wchar.h>
 #include "sparser.h"
 #include "ostr.h"
 #include "sexpr.h"
@@ -20,7 +20,7 @@ Whitespace or special characters can be included in an identifier by quoting the
 */
 
 struct sparse_ctx {
-    FILE *in,
+    FILE *in;
     wint_t prev;
     wint_t next;
     struct sexpr * stack;
@@ -64,7 +64,7 @@ sparse_object(struct sparse_ctx * ctx, struct sobj ** obj) {
     
     while(1) {
         ctx->prev = ctx->next;
-        ctx->next = fwgetc(ctx->in);
+        ctx->next = fgetwc(ctx->in);
         if(ctx->next == WEOF) {
             ret_val = SPARSE_EOF;
             break;
@@ -82,7 +82,7 @@ sparse_object(struct sparse_ctx * ctx, struct sobj ** obj) {
                 ret_val = sparse_symbol(ctx, &ostr);
             } else if(ctx->next == L'(') {
                 /* start cons */
-                ret_val = sparse_list(ctx, &ostr);
+                ret_val = sparse_cons(ctx, &ostr);
             } else if(ctx->next == L'\'') {
                 /* 
                 start quote - the quote ends with the current expression. 
@@ -115,7 +115,7 @@ sparse_string(struct sparse_ctx * ctx, struct sobj ** obj) {
     /* read everything until " */
     while(1) {
         ctx->prev = ctx->next;
-        ctx->next = fwgetc(ctx->in);
+        ctx->next = fgetwc(ctx->in);
         if(ctx->next == WEOF) {
             return SPARSE_EOF;
         }
@@ -181,4 +181,22 @@ sparse_string(struct sparse_ctx * ctx, struct sobj ** obj) {
 
     ostr_destroy(str);
     return SPARSE_OK;
+}
+
+/* not implemented yet... */
+int WEAK_FOR_UNIT_TEST
+sparse_symbol(struct sparse_ctx * ctx, struct sobj ** obj) {
+    return SPARSE_BAD_SYM;
+}
+int WEAK_FOR_UNIT_TEST
+sparse_simple_symbol(struct sparse_ctx * ctx, struct sobj ** obj) {
+    return SPARSE_BAD_SYM;
+}
+int WEAK_FOR_UNIT_TEST
+sparse_quote(struct sparse_ctx * ctx, struct sobj ** obj) {
+    return SPARSE_BAD_SYM;
+}
+int WEAK_FOR_UNIT_TEST
+sparse_cons(struct sparse_ctx * ctx, struct sobj ** obj) {
+    return SPARSE_BAD_SYM;
 }

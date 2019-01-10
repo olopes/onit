@@ -1,0 +1,3 @@
+--Wl,--wrap==memcpy
+--Wl,--wrap==wcslen
+--Wl,--wrap==fputwc

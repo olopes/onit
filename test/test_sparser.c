@@ -5,6 +5,25 @@
 #include <setjmp.h>
 #include <cmocka.h>
 
+/* prod code includes */
+#include "svisitor.h"
+#include "wraps.c"
+
+iswspace
+
+int 
+sparse_object(struct sparse_ctx * ctx, struct sobj ** obj);
+int 
+sparse_string(struct sparse_ctx * ctx, struct sobj ** obj);
+int 
+sparse_symbol(struct sparse_ctx * ctx, struct sobj ** obj);
+int 
+sparse_simple_symbol(struct sparse_ctx * ctx, struct sobj ** obj);
+int 
+sparse_quote(struct sparse_ctx * ctx, struct sobj ** obj);
+int 
+sparse_cons(struct sparse_ctx * ctx, struct sobj ** obj);
+
 
 void null_test_failure(void ** param) {
     assert_true(1);

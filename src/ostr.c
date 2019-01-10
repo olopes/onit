@@ -46,6 +46,8 @@ ostr_new_node(wchar_t *str) {
     if (str) {
         token->length = len;
         memcpy(token->str, str, len * sizeof(wchar_t));
+    } else {
+        memset(token->str, 0, len * sizeof(wchar_t));
     }
     
     return token;
@@ -139,6 +141,28 @@ ostr_append(struct ostr * ostr, wchar_t chr) {
     token->str[token->length] = chr;
     token->length++;
     ostr->length++;
+    
+    return ostr;
+}
+
+
+/**
+ * Replace last wchar in the string with the provided wchar
+ */
+struct ostr * WEAK_FOR_UNIT_TEST
+ostr_replace_last(struct ostr * ostr, wchar_t chr) {
+    struct ostr_token * token;
+    
+    if(ostr == NULL) {
+        return NULL;
+    }
+    
+    if(ostr->length == 0) {
+        return NULL;
+    }
+    
+    token = ostr->last;
+    token->str[token->length-1] = chr;
     
     return ostr;
 }

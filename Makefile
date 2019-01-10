@@ -1,15 +1,16 @@
 
-CFLAGS=-g -ansi -std=c99 -Wall -pedantic -finput-charset=UTF-8 -DWEAK_FOR_UNIT_TEST
+CFLAGS=-g -ansi -std=c99 -Wall -pedantic -finput-charset=UTF-8 -DWEAK_FOR_UNIT_TEST=\ 
 LDFLAGS=-static 
 
-TEST_CFLAGS=-g -ansi -std=c99 -Wall -pedantic -finput-charset=UTF-8 -Isrc -DUNIT_TEST "-DWEAK_FOR_UNIT_TEST=__attribute__((weak))" -fprofile-arcs -ftest-coverage
-TEST_LDFLAGS=-lcmocka 
-#PROD_CODE_TO_TEST=src/ostr.c src/sexpr.c src/sexpr_stack.c src/sobj.c src/svisitor.c src/sparser.c src/eval.c
-TESTS_PROD_SRC=src/ostr.c src/sexpr.c src/sexpr_stack.c src/sobj.c src/svisitor.c
-TESTS_PROD_OBJ := $(patsubst %.c,build/%.o,$(subst src/,test/,$(TESTS_PROD_SRC)))
-TESTS := $(patsubst %.c,build/%.t,$(wildcard test/*.c))
+TEST_CFLAGS=-g -ansi -std=c99 -Wall -pedantic -finput-charset=UTF-8 -Isrc -fPIC -include test/test_definitions.h
+TEST_LDFLAGS=-lcmocka -Wl,--wrap=fgetwc -Wl,--wrap=fputwc 
 
-all: build/onit build/ostr build/sexpr run-tests 
+#PROD_CODE_TO_TEST=src/ostr.c src/sexpr.c src/sexpr_stack.c src/sobj.c src/svisitor.c src/sparser.c src/eval.c
+TESTS_PROD_SRC=src/ostr.c src/sexpr.c src/sexpr_stack.c src/sobj.c src/svisitor.c src/sparser.c
+TESTS_PROD_OBJ := $(patsubst %.c,build/%.o,$(subst src/,test/,$(TESTS_PROD_SRC))) build/test/wrap_fn.o
+TESTS := $(patsubst %.c,build/%.t,$(wildcard test/test*.c))
+
+all: build/onit build/ostr build/sexpr tests 
 
 build/onit: src/onit.c
 	cc $(LDFLAGS) $(CFLAGS) -o $@ $^
@@ -21,19 +22,26 @@ build/sexpr: src/sexpr.c src/sexpr_main.c src/sexpr_stack.c src/sobj.c src/svisi
 	cc $(LDFLAGS) $(CFLAGS) -o $@ $^
 
 clean:
-	rm -r -f -- build/sexpr build/onit build/ostr build/*.o build/test
+	rm -r -f -- build/sexpr build/onit build/ostr build/*.o build/test *.gcda *.gcno
 
 # Unit tests
-run-tests: $(TESTS)
+tests: $(TESTS)
+
+build/test/wrap_fn.o: test/wraps.c
+	mkdir -p build/test
+	cc $(TEST_CFLAGS) -c -o $@ $<
 
 build/test/%.o: src/%.c
-	cc $(TEST_CFLAGS) -fPIC -c -o $@ $<
+	mkdir -p build/test
+	cc $(TEST_CFLAGS) -c -o $@ $<
 
 build/test/%.t: test/%.c $(TESTS_PROD_OBJ)
 	cc $(TEST_LDFLAGS) $(TEST_CFLAGS) -o $@ $^
 	$@
 
-.PHONY: all run-tests clean
+coverage: tests
+
+.PHONY: all tests coverage clean
 
 
 # dependencies

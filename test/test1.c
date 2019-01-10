@@ -6,6 +6,7 @@
 
 /* prod code includes */
 #include "svisitor.h"
+#include "wraps.c"
 
 /* mock implementations */
 void svisitor(struct sobj * sobj, struct scallback * cb) {
