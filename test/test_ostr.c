@@ -396,6 +396,8 @@ int main (void)
         cmocka_unit_test (ostr_dup_should_create_new_string_from_original_string),
         cmocka_unit_test (ostr_concat_should_create_new_string_from_two_strings),
         cmocka_unit_test (ostr_compact_should_reorganize_string_internals),
+        cmocka_unit_test (ostr_puts_should_write_contents_to_stdout),
+        cmocka_unit_test (ostr_fputs_should_write_contents_to_stderr),
     };
 
     /* If setup and teardown functions are not
