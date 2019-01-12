@@ -225,7 +225,10 @@ ostr_compact(struct ostr *src) {
         return NULL;
     }
     
+    
     token = src->last = src->first;
+    
+    free(token->str);
     
     next = token->next;
     token->size = token->length = src->length;
@@ -287,10 +290,11 @@ ostr_str(struct ostr * ostr) {
     wchar_t * str;
     size_t position;
     
-    str = (wchar_t *) calloc(ostr->length, sizeof(wchar_t));
+    str = (wchar_t *) malloc((ostr->length+1) * sizeof(wchar_t));
     if(str == NULL && errno == ENOMEM) {
         return NULL;
     }
+    memset(str, 0, (ostr->length+1) * sizeof(wchar_t));
     
     position = 0;
     token = ostr->first;

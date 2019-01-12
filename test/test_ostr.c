@@ -144,6 +144,227 @@ void ostr_length_should_return_length(void ** param)
     assert_int_equal(100, ostr_length(&test_ostr));
 }
 
+
+void ostr_str_should_create_new_c_string(void ** param) 
+{
+    (void) param; /* unused */
+    struct ostr test_ostr;
+    struct ostr_token test_token1;
+    struct ostr_token test_token2;
+    wchar_t * strang1 = L"HEL";
+    wchar_t * strang2 = L"LO!";
+    wchar_t * result_str = L"HELLO!";
+    wchar_t * result;
+    
+    test_ostr.first = &test_token1;
+    test_ostr.last = test_token1.next = &test_token2;
+    test_token2.next = NULL;
+    test_token1.str = strang1;
+    test_token2.str = strang2;
+    test_ostr.length = 6;
+    test_token1.length = test_token2.length = 3;
+    test_token1.size = test_token2.size = 3;
+    
+    
+    result = ostr_str(&test_ostr);
+    
+    assert_int_equal( 6, wcslen(result));
+    assert_int_equal( 0, wcsncmp(result_str, result, 7));
+
+    free(result);
+    
+}
+
+void ostr_dup_should_create_new_string_from_original_string(void ** param) 
+{
+    (void) param; /* unused */
+    struct ostr * result;
+    struct ostr test_ostr;
+    struct ostr_token test_token1;
+    struct ostr_token test_token2;
+    wchar_t * strang1 = L"HEL";
+    wchar_t * strang2 = L"LO!";
+    wchar_t * result_str = L"HELLO!";
+    
+    test_ostr.first = &test_token1;
+    test_ostr.last = test_token1.next = &test_token2;
+    test_token2.next = NULL;
+    test_token1.str = strang1;
+    test_token2.str = strang2;
+    test_ostr.length = 6;
+    test_token1.length = test_token2.length = 3;
+    test_token1.size = test_token2.size = 3;
+    
+    
+    result = ostr_dup(&test_ostr);
+    
+    assert_int_equal( 6, result->length);
+    assert_int_equal( 6, result->first->length);
+    assert_int_equal( 0, wcsncmp(result_str, result->first->str, 7));
+
+    
+    ostr_destroy(result);
+}
+
+void ostr_concat_should_create_new_string_from_two_strings(void ** param) 
+{
+    (void) param; /* unused */
+    struct ostr * result;
+    struct ostr test_ostr1;
+    struct ostr test_ostr2;
+    struct ostr_token test_token1;
+    struct ostr_token test_token2;
+    wchar_t * strang1 = L"HEL";
+    wchar_t * strang2 = L"LO!";
+    
+    test_ostr1.first = test_ostr1.last = &test_token1;
+    test_ostr2.first = test_ostr2.last = &test_token2;
+    test_token1.next = NULL;
+    test_token2.next = NULL;
+    test_token1.str = strang1;
+    test_token2.str = strang2;
+    test_ostr1.length = test_ostr2.length = 3;
+    test_token1.length = test_token1.size = 3;
+    test_token2.length = test_token2.size = 3;
+    
+    
+    result = ostr_concat(&test_ostr1, &test_ostr2);
+    
+    assert_int_equal( 6, result->length);
+    assert_int_equal( 3, result->first->length);
+    assert_int_equal( 3, result->last->length);
+    assert_int_equal( 0, wcsncmp(strang1, result->first->str, 7));
+    assert_int_equal( 0, wcsncmp(strang2, result->last->str, 7));
+    
+    ostr_destroy(result);
+}
+
+
+void ostr_compact_should_reorganize_string_internals(void ** param) 
+{
+    (void) param; /* unused */
+    struct ostr * result;
+    struct ostr test_ostr1;
+    struct ostr test_ostr2;
+    struct ostr_token test_token1;
+    struct ostr_token test_token2;
+    wchar_t * strang1 = L"HEL";
+    wchar_t * strang2 = L"LO!";
+    wchar_t * result_str = L"HELLO!";
+    
+    test_ostr1.first = test_ostr1.last = &test_token1;
+    test_ostr2.first = test_ostr2.last = &test_token2;
+    test_token1.next = NULL;
+    test_token2.next = NULL;
+    test_token1.str = strang1;
+    test_token2.str = strang2;
+    test_ostr1.length = test_ostr2.length = 3;
+    test_token1.length = test_token1.size = 3;
+    test_token2.length = test_token2.size = 3;
+    
+    
+    /* ostr_compact works with allocated strings, 
+       so we use ostr_concat to create one */
+    result = ostr_concat(&test_ostr1, &test_ostr2);
+    
+    /* the string contents are modified by this function */
+    ostr_compact(result);
+    
+    assert_int_equal( 6, result->length);
+    assert_int_equal( 0, wcsncmp(result_str, result->first->str, 7));
+    assert_ptr_equal(result->first, result->last);
+    assert_null(result->first->next);
+
+    ostr_destroy(result);
+    
+}
+
+wchar_t * TEST_STR;
+FILE * TEST_STREAM;
+int TEST_CALLS;
+wint_t WEAK_FOR_UNIT_TEST
+__wrap_fputwc(wchar_t wc, FILE * stream) {
+    assert_int_equal(*TEST_STR, wc);
+    
+    assert_ptr_equal(TEST_STREAM, stream);
+    
+    TEST_STR++;
+    TEST_CALLS++;
+    return 1;
+}
+
+
+void ostr_puts_should_write_contents_to_stdout(void ** param) 
+{
+    (void) param; /* unused */
+    wchar_t * data = L"HELLO!";
+    struct ostr test_ostr;
+    struct ostr_token test_token1;
+    struct ostr_token test_token2;
+    wchar_t * strang1 = L"HEL";
+    wchar_t * strang2 = L"LO!";
+    size_t written;
+    
+    test_ostr.first = &test_token1;
+    test_ostr.last = test_token1.next = &test_token2;
+    test_token2.next = NULL;
+    test_token1.str = strang1;
+    test_token2.str = strang2;
+    test_ostr.length = 6;
+    test_token1.length = test_token2.length = 3;
+    test_token1.size = test_token2.size = 3;
+    
+    TEST_STR = data;
+    TEST_STREAM = stdout;
+    TEST_CALLS = 0;
+    
+    
+    written = ostr_puts(&test_ostr);
+    
+    
+    assert_int_equal(6, written);
+    assert_int_equal(6, TEST_CALLS);
+    
+    /* other assertions performed by the wrapper function */
+   
+}
+
+void ostr_fputs_should_write_contents_to_stderr(void ** param) 
+{
+    (void) param; /* unused */
+    wchar_t * data = L"COOL!!";
+    struct ostr test_ostr;
+    struct ostr_token test_token1;
+    struct ostr_token test_token2;
+    wchar_t * strang1 = L"COO";
+    wchar_t * strang2 = L"L!!";
+    size_t written;
+    
+    test_ostr.first = &test_token1;
+    test_ostr.last = test_token1.next = &test_token2;
+    test_token2.next = NULL;
+    test_token1.str = strang1;
+    test_token2.str = strang2;
+    test_ostr.length = 6;
+    test_token1.length = test_token2.length = 3;
+    test_token1.size = test_token2.size = 3;
+    
+    TEST_STR = data;
+    TEST_STREAM = stderr;
+    TEST_CALLS = 0;
+    
+    
+    written = ostr_fputs(&test_ostr, stderr);
+    
+    
+    assert_int_equal(6, written);
+    assert_int_equal(6, TEST_CALLS);
+    
+    /* other assertions performed by the wrapper function */
+   
+}
+
+
 /* These functions will be used to initialize
    and clean resources up after each test run */
 int setup (void ** param)
@@ -171,6 +392,10 @@ int main (void)
         cmocka_unit_test (ostr_replace_last_should_replace_last_char),
         cmocka_unit_test (ostr_replace_last_should_return_null_if_len_zero),
         cmocka_unit_test (ostr_length_should_return_length),
+        cmocka_unit_test (ostr_str_should_create_new_c_string),
+        cmocka_unit_test (ostr_dup_should_create_new_string_from_original_string),
+        cmocka_unit_test (ostr_concat_should_create_new_string_from_two_strings),
+        cmocka_unit_test (ostr_compact_should_reorganize_string_internals),
     };
 
     /* If setup and teardown functions are not

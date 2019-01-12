@@ -80,7 +80,7 @@ ostr_dup(struct ostr * ostr);
  * Print a ostr to a FILE stream
  */
 int 
-ostr_fputs(struct ostr *, FILE*);
+ostr_fputs(struct ostr *, FILE *);
 
 /**
  * Print a ostr to stdout
