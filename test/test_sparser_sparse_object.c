@@ -14,8 +14,8 @@ struct sparse_ctx {
 int sparse_object(struct sparse_ctx * ctx, struct sobj ** obj);
 
 /* mocks and stubs */
-wint_t 
-__wrap_fwgetc(FILE *fp) {
+wint_t __wrap_fgetwc(FILE * fp)
+{
     return mock();
 }
 
@@ -71,19 +71,19 @@ test other
 
 void sparse_object_should_never_call_sparse_functions_when_input_is_space(void ** param) {
     
-    will_return(__wrap_fwgetc, L' ');
-    will_return(__wrap_fwgetc, L'\r');
-    will_return(__wrap_fwgetc, L'\n');
-    will_return(__wrap_fwgetc, L'\t');
-    will_return(__wrap_fwgetc, L'\f');
-    will_return(__wrap_fwgetc, WEOF);
+    will_return(__wrap_fgetwc, L' ');
+    will_return(__wrap_fgetwc, L'\r');
+    will_return(__wrap_fgetwc, L'\n');
+    will_return(__wrap_fgetwc, L'\t');
+    will_return(__wrap_fgetwc, L'\f');
+    will_return(__wrap_fgetwc, WEOF);
     
     sparse_object(&mctx, &mobj);
     
 }
 
 void sparse_object_should_call_sparse_string(void ** param) {
-    will_return(__wrap_fwgetc, L'"');
+    will_return(__wrap_fgetwc, L'"');
     
     expect_value(sparse_string, ctx, &mctx);
     expect_value(sparse_string, obj, &mobj);
@@ -93,7 +93,7 @@ void sparse_object_should_call_sparse_string(void ** param) {
 }
 
 void sparse_object_should_call_sparse_symbol(void ** param) {
-    will_return(__wrap_fwgetc, L'|');
+    will_return(__wrap_fgetwc, L'|');
     
     expect_value(sparse_symbol, ctx, &mctx);
     expect_value(sparse_symbol, obj, &mobj);
@@ -103,7 +103,7 @@ void sparse_object_should_call_sparse_symbol(void ** param) {
 }
 
 void sparse_object_should_call_sparse_list(void ** param) {
-    will_return(__wrap_fwgetc, L'(');
+    will_return(__wrap_fgetwc, L'(');
     
     expect_value(sparse_cons, ctx, &mctx);
     expect_value(sparse_cons, obj, &mobj);
@@ -113,7 +113,7 @@ void sparse_object_should_call_sparse_list(void ** param) {
 }
 
 void sparse_object_should_call_sparse_quote(void ** param) {
-    will_return(__wrap_fwgetc, L'\'');
+    will_return(__wrap_fgetwc, L'\'');
     
     expect_value(sparse_quote, ctx, &mctx);
     expect_value(sparse_quote, obj, &mobj);
@@ -123,7 +123,7 @@ void sparse_object_should_call_sparse_quote(void ** param) {
 }
 
 void sparse_object_should_call_sparse_simple_symbol(void ** param) {
-    will_return(__wrap_fwgetc, L'x');
+    will_return(__wrap_fgetwc, L'x');
     
     expect_value(sparse_simple_symbol, ctx, &mctx);
     expect_value(sparse_simple_symbol, obj, &mobj);

@@ -4,6 +4,7 @@
 #include <wchar.h>
 #include "sparser.h"
 #include "ostr.h"
+#include "sobj.h"
 #include "sexpr.h"
 
 /*
@@ -105,7 +106,7 @@ sparse_object(struct sparse_ctx * ctx, struct sobj ** obj) {
 int WEAK_FOR_UNIT_TEST
 sparse_string(struct sparse_ctx * ctx, struct sobj ** obj) {
     struct ostr * str;
-    wint_t escaped_chars[5];
+    wchar_t escaped_chars[5];
     int escape_pos;
     int escape_state;
     
@@ -117,6 +118,7 @@ sparse_string(struct sparse_ctx * ctx, struct sobj ** obj) {
         ctx->prev = ctx->next;
         ctx->next = fgetwc(ctx->in);
         if(ctx->next == WEOF) {
+            ostr_destroy(str);
             return SPARSE_EOF;
         }
         
@@ -128,9 +130,13 @@ sparse_string(struct sparse_ctx * ctx, struct sobj ** obj) {
             } else {
                 escape_state = 0;
                 escaped_chars[escape_pos] = L'\0';
-                ctx->prev = wcstol(str, NULL, 8);
-                ostr_append(str, ctx->prev);
-                ostr_append(str, ctx->next);
+                ctx->prev = wcstol(escaped_chars, NULL, 8);
+                ostr_replace_last(str, ctx->prev);
+                if(ctx->next == L'"') {
+                    break;
+                } else {
+                    ostr_append(str, ctx->next);
+                }
             }
         } else if(escape_state == 2) {
             /* handle unicode char */
@@ -140,23 +146,28 @@ sparse_string(struct sparse_ctx * ctx, struct sobj ** obj) {
                 escape_pos++;
             } else if (escape_pos == 0) {
                 /* bad escape char */
+                ostr_destroy(str);
                 return SPARSE_BAD_CHAR;
             } else {
                 escape_state = 0;
                 escaped_chars[escape_pos] = L'\0';
-                ctx->prev = wcstol(str, NULL, 16);
-                ostr_append(str, ctx->prev);
-                ostr_append(str, ctx->next);
+                ctx->prev = wcstol(escaped_chars, NULL, 16);
+                ostr_replace_last(str, ctx->prev);
+                if(ctx->next == L'"') {
+                    break;
+                } else {
+                    ostr_append(str, ctx->next);
+                }
             }
         } else if(ctx->prev == L'\\') {
             /* must replace last entered char with current char */
             if(ctx->next==L'n') {
                 ostr_replace_last(str, L'\n');
                 ctx->next=L'\n';
-            } else if(ctx->next==L'\r') {
+            } else if(ctx->next==L'r') {
                 ostr_replace_last(str, L'\r');
                 ctx->next=L'\r';
-            } else if(ctx->next==L'\\' || ctx->next==L'"') {
+            } else if(ctx->next==L'\\' || ctx->next==L'"' || ctx->next==L'\'') {
                 ostr_replace_last(str, ctx->next);
             } else if(ctx->next==L'u') {
                 escape_pos = 0;
@@ -167,6 +178,7 @@ sparse_string(struct sparse_ctx * ctx, struct sobj ** obj) {
                 escaped_chars[0] = ctx->next;
             } else {
                 /* bad escape sequence */
+                ostr_destroy(str);
                 return SPARSE_BAD_CHAR;
             }
         

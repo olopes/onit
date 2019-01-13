@@ -1,15 +1,9 @@
 /* TODO implement */
 
-#include <stdarg.h>
-#include <stddef.h>
-#include <setjmp.h>
-#include <cmocka.h>
-
-/* prod code includes */
 #include "svisitor.h"
 #include "wraps.c"
 
-iswspace
+/* iswspace */
 
 int 
 sparse_object(struct sparse_ctx * ctx, struct sobj ** obj);
