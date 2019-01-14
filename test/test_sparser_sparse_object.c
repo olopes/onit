@@ -1,7 +1,5 @@
 /* prod code includes */
-#include <stdio.h>
-#include <wctype.h>
-#include <wchar.h>
+#include "stype.h"
 #include "sparser.h"
 
 /* borrow definitions from sparse.c */
@@ -11,125 +9,171 @@ struct sparse_ctx {
     wint_t next;
     struct sexpr * stack;
 };
+
 int sparse_object(struct sparse_ctx * ctx, struct sobj ** obj);
+int sparse_string(struct sparse_ctx * ctx, struct sobj ** obj);
+int sparse_symbol(struct sparse_ctx * ctx, struct sobj ** obj);
+int sparse_simple_symbol(struct sparse_ctx * ctx, struct sobj ** obj);
+int sparse_quote(struct sparse_ctx * ctx, struct sobj ** obj);
+int sparse_cons(struct sparse_ctx * ctx, struct sobj ** obj);
 
 /* mocks and stubs */
-wint_t __wrap_fgetwc(FILE * fp)
+wchar_t * TEST_STREAM;
+int FGET_CALLS;
+
+wint_t __wrap_fgetwc(FILE * stream)
 {
-    return mock();
+    wint_t chr;
+    
+    FGET_CALLS++;
+    chr = *TEST_STREAM;
+    
+    if(chr) {
+        TEST_STREAM++;
+    } else {
+        chr = WEOF;
+    }
+    return chr;
 }
-
-
-struct sparse_ctx mctx;
-struct sobj * mobj;
 
 int 
 sparse_string(struct sparse_ctx * ctx, struct sobj ** obj) {
-    check_expected(ctx);
-    check_expected(obj);
+    function_called();
+    *obj = mock_ptr_type(struct sobj *);
     return mock();
 }
 int 
 sparse_symbol(struct sparse_ctx * ctx, struct sobj ** obj) {
-    check_expected(ctx);
-    check_expected(obj);
+    function_called();
+    *obj = mock_ptr_type(struct sobj *);
     return mock();
 }
 int 
 sparse_simple_symbol(struct sparse_ctx * ctx, struct sobj ** obj) {
-    check_expected(ctx);
-    check_expected(obj);
+    function_called();
+    *obj = mock_ptr_type(struct sobj *);
     return mock();
 }
 int 
 sparse_quote(struct sparse_ctx * ctx, struct sobj ** obj) {
-    check_expected(ctx);
-    check_expected(obj);
+    function_called();
+    *obj = mock_ptr_type(struct sobj *);
     return mock();
 }
 int 
 sparse_cons(struct sparse_ctx * ctx, struct sobj ** obj) {
-    check_expected(ctx);
-    check_expected(obj);
+    function_called();
+    *obj = mock_ptr_type(struct sobj *);
     return mock();
 }
 
-/*
 
-test iswspace 
-test '"'
-test '|'
-test '('
-test '''
-test other
-
-*/
-
-
-
+/* dummy good pointer */
+struct sobj dummy;
+struct sobj * pdummy = &dummy;
 
 
 void sparse_object_should_never_call_sparse_functions_when_input_is_space(void ** param) {
+    struct sparse_ctx ctx = {NULL, L' ', L'"', NULL};
+    struct sobj * sobj = pdummy;
+    int retval;
+    TEST_STREAM = L" \r\n\t\f";
     
-    will_return(__wrap_fgetwc, L' ');
-    will_return(__wrap_fgetwc, L'\r');
-    will_return(__wrap_fgetwc, L'\n');
-    will_return(__wrap_fgetwc, L'\t');
-    will_return(__wrap_fgetwc, L'\f');
-    will_return(__wrap_fgetwc, WEOF);
+    retval = sparse_object(&ctx, &sobj);
     
-    sparse_object(&mctx, &mobj);
-    
+    /* EOF found and sobj set to NULL */
+    assert_int_equal(SPARSE_EOF, retval);
+    assert_null(sobj);
 }
 
 void sparse_object_should_call_sparse_string(void ** param) {
-    will_return(__wrap_fgetwc, L'"');
+    struct sparse_ctx ctx = {NULL, L' ', L'"', NULL};
+    struct sobj * sobj = NULL;
+    int retval;
+    TEST_STREAM = L"\"X\"";
     
-    expect_value(sparse_string, ctx, &mctx);
-    expect_value(sparse_string, obj, &mobj);
-    will_return(sparse_string, 0);
+    expect_function_call(sparse_string);
+    will_return(sparse_string, pdummy);
+    will_return(sparse_string, 1);
     
-    sparse_object(&mctx, &mobj);
+    
+    retval = sparse_object(&ctx, &sobj);
+    
+    /* must return the value and sobj returned by the called function */
+    assert_int_equal(1, retval);
+    assert_ptr_equal(pdummy, sobj);
 }
 
 void sparse_object_should_call_sparse_symbol(void ** param) {
-    will_return(__wrap_fgetwc, L'|');
+    struct sparse_ctx ctx = {NULL, L' ', L'"', NULL};
+    struct sobj * sobj = NULL;
+    int retval;
+    TEST_STREAM = L"|X|";
     
-    expect_value(sparse_symbol, ctx, &mctx);
-    expect_value(sparse_symbol, obj, &mobj);
-    will_return(sparse_symbol, 0);
+    expect_function_call(sparse_symbol);
+    will_return(sparse_symbol, pdummy);
+    will_return(sparse_symbol, 2);
     
-    sparse_object(&mctx, &mobj);
+    
+    retval = sparse_object(&ctx, &sobj);
+    
+    /* must return the value and sobj returned by the called function */
+    assert_int_equal(2, retval);
+    assert_ptr_equal(pdummy, sobj);
 }
 
 void sparse_object_should_call_sparse_list(void ** param) {
-    will_return(__wrap_fgetwc, L'(');
+    struct sparse_ctx ctx = {NULL, L' ', L'"', NULL};
+    struct sobj * sobj = NULL;
+    int retval;
+    TEST_STREAM = L"(X)";
     
-    expect_value(sparse_cons, ctx, &mctx);
-    expect_value(sparse_cons, obj, &mobj);
-    will_return(sparse_cons, 0);
+    expect_function_call(sparse_cons);
+    will_return(sparse_cons, pdummy);
+    will_return(sparse_cons, 3);
     
-    sparse_object(&mctx, &mobj);
+    
+    retval = sparse_object(&ctx, &sobj);
+    
+    /* must return the value and sobj returned by the called function */
+    assert_int_equal(3, retval);
+    assert_ptr_equal(pdummy, sobj);
 }
 
 void sparse_object_should_call_sparse_quote(void ** param) {
-    will_return(__wrap_fgetwc, L'\'');
+    struct sparse_ctx ctx = {NULL, L' ', L'"', NULL};
+    struct sobj * sobj = NULL;
+    int retval;
+    TEST_STREAM = L"'(X)";
     
-    expect_value(sparse_quote, ctx, &mctx);
-    expect_value(sparse_quote, obj, &mobj);
-    will_return(sparse_quote, 0);
+    expect_function_call(sparse_quote);
+    will_return(sparse_quote, pdummy);
+    will_return(sparse_quote, 4);
     
-    sparse_object(&mctx, &mobj);
+    
+    retval = sparse_object(&ctx, &sobj);
+    
+    /* must return the value and sobj returned by the called function */
+    assert_int_equal(4, retval);
+    assert_ptr_equal(pdummy, sobj);
 }
 
 void sparse_object_should_call_sparse_simple_symbol(void ** param) {
-    will_return(__wrap_fgetwc, L'x');
+    struct sparse_ctx ctx = {NULL, L' ', L'"', NULL};
+    struct sobj * sobj = NULL;
+    int retval;
+    TEST_STREAM = L"X";
     
-    expect_value(sparse_simple_symbol, ctx, &mctx);
-    expect_value(sparse_simple_symbol, obj, &mobj);
-    will_return(sparse_simple_symbol, 0);
+    expect_function_call(sparse_simple_symbol);
+    will_return(sparse_simple_symbol, pdummy);
+    will_return(sparse_simple_symbol, 5);
     
-    sparse_object(&mctx, &mobj);
+    
+    retval = sparse_object(&ctx, &sobj);
+    
+    /* must return the value and sobj returned by the called function */
+    assert_int_equal(5, retval);
+    assert_ptr_equal(pdummy, sobj);
 }
 
 /* These functions will be used to initialize

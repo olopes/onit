@@ -1,22 +1,21 @@
-/* TODO implement */
+/* prod code includes */
+#include "stype.h"
+#include "sparser.h"
 
-#include "svisitor.h"
-#include "wraps.c"
+/* borrow definitions from sparse.c */
+struct sparse_ctx {
+    FILE *in;
+    wint_t prev;
+    wint_t next;
+    struct sexpr * stack;
+};
 
-/* iswspace */
-
-int 
-sparse_object(struct sparse_ctx * ctx, struct sobj ** obj);
-int 
-sparse_string(struct sparse_ctx * ctx, struct sobj ** obj);
-int 
-sparse_symbol(struct sparse_ctx * ctx, struct sobj ** obj);
-int 
-sparse_simple_symbol(struct sparse_ctx * ctx, struct sobj ** obj);
-int 
-sparse_quote(struct sparse_ctx * ctx, struct sobj ** obj);
-int 
-sparse_cons(struct sparse_ctx * ctx, struct sobj ** obj);
+int sparse_object(struct sparse_ctx * ctx, struct sobj ** obj);
+int sparse_string(struct sparse_ctx * ctx, struct sobj ** obj);
+int sparse_symbol(struct sparse_ctx * ctx, struct sobj ** obj);
+int sparse_simple_symbol(struct sparse_ctx * ctx, struct sobj ** obj);
+int sparse_quote(struct sparse_ctx * ctx, struct sobj ** obj);
+int sparse_cons(struct sparse_ctx * ctx, struct sobj ** obj);
 
 
 void null_test_failure(void ** param) {

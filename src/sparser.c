@@ -44,7 +44,6 @@ sparse_cons(struct sparse_ctx * ctx, struct sobj ** obj);
 int WEAK_FOR_UNIT_TEST
 sparse(FILE *in, struct sobj ** obj) {
     struct sparse_ctx ctx;
-    struct ostr *ostr;
     ctx.in = in;
     ctx.next = L' ';
     ctx.stack = NULL;
@@ -62,6 +61,7 @@ sparse_object(struct sparse_ctx * ctx, struct sobj ** obj) {
     struct sobj * ostr;
     int ret_val;
     ret_val = SPARSE_OK;
+    ostr = NULL;
     
     while(1) {
         ctx->prev = ctx->next;
