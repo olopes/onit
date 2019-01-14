@@ -34,8 +34,6 @@ sparse_string(struct sparse_ctx * ctx, struct sobj ** obj);
 int 
 sparse_symbol(struct sparse_ctx * ctx, struct sobj ** obj);
 int 
-sparse_simple_symbol(struct sparse_ctx * ctx, struct sobj ** obj);
-int 
 sparse_quote(struct sparse_ctx * ctx, struct sobj ** obj);
 int 
 sparse_cons(struct sparse_ctx * ctx, struct sobj ** obj);
@@ -78,9 +76,6 @@ sparse_object(struct sparse_ctx * ctx, struct sobj ** obj) {
             if(ctx->next == L'"') {
                 // start or end str
                 ret_val = sparse_string(ctx, &ostr);
-            } else if(ctx->next == L'|') {
-                /* start or end symbol */
-                ret_val = sparse_symbol(ctx, &ostr);
             } else if(ctx->next == L'(') {
                 /* start cons */
                 ret_val = sparse_cons(ctx, &ostr);
@@ -91,7 +86,8 @@ sparse_object(struct sparse_ctx * ctx, struct sobj ** obj) {
                 */
                 ret_val = sparse_quote(ctx, &ostr);
             } else {
-                ret_val = sparse_simple_symbol(ctx, &ostr);
+                /* start or end symbol */
+                ret_val = sparse_symbol(ctx, &ostr);
             }
             break;
         }
@@ -198,7 +194,94 @@ sparse_string(struct sparse_ctx * ctx, struct sobj ** obj) {
 /* not implemented yet... */
 int WEAK_FOR_UNIT_TEST
 sparse_symbol(struct sparse_ctx * ctx, struct sobj ** obj) {
-    return SPARSE_BAD_SYM;
+    struct ostr * str;
+    wchar_t escaped_chars[5];
+    int escape_pos;
+    int escape_state;
+    
+    str = ostr_new(NULL);
+
+    escape_state = 0;
+    /* read everything until " */
+    while(1) {
+        ctx->prev = ctx->next;
+        ctx->next = fgetwc(ctx->in);
+        if(ctx->next == WEOF) {
+            ostr_destroy(str);
+            return SPARSE_EOF;
+        }
+        
+        if(escape_state == 1) {
+            /* handle octal char */
+            if(ctx->next >= L'0' && ctx->next <= L'7' && escape_pos < 3) {
+                escaped_chars[escape_pos] = ctx->next;
+                escape_pos++;
+            } else {
+                escape_state = 0;
+                escaped_chars[escape_pos] = L'\0';
+                ctx->prev = wcstol(escaped_chars, NULL, 8);
+                ostr_replace_last(str, ctx->prev);
+                if(ctx->next == L'"') {
+                    break;
+                } else {
+                    ostr_append(str, ctx->next);
+                }
+            }
+        } else if(escape_state == 2) {
+            /* handle unicode char */
+            /* handle octal char */
+            if(iswxdigit(ctx->next) && escape_pos < 4) {
+                escaped_chars[escape_pos] = ctx->next;
+                escape_pos++;
+            } else if (escape_pos == 0) {
+                /* bad escape char */
+                ostr_destroy(str);
+                return SPARSE_BAD_SYM;
+            } else {
+                escape_state = 0;
+                escaped_chars[escape_pos] = L'\0';
+                ctx->prev = wcstol(escaped_chars, NULL, 16);
+                ostr_replace_last(str, ctx->prev);
+                if(ctx->next == L'"') {
+                    break;
+                } else {
+                    ostr_append(str, ctx->next);
+                }
+            }
+        } else if(ctx->prev == L'\\') {
+            /* must replace last entered char with current char */
+            if(ctx->next==L'n') {
+                ostr_replace_last(str, L'\n');
+                ctx->next=L'\n';
+            } else if(ctx->next==L'r') {
+                ostr_replace_last(str, L'\r');
+                ctx->next=L'\r';
+            } else if(ctx->next==L'\\' || ctx->next==L'"' || ctx->next==L'\'') {
+                ostr_replace_last(str, ctx->next);
+            } else if(ctx->next==L'u') {
+                escape_pos = 0;
+                escape_state = 2;
+            } else if(ctx->next >= L'0' && ctx->next <= L'7') {
+                escape_pos = 1;
+                escape_state = 1;
+                escaped_chars[0] = ctx->next;
+            } else {
+                /* bad escape sequence */
+                ostr_destroy(str);
+                return SPARSE_BAD_SYM;
+            }
+        
+        } else if(ctx->next == L'"') {
+            break;
+        } else {
+            ostr_append(str, ctx->next);
+        }
+    }
+        
+    *obj = sobj_from_string(ostr_str(str), ostr_length(str));
+
+    ostr_destroy(str);
+    return SPARSE_OK;
 }
 int WEAK_FOR_UNIT_TEST
 sparse_simple_symbol(struct sparse_ctx * ctx, struct sobj ** obj) {

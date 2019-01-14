@@ -1,4 +1,3 @@
-
 CFLAGS=-g -ansi -std=c99 -Wall -pedantic -finput-charset=UTF-8 -DWEAK_FOR_UNIT_TEST=\ 
 LDFLAGS=-static 
 
@@ -25,7 +24,12 @@ clean:
 	rm -r -f -- build/sexpr build/onit build/ostr build/*.o build/test *.gcda *.gcno
 
 # Unit tests
+empty:=
+and:=$(empty) && $(empty)
+space:=$(empty) $(empty)
+
 tests: $(TESTS)
+	(f=0;for t in $^ ; do echo "Running $$t ..." ; $$t ; f=`expr $$f + $$?` ; done; exit $$f)
 
 build/test/wrap_fn.o: test/wraps.c
 	mkdir -p build/test
@@ -37,7 +41,6 @@ build/test/%.o: src/%.c
 
 build/test/%.t: test/%.c $(TESTS_PROD_OBJ)
 	cc $(TEST_LDFLAGS) $(TEST_CFLAGS) -o $@ $^
-	$@
 
 coverage: tests
 

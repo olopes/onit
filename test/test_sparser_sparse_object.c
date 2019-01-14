@@ -13,7 +13,6 @@ struct sparse_ctx {
 int sparse_object(struct sparse_ctx * ctx, struct sobj ** obj);
 int sparse_string(struct sparse_ctx * ctx, struct sobj ** obj);
 int sparse_symbol(struct sparse_ctx * ctx, struct sobj ** obj);
-int sparse_simple_symbol(struct sparse_ctx * ctx, struct sobj ** obj);
 int sparse_quote(struct sparse_ctx * ctx, struct sobj ** obj);
 int sparse_cons(struct sparse_ctx * ctx, struct sobj ** obj);
 
@@ -44,12 +43,6 @@ sparse_string(struct sparse_ctx * ctx, struct sobj ** obj) {
 }
 int 
 sparse_symbol(struct sparse_ctx * ctx, struct sobj ** obj) {
-    function_called();
-    *obj = mock_ptr_type(struct sobj *);
-    return mock();
-}
-int 
-sparse_simple_symbol(struct sparse_ctx * ctx, struct sobj ** obj) {
     function_called();
     *obj = mock_ptr_type(struct sobj *);
     return mock();
@@ -164,9 +157,9 @@ void sparse_object_should_call_sparse_simple_symbol(void ** param) {
     int retval;
     TEST_STREAM = L"X";
     
-    expect_function_call(sparse_simple_symbol);
-    will_return(sparse_simple_symbol, pdummy);
-    will_return(sparse_simple_symbol, 5);
+    expect_function_call(sparse_symbol);
+    will_return(sparse_symbol, pdummy);
+    will_return(sparse_symbol, 5);
     
     
     retval = sparse_object(&ctx, &sobj);

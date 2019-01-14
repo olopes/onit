@@ -98,18 +98,11 @@ void sparse_string_should_handle_escape_chars(void ** param) {
     sobj_free(sobj);
 }
 
-struct ss_test_case {
-    wchar_t * stream;
-    wchar_t * expected;
-    int retval;
-    int calls;
-};
-
 void sparse_string_should_handle_escaped_unicode_hex_chars(void ** param) {
     (void) param; /* unused */
     struct sparse_ctx ctx = {NULL, L' ', L'"', NULL};
     struct sobj * sobj = NULL;
-    struct ss_test_case tests[6] = {
+    struct parametrized_test_case tests[6] = {
         {L"\\u0059\"", L"Y", SPARSE_OK, 7},
         {L"\\u65\"", L"e", SPARSE_OK, 5},
         {L"\\u073\"", L"s", SPARSE_OK, 6},
@@ -138,7 +131,7 @@ void sparse_string_should_handle_escaped_oct_chars(void ** param) {
     (void) param; /* unused */
     struct sparse_ctx ctx = {NULL, L' ', L'"', NULL};
     struct sobj * sobj = NULL;
-    struct ss_test_case tests[6] = {
+    struct parametrized_test_case tests[6] = {
         {L"\\131\"", L"Y", SPARSE_OK, 5},
         {L"\\145\"", L"e", SPARSE_OK, 5},
         {L"\\163\"", L"s", SPARSE_OK, 5},
@@ -166,7 +159,7 @@ void sparse_string_should_return_SPARSE_BAD_CHAR(void ** param) {
     (void) param; /* unused */
     struct sparse_ctx ctx = {NULL, L' ', L'"', NULL};
     struct sobj * sobj = NULL;
-    struct ss_test_case tests[3] = {
+    struct parametrized_test_case tests[3] = {
         {L"\\x\"", L"-", SPARSE_BAD_CHAR, 2},
         {L"\\E\"", L"-", SPARSE_BAD_CHAR, 2},
         {L"\\ux\"", L"-", SPARSE_BAD_CHAR, 3},

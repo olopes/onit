@@ -28,4 +28,14 @@
 #undef ungetwc
 #endif
 
+/* Useful struct for testing with multiple parameters */
+struct parametrized_test_case {
+    wchar_t * stream;
+    wchar_t * expected;
+    int retval;
+    int calls;
+};
+
+
+
 #endif /* UNIT_TESTING */
