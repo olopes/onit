@@ -21,7 +21,7 @@ build/sexpr: src/sexpr.c src/sexpr_main.c src/sexpr_stack.c src/sobj.c src/svisi
 	cc $(LDFLAGS) $(CFLAGS) -o $@ $^
 
 clean:
-	rm -r -f -- build/sexpr build/onit build/ostr build/*.o build/test *.gcda *.gcno
+	rm -r -f -- build *.gcda *.gcno
 
 # Unit tests
 empty:=
