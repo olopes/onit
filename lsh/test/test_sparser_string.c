@@ -32,77 +32,60 @@ int
 sparse_string(struct sparse_ctx * ctx, struct sobj ** obj);
 
 
-void sparse_string_should_create_sobj_with_str(void ** param) {
-    (void) param; /* unused */
+/* think about cmocka's setup and teardown methods? */
+void run_sparse_string_test(struct sparser_test_params * test_params) {
+    /* arrange */
     struct sparse_ctx ctx = {NULL, L' ', L'"', NULL};
-    struct sobj * sobj;
+    struct sobj * sobj = NULL;
     int retval;
-    wchar_t * expected = L"HEY!";
-    
     FGET_CALLS = 0;
-    TEST_STREAM = L"HEY!\""; 
-    
+    TEST_STREAM = test_params->stream;
+
+    /* act */
     retval = sparse_string(&ctx, &sobj);
     
-    assert_int_equal(4, sobj->len);
-    assert_int_equal(T_STRING, sobj->type);
-    assert_int_equal(0, wcscmp(sobj->data, expected));
-    assert_int_equal(5, FGET_CALLS);
-    assert_true(ctx.next == L'"');
-    assert_true(ctx.prev == L'!');
-    assert_int_equal(SPARSE_OK, retval);
+    /* assert */
+    assert_int_equal(test_params->return_value, retval);
+    assert_int_equal(test_params->expected_fgetc_calls, FGET_CALLS);
+    if(retval == SPARSE_OK) {
+        assert_int_equal(0, wcscmp(sobj->data, test_params->expected));
+        assert_int_equal(T_STRING, sobj->type);
+        
+        free(sobj->data);
+        sobj_free(sobj);
+    }
     
-    free(sobj->data);
-    sobj_free(sobj);
+}
+
+
+void sparse_string_should_create_sobj_with_str(void ** param) {
+    (void) param; /* unused */
+    struct sparser_test_params test_params = {L"HEY!\"", L"HEY!", SPARSE_OK, 5};
+    
+    run_sparse_string_test(&test_params);
+    
 }
 
 void sparse_string_should_return_SPARSE_EOF_if_EOF_found(void ** param) {
     (void) param; /* unused */
-    struct sparse_ctx ctx = {NULL, L' ', L'"', NULL};
-    struct sobj * sobj;
-    int retval;
+    struct sparser_test_params test_params = {L"HE", NULL, SPARSE_EOF, 3};
     
-    FGET_CALLS = 0;
-    TEST_STREAM = L"HE"; 
-    sobj = NULL;
-    
-    retval = sparse_string(&ctx, &sobj);
-    
-    assert_int_equal(SPARSE_EOF, retval);
-    
-    assert_null(sobj);
-    assert_int_equal(3, FGET_CALLS);
-    assert_true(ctx.next == WEOF);
-    assert_true(ctx.prev == L'E');
-    
+    run_sparse_string_test(&test_params);
+        
 }
 
 void sparse_string_should_handle_escape_chars(void ** param) {
     (void) param; /* unused */
-    struct sparse_ctx ctx = {NULL, L' ', L'"', NULL};
-    struct sobj * sobj;
-    int retval;
-    wchar_t * expected = L"\r\n'\"";
+    struct sparser_test_params test_params = {L"\\r\\n\\'\\\"\"", L"\r\n'\"", SPARSE_OK, 9};
     
-    FGET_CALLS = 0;
-    TEST_STREAM = L"\\r\\n\\'\\\"\""; 
-    sobj = NULL;
+    run_sparse_string_test(&test_params);
     
-    retval = sparse_string(&ctx, &sobj);
-    
-    assert_int_equal(SPARSE_OK, retval);
-    assert_int_equal(0, wcscmp(sobj->data, expected));
-    assert_int_equal(9, FGET_CALLS);
-
-    free(sobj->data);
-    sobj_free(sobj);
 }
 
 void sparse_string_should_handle_escaped_unicode_hex_chars(void ** param) {
     (void) param; /* unused */
-    struct sparse_ctx ctx = {NULL, L' ', L'"', NULL};
-    struct sobj * sobj = NULL;
-    struct parametrized_test_case tests[6] = {
+    int i;
+    struct sparser_test_params tests[6] = {
         {L"\\u0059\"", L"Y", SPARSE_OK, 7},
         {L"\\u65\"", L"e", SPARSE_OK, 5},
         {L"\\u073\"", L"s", SPARSE_OK, 6},
@@ -110,28 +93,17 @@ void sparse_string_should_handle_escaped_unicode_hex_chars(void ** param) {
         {L"\\u00211\"", L"!1", SPARSE_OK, 8},
         {L"\\u0059\\u65\\u073\\u00211\\ua\\u6e\\u6F\"  ", L"Yes!1\nno", SPARSE_OK, 34},
     };
-    int i;
     
     for (i = 0; i < 6; i++) {
-        ctx.next = L'"';
-        FGET_CALLS = 0;
-        TEST_STREAM = tests[i].stream;
-    
-        assert_int_equal(tests[i].retval, sparse_string(&ctx, &sobj));
-        assert_int_equal(0, wcscmp(sobj->data, tests[i].expected));
-        assert_int_equal(tests[i].calls, FGET_CALLS);
-
-        free(sobj->data);
-        sobj_free(sobj);
+        run_sparse_string_test(tests+i);
     }
 }
 
 
 void sparse_string_should_handle_escaped_oct_chars(void ** param) {
     (void) param; /* unused */
-    struct sparse_ctx ctx = {NULL, L' ', L'"', NULL};
-    struct sobj * sobj = NULL;
-    struct parametrized_test_case tests[6] = {
+    int i;
+    struct sparser_test_params tests[6] = {
         {L"\\131\"", L"Y", SPARSE_OK, 5},
         {L"\\145\"", L"e", SPARSE_OK, 5},
         {L"\\163\"", L"s", SPARSE_OK, 5},
@@ -139,41 +111,23 @@ void sparse_string_should_handle_escaped_oct_chars(void ** param) {
         {L"\\0411\"", L"!1", SPARSE_OK, 6},
         {L"\\131\\145\\163\\0411\\41\\1\"  ", L"Yes!1!\1", SPARSE_OK, 23},
     };
-    int i;
     
     for (i = 0; i < 6; i++) {
-        ctx.next = L'"';
-        FGET_CALLS = 0;
-        TEST_STREAM = tests[i].stream;
-    
-        assert_int_equal(tests[i].retval, sparse_string(&ctx, &sobj));
-        assert_int_equal(0, wcscmp(sobj->data, tests[i].expected));
-        assert_int_equal(tests[i].calls, FGET_CALLS);
-
-        free(sobj->data);
-        sobj_free(sobj);
+        run_sparse_string_test(tests+i);
     }
 }
 
 void sparse_string_should_return_SPARSE_BAD_CHAR(void ** param) {
     (void) param; /* unused */
-    struct sparse_ctx ctx = {NULL, L' ', L'"', NULL};
-    struct sobj * sobj = NULL;
-    struct parametrized_test_case tests[3] = {
+    int i;
+    struct sparser_test_params tests[3] = {
         {L"\\x\"", L"-", SPARSE_BAD_CHAR, 2},
         {L"\\E\"", L"-", SPARSE_BAD_CHAR, 2},
         {L"\\ux\"", L"-", SPARSE_BAD_CHAR, 3},
     };
-    int i;
     
     for (i = 0; i < 3; i++) {
-        ctx.next = L'"';
-        FGET_CALLS = 0;
-        TEST_STREAM = tests[i].stream;
-    
-        assert_int_equal(tests[i].retval, sparse_string(&ctx, &sobj));
-        assert_int_equal(tests[i].calls, FGET_CALLS);
-
+        run_sparse_string_test(tests+i);
     }
 }
 

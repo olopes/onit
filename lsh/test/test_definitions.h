@@ -29,11 +29,11 @@
 #endif
 
 /* Useful struct for testing with multiple parameters */
-struct parametrized_test_case {
+struct sparser_test_params {
     wchar_t * stream;
     wchar_t * expected;
-    int retval;
-    int calls;
+    int return_value;
+    int expected_fgetc_calls;
 };
 
 

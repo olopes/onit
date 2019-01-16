@@ -62,4 +62,4 @@ src/sexpr.c: src/stype.h src/sobj.h src/sexpr.h
 src/sobj.c: src/stype.h src/sobj.h
 
 src/sobj.c: src/stype.h src/svisitor.h src/sobj.h src/sexpr.h src/sexpr_stack.h
-# DO NOT DELETE
+
