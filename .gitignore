@@ -4,4 +4,4 @@ build/
 
 *.gcda
 *.gcno
-
+*.bak
