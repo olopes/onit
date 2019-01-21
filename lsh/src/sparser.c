@@ -27,6 +27,8 @@ struct sparse_ctx {
     struct sexpr * stack;
 };
 
+/* FIXME maybe these should belong to their own file instead 
+    of this one alone? */
 int 
 sparse_object(struct sparse_ctx * ctx, struct sobj ** obj);
 int 
@@ -191,106 +193,125 @@ sparse_string(struct sparse_ctx * ctx, struct sobj ** obj) {
     return SPARSE_OK;
 }
 
-/* not implemented yet... */
 int WEAK_FOR_UNIT_TEST
 sparse_symbol(struct sparse_ctx * ctx, struct sobj ** obj) {
     struct ostr * str;
-    wchar_t escaped_chars[5];
     int escape_pos;
     int escape_state;
+    int return_value;
     
     str = ostr_new(NULL);
 
-    escape_state = 0;
-    /* read everything until " */
+    if(ctx->next == L'#') {
+        /* reject symbols starting with # and second char not % */
+        escape_state = 3;
+    } else {
+        escape_state = 0;
+    }
+    /* read everything until arriving to the end of the symbol */
     while(1) {
-        ctx->prev = ctx->next;
-        ctx->next = fgetwc(ctx->in);
-        if(ctx->next == WEOF) {
-            ostr_destroy(str);
-            return SPARSE_EOF;
-        }
         
         if(escape_state == 1) {
-            /* handle octal char */
-            if(ctx->next >= L'0' && ctx->next <= L'7' && escape_pos < 3) {
-                escaped_chars[escape_pos] = ctx->next;
-                escape_pos++;
-            } else {
+            /* handle insides of |....| */
+            if (ctx->next == WEOF) {
+                /* eof found in a normal symbol. */
+                return_value = SPARSE_BAD_SYM;
+                goto SYM_PARSE_END;
+            } else if(ctx->next == L'|') {
+                /* end escape */
                 escape_state = 0;
-                escaped_chars[escape_pos] = L'\0';
-                ctx->prev = wcstol(escaped_chars, NULL, 8);
-                ostr_replace_last(str, ctx->prev);
-                if(ctx->next == L'"') {
-                    break;
-                } else {
-                    ostr_append(str, ctx->next);
-                }
+            } else {
+                ostr_append(str, ctx->next);
             }
         } else if(escape_state == 2) {
-            /* handle unicode char */
-            /* handle octal char */
-            if(iswxdigit(ctx->next) && escape_pos < 4) {
-                escaped_chars[escape_pos] = ctx->next;
-                escape_pos++;
-            } else if (escape_pos == 0) {
-                /* bad escape char */
-                ostr_destroy(str);
-                return SPARSE_BAD_SYM;
-            } else {
-                escape_state = 0;
-                escaped_chars[escape_pos] = L'\0';
-                ctx->prev = wcstol(escaped_chars, NULL, 16);
-                ostr_replace_last(str, ctx->prev);
-                if(ctx->next == L'"') {
-                    break;
+            /* handle insides of \<char> */
+            if (ctx->next == WEOF) {
+                /* eof found in a normal symbol. */
+                return_value = SPARSE_BAD_SYM;
+                goto SYM_PARSE_END;
+            }
+            escape_state = 0;
+            ostr_append(str, ctx->next);
+        } else if(escape_state == 3) {
+            /* I'm not totally sure about this one.... */
+            if(ctx->prev == L'#') {
+                if(ctx->prev == L'%') {
+                    escape_state = 0;
                 } else {
-                    ostr_append(str, ctx->next);
+                    return_value = SPARSE_BAD_SYM;
+                    goto SYM_PARSE_END;
                 }
             }
-        } else if(ctx->prev == L'\\') {
-            /* must replace last entered char with current char */
-            if(ctx->next==L'n') {
-                ostr_replace_last(str, L'\n');
-                ctx->next=L'\n';
-            } else if(ctx->next==L'r') {
-                ostr_replace_last(str, L'\r');
-                ctx->next=L'\r';
-            } else if(ctx->next==L'\\' || ctx->next==L'"' || ctx->next==L'\'') {
-                ostr_replace_last(str, ctx->next);
-            } else if(ctx->next==L'u') {
-                escape_pos = 0;
-                escape_state = 2;
-            } else if(ctx->next >= L'0' && ctx->next <= L'7') {
-                escape_pos = 1;
-                escape_state = 1;
-                escaped_chars[0] = ctx->next;
-            } else {
-                /* bad escape sequence */
-                ostr_destroy(str);
-                return SPARSE_BAD_SYM;
-            }
-        
-        } else if(ctx->next == L'"') {
-            break;
+            ostr_append(str, ctx->next);                
         } else {
-            ostr_append(str, ctx->next);
+            if (ctx->next == WEOF) {
+                /* eof found in a normal symbol. */
+                return_value = SPARSE_OK;
+                goto SYM_PARSE_END;
+            }
+            /* handle "regular" symbol escape */
+            switch(ctx->next) {
+            case L'|':
+                /* start escape context */
+                escape_state = 1;
+                break;
+            
+            case L'\\':
+                /* regular escape - get next char */
+                escape_state = 2;
+                break;
+            
+            case L' ':
+            case L'(':
+            case L')':
+            case L'[': 
+            case L']': 
+            case L'{': 
+            case L'}': 
+            case L'"': 
+            case L',': 
+            case L'\'': 
+            case L'`': 
+            case L';': 
+                /* handle special chars. In most cases, the parse ends */
+                ungetwc(ctx->next, ctx->in); /* FIXME do I really need this? */
+                return_value = SPARSE_OK;
+                goto SYM_PARSE_END;
+                
+            case L'#': 
+                /* fallthrough: I'm accepting this special char for now. */
+            default:
+                ostr_append(str, ctx->next);
+                break;
+            }
+            
         }
-    }
         
-    *obj = sobj_from_string(ostr_str(str), ostr_length(str));
+        ctx->prev = ctx->next;
+        ctx->next = fgetwc(ctx->in);
+    }
+    
+SYM_PARSE_END:
+    /* must handle the special case: single dot */
+    if(return_value == SPARSE_OK && ostr_length(str) == 1 && ostr_char_at(str, 0) == L'.') {
+        return_value = SPARSE_DOT_SYM;
+    }
+    
+    if(return_value == SPARSE_OK) {
+        *obj = sobj_from_symbol(ostr_str(str), ostr_length(str));
+    } else {
+        *obj = NULL;
+    }
 
     ostr_destroy(str);
-    return SPARSE_OK;
+    return return_value;
 }
-int WEAK_FOR_UNIT_TEST
-sparse_simple_symbol(struct sparse_ctx * ctx, struct sobj ** obj) {
-    return SPARSE_BAD_SYM;
-}
+
 int WEAK_FOR_UNIT_TEST
 sparse_quote(struct sparse_ctx * ctx, struct sobj ** obj) {
     return SPARSE_BAD_SYM;
 }
+
 int WEAK_FOR_UNIT_TEST
 sparse_cons(struct sparse_ctx * ctx, struct sobj ** obj) {
     return SPARSE_BAD_SYM;

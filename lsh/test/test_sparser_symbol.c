@@ -117,7 +117,7 @@ void sparse_symbol_should_return_BAD_SYMBOL_if_no_char_present_after_escaping_sl
 void sparse_symbol_should_return_BAD_SYMBOL_if_hash_used_at_start_of_symbol(void ** param) 
 {
     (void) param; /* unused */;
-    struct sparser_test_params test_params = {L"#hash", NULL, SPARSE_BAD_SYM, 0};
+    struct sparser_test_params test_params = {L"#hash", NULL, SPARSE_BAD_SYM, 1};
     
     run_sparse_symbol_test(&test_params);
 }
@@ -141,7 +141,7 @@ void sparse_symbol_should_accept_special_chars_if_quoted_with_pipe(void ** param
 void sparse_symbol_should_return_BAD_SYMBOL_if_quoting_pipe_is_not_closed(void ** param) 
 {
     (void) param; /* unused */;
-    struct sparser_test_params test_params = {L"x|y", NULL, SPARSE_BAD_SYM, 0};
+    struct sparser_test_params test_params = {L"x|y", NULL, SPARSE_BAD_SYM, 3};
     
     run_sparse_symbol_test(&test_params);
 }
@@ -153,14 +153,15 @@ void sparse_symbol_should_put_char_back_into_stream_and_stop_if_char_is_special(
     struct sparser_test_params test_params[] = {
         {L"xyz ", L"xyz", SPARSE_OK, 3},
         {L"xyz(.)", L"xyz", SPARSE_OK, 3},
-        {L"\\(\\)\\[\\]\\{\\}\\\"\\,\\'\\`\\;\\#\\|\\\\", L"()[]{}\",'`;#|\\", SPARSE_OK, 28},
+        {L"xyz'a", L"xyz", SPARSE_OK, 3},
     };
     
-    for (i = 0; i < 2; i++) {
+    for (i = 0; i < 3; i++) {
+        UNGET_CALLS = 0;
         run_sparse_symbol_test(test_params+i);
+        assert_int_equal(1,UNGET_CALLS);
     }
     
-    assert_int_equal(2,UNGET_CALLS);
 }
 
 

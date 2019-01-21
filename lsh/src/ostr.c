@@ -341,3 +341,36 @@ ostr_fputs(struct ostr * ostr, FILE * out) {
     return total;
 }
 
+/**
+ * Get Nth character
+ */
+wint_t WEAK_FOR_UNIT_TEST
+ostr_char_at(struct ostr * str, size_t position) {
+    struct ostr_token * token;
+    int start_pos;
+    
+    if(str == NULL) {
+        return WEOF;
+    }
+    
+    if(position >= str->length) {
+        return WEOF;
+    }
+    
+    if(position < 0) {
+        return WEOF;
+    }
+    
+    /* search for the correct token */
+    token = str->first;
+    start_pos = 0;
+    while(token) {
+        if(position >= start_pos && position < start_pos+token->length) {
+            return token->str[position - start_pos];
+        }
+        start_pos += token->length;
+        token = token->next;
+    }
+    
+    return WEOF;
+}

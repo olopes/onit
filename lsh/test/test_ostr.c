@@ -364,6 +364,58 @@ void ostr_fputs_should_write_contents_to_stderr(void ** param)
    
 }
 
+void ostr_char_at_should_return_nth_char(void ** param) 
+{
+    (void) param; /* unused */
+    struct ostr test_ostr;
+    struct ostr_token test_token1;
+    struct ostr_token test_token2;
+    wchar_t * strang1 = L"HEL";
+    wchar_t * strang2 = L"LO!";
+    wint_t result1;
+    wint_t result2;
+    
+    test_ostr.first = &test_token1;
+    test_ostr.last = test_token1.next = &test_token2;
+    test_token2.next = NULL;
+    test_token1.str = strang1;
+    test_token2.str = strang2;
+    test_ostr.length = 6;
+    test_token1.length = test_token2.length = 3;
+    test_token1.size = test_token2.size = 3;
+    
+    result1 = ostr_char_at(&test_ostr, 1);
+    result2 = ostr_char_at(&test_ostr, 4);
+    
+    assert_true(L'E' == result1);
+    assert_true(L'O' == result2);
+    
+}
+
+void ostr_char_at_should_return_WEOF_when_out_of_bounds(void ** param) 
+{
+    (void) param; /* unused */
+    struct ostr test_ostr;
+    struct ostr_token test_token1;
+    struct ostr_token test_token2;
+    wchar_t * strang1 = L"HEL";
+    wchar_t * strang2 = L"LO!";
+    wint_t result;
+    
+    test_ostr.first = &test_token1;
+    test_ostr.last = test_token1.next = &test_token2;
+    test_token2.next = NULL;
+    test_token1.str = strang1;
+    test_token2.str = strang2;
+    test_ostr.length = 6;
+    test_token1.length = test_token2.length = 3;
+    test_token1.size = test_token2.size = 3;
+    
+    result = ostr_char_at(&test_ostr, 8);
+    
+    assert_true(WEOF == result);
+    
+}
 
 /* These functions will be used to initialize
    and clean resources up after each test run */
@@ -398,6 +450,8 @@ int main (void)
         cmocka_unit_test (ostr_compact_should_reorganize_string_internals),
         cmocka_unit_test (ostr_puts_should_write_contents_to_stdout),
         cmocka_unit_test (ostr_fputs_should_write_contents_to_stderr),
+        cmocka_unit_test (ostr_char_at_should_return_nth_char),
+        cmocka_unit_test (ostr_char_at_should_return_WEOF_when_out_of_bounds),
     };
 
     /* If setup and teardown functions are not

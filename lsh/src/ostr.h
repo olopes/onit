@@ -88,5 +88,12 @@ ostr_fputs(struct ostr *, FILE *);
 int 
 ostr_puts(struct ostr *);
 
+/**
+ * Get Nth character
+ */
+wint_t
+ostr_char_at(struct ostr * str, size_t position);
+
+
 #endif /* __OSTR__H__ */
 
