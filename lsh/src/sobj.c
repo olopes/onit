@@ -76,10 +76,10 @@ sobj_free(struct sobj * obj) {
 /**
  * Fetch the S-Expression object value as a string
  */
-struct sexpr_str * WEAK_FOR_UNIT_TEST
+struct sstr * WEAK_FOR_UNIT_TEST
 sobj_to_string(struct sobj * obj) {
     if(sobj_is_string(obj)) {
-        return (struct sexpr_str *) obj;
+        return (struct sstr *) obj;
     }
     return NULL;
 }
@@ -87,10 +87,10 @@ sobj_to_string(struct sobj * obj) {
 /**
  * Fetch the S-Expression object value as a symbol
  */
-struct sexpr_str * WEAK_FOR_UNIT_TEST
+struct sstr * WEAK_FOR_UNIT_TEST
 sobj_to_symbol(struct sobj * obj) {
     if(sobj_is_symbol(obj)) {
-        return (struct sexpr_str *) obj;
+        return (struct sstr *) obj;
     }
     return NULL;
 }

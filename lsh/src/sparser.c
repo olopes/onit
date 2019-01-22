@@ -41,7 +41,7 @@ int
 sparse_cons(struct sparse_ctx * ctx, struct sobj ** obj);
 
 
-int WEAK_FOR_UNIT_TEST
+WEAK_FOR_UNIT_TEST int 
 sparse(FILE *in, struct sobj ** obj) {
     struct sparse_ctx ctx;
     ctx.in = in;
@@ -56,7 +56,7 @@ sparse(FILE *in, struct sobj ** obj) {
     return 0;
 }
 
-int WEAK_FOR_UNIT_TEST
+WEAK_FOR_UNIT_TEST int 
 sparse_object(struct sparse_ctx * ctx, struct sobj ** obj) {
     struct sobj * ostr;
     int ret_val;
@@ -101,7 +101,7 @@ sparse_object(struct sparse_ctx * ctx, struct sobj ** obj) {
 }
 
 
-int WEAK_FOR_UNIT_TEST
+WEAK_FOR_UNIT_TEST int 
 sparse_string(struct sparse_ctx * ctx, struct sobj ** obj) {
     struct ostr * str;
     wchar_t escaped_chars[5];
@@ -193,7 +193,7 @@ sparse_string(struct sparse_ctx * ctx, struct sobj ** obj) {
     return SPARSE_OK;
 }
 
-int WEAK_FOR_UNIT_TEST
+WEAK_FOR_UNIT_TEST int 
 sparse_symbol(struct sparse_ctx * ctx, struct sobj ** obj) {
     struct ostr * str;
     int escape_pos;
@@ -273,13 +273,11 @@ sparse_symbol(struct sparse_ctx * ctx, struct sobj ** obj) {
             case L'\'': 
             case L'`': 
             case L';': 
-                /* handle special chars. In most cases, the parse ends */
-                ungetwc(ctx->next, ctx->in); /* FIXME do I really need this? */
+                /* handle special chars. Put the special char back and finish */
+                ungetwc(ctx->next, ctx->in);
                 return_value = SPARSE_OK;
                 goto SYM_PARSE_END;
                 
-            case L'#': 
-                /* fallthrough: I'm accepting this special char for now. */
             default:
                 ostr_append(str, ctx->next);
                 break;
@@ -307,12 +305,12 @@ SYM_PARSE_END:
     return return_value;
 }
 
-int WEAK_FOR_UNIT_TEST
+WEAK_FOR_UNIT_TEST int 
 sparse_quote(struct sparse_ctx * ctx, struct sobj ** obj) {
     return SPARSE_BAD_SYM;
 }
 
-int WEAK_FOR_UNIT_TEST
+WEAK_FOR_UNIT_TEST int 
 sparse_cons(struct sparse_ctx * ctx, struct sobj ** obj) {
     return SPARSE_BAD_SYM;
 }

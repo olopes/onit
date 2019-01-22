@@ -38,13 +38,13 @@ sobj_free(struct sobj *);
 /**
  * Fetch the S-Expression object value as a string
  */
-struct sexpr_str * 
+struct sstr * 
 sobj_to_string(struct sobj *);
 
 /**
  * Fetch the S-Expression object value as a symbol
  */
-struct sexpr_str * 
+struct sstr * 
 sobj_to_symbol(struct sobj *);
 
 /**
