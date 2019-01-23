@@ -18,7 +18,7 @@ static struct sexpr *
 sexpr_eval_expand(struct sexpr * list, struct sexpr * accum) {
     struct sobj * value;
     if(list->car->type == T_CONS) {
-        value = sexpr_eval(sobj_to_sexpr(list->car));
+        value = NULL;/* sexpr_eval(sobj_to_sexpr(list->car)); */
     } else {
         value = list->car;
     }

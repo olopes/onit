@@ -6,7 +6,7 @@
 #include "svisitor.h"
 
 int
-main(int argc, char ** argv) {
+sexpr_main(int argc, char ** argv) {
     struct sexpr * lcons;
     struct sexpr * ccons;
     struct sexpr * pcons;

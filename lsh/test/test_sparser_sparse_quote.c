@@ -39,7 +39,7 @@ void sparse_quote_should_call_sparse_object_and_create_quote_list_if_success(voi
     
     a_object = sobj_from_string(yes_str, 3);
     
-    expect_function_call(sparse_string);
+    expect_function_call(sparse_object);
     will_return(sparse_object, a_object);
     will_return(sparse_object, SPARSE_OK);
     
@@ -58,6 +58,7 @@ void sparse_quote_should_call_sparse_object_and_create_quote_list_if_success(voi
     
     assert_ptr_equal(NULL, sexpr_cdr(sobj_to_cons(sexpr_cdr(sobj_to_cons(sobj)))));
     
+    sexpr_free(sobj_to_cons(sobj));
     sobj_free(sobj);
     
 }
@@ -68,8 +69,8 @@ void sparse_quote_should_call_sparse_object_and_return_error_code(void ** param)
     int retval;
     
     expect_function_call(sparse_object);
-    will_return(sparse_symbol, pdummy);
-    will_return(sparse_symbol, SPARSE_BAD_CHAR);
+    will_return(sparse_object, pdummy);
+    will_return(sparse_object, SPARSE_BAD_CHAR);
     
     
     retval = sparse_quote(&ctx, &sobj);

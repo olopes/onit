@@ -3,7 +3,8 @@
 #include <wchar.h>
 #include "ostr.h"
 
-int main(int argc, char ** argv) {
+int 
+ostr_main(int argc, char ** argv) {
     struct ostr * str;
     wint_t c;
     

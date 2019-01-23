@@ -307,7 +307,20 @@ SYM_PARSE_END:
 
 WEAK_FOR_UNIT_TEST int 
 sparse_quote(struct sparse_ctx * ctx, struct sobj ** obj) {
-    return SPARSE_BAD_SYM;
+    int parse_result;
+    struct sobj * parsed_object;
+    struct sobj * quote;
+    struct sobj * tail;
+    
+    parse_result = sparse_object(ctx, &parsed_object);
+    if(parse_result == SPARSE_OK) {
+        /* (quote (parsed_object . NULL)) */
+        quote = sobj_from_symbol(L"quote", 5);
+        tail = sobj_from_cons(sexpr_cons(parsed_object, NULL));
+        *obj = sobj_from_cons(sexpr_cons(quote, tail));
+    }
+    
+    return parse_result;
 }
 
 WEAK_FOR_UNIT_TEST int 
