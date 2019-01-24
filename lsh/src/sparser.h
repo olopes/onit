@@ -18,4 +18,11 @@
 int
 sparse(FILE * input, struct sobj ** parsed_object);
 
+
+/**
+ * Release a sparsed S-Expression Object created by sparse function
+ */
+void
+sparse_free(struct sobj *);
+
 #endif /* __SPARSER_H__ */

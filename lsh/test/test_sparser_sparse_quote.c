@@ -31,12 +31,15 @@ struct sobj * pdummy = &dummy;
 
 void sparse_quote_should_call_sparse_object_and_create_quote_list_if_success(void ** param) {
     struct sparse_ctx ctx = {NULL, L' ', L' ', NULL};
-    wchar_t *yes_str = L"YES";
+    wchar_t *yes_str;
     struct sobj * a_object;
     struct sobj * sobj;
     struct sstr * expected_quote;
     int retval;
     
+    yes_str = (wchar_t*)malloc(sizeof(wchar_t)*4);
+    wcscpy(yes_str, L"YES");
+
     a_object = sobj_from_string(yes_str, 3);
     
     expect_function_call(sparse_object);
@@ -58,9 +61,7 @@ void sparse_quote_should_call_sparse_object_and_create_quote_list_if_success(voi
     
     assert_ptr_equal(NULL, sexpr_cdr(sobj_to_cons(sexpr_cdr(sobj_to_cons(sobj)))));
     
-    sexpr_free(sobj_to_cons(sobj));
-    sobj_free(sobj);
-    
+    sparse_free(sobj);
 }
 
 void sparse_quote_should_call_sparse_object_and_return_error_code(void ** param) {

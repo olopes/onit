@@ -311,11 +311,14 @@ sparse_quote(struct sparse_ctx * ctx, struct sobj ** obj) {
     struct sobj * parsed_object;
     struct sobj * quote;
     struct sobj * tail;
+    struct wchar_t * quote_str;
     
     parse_result = sparse_object(ctx, &parsed_object);
     if(parse_result == SPARSE_OK) {
         /* (quote (parsed_object . NULL)) */
-        quote = sobj_from_symbol(L"quote", 5);
+        quote_str = (wchar_t*)malloc(sizeof(wchar_t)*6);
+        wcscpy(quote_str, L"quote");
+        quote = sobj_from_symbol(quote_str, 5);
         tail = sobj_from_cons(sexpr_cons(parsed_object, NULL));
         *obj = sobj_from_cons(sexpr_cons(quote, tail));
     }
@@ -326,4 +329,26 @@ sparse_quote(struct sparse_ctx * ctx, struct sobj ** obj) {
 WEAK_FOR_UNIT_TEST int 
 sparse_cons(struct sparse_ctx * ctx, struct sobj ** obj) {
     return SPARSE_BAD_SYM;
+}
+
+/* TODO kill this method as soon as sobj/sexpr nonsense is refactored */
+void
+sparse_free(struct sobj *sobj) {
+    struct sexpr * sexpr;
+    struct sobj *car;
+    struct sobj *cdr;
+    
+    if(sobj_is_nil(sobj)) {
+        return;
+    }
+    
+    if(sobj_is_cons(sobj)) {
+        sexpr = sobj_to_cons(sobj);
+        sparse_free(sexpr_car(sexpr));
+        sparse_free(sexpr_cdr(sexpr));
+        sexpr_free(sexpr);
+    } else {
+        free(sobj->data);
+    }
+    sobj_free(sobj);
 }

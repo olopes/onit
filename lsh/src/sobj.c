@@ -111,7 +111,7 @@ sobj_to_cons(struct sobj * obj) {
  */
 enum stype WEAK_FOR_UNIT_TEST
 sobj_get_type(struct sobj * obj) {
-    return obj->type;
+    return obj ? obj->type : T_NIL;
 }
 
 /**
@@ -119,7 +119,7 @@ sobj_get_type(struct sobj * obj) {
  */
 int WEAK_FOR_UNIT_TEST
 sobj_is_nil(struct sobj * obj) {
-    return obj && obj->type==T_NIL;
+    return !obj || obj->type==T_NIL;
 }
 
 /**
