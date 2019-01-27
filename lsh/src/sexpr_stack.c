@@ -1,6 +1,5 @@
 #include <stdlib.h>
 #include "sexpr.h"
-#include "sobj.h"
 #include "sexpr_stack.h"
 
 /**
@@ -8,12 +7,9 @@
  */
 void WEAK_FOR_UNIT_TEST
 sexpr_push(struct sexpr ** sexpr, struct sobj * obj) {
-    struct sobj * cdr;
-    struct sexpr * node;
+    struct sexpression * node;
     
-    cdr = sobj_from_sexpr(*sexpr);
-    
-    node = sexpr_cons(obj, cdr);
+    node = sexpr_cons(obj, *sexpr);
     
     /* TODO handle NULL return */
     
@@ -23,25 +19,25 @@ sexpr_push(struct sexpr ** sexpr, struct sobj * obj) {
 /**
  * Fetch the top most element of the stack
  */
-struct sobj * WEAK_FOR_UNIT_TEST
-sexpr_peek(struct sexpr ** sexpr) {
+struct sexpression * WEAK_FOR_UNIT_TEST
+sexpr_peek(struct sexpression ** sexpr) {
     return sexpr_car(*sexpr);
 }
 
 /**
  * Remove and return the top-most element of the stack
  */
-struct sobj * WEAK_FOR_UNIT_TEST
-sexpr_pop(struct sexpr ** sexpr) {
-    struct sexpr * node;
-    struct sobj * value;
-    struct sobj * cdr;
-    value = sexpr_car(*sexpr);
+struct sexpression * WEAK_FOR_UNIT_TEST
+sexpr_pop(struct sexpression ** sexpr) {
+    struct sexpression * car;
+    struct sexpression * cdr;
+
+    car = sexpr_car(*sexpr);
     cdr = sexpr_cdr(*sexpr);
-    node = *sexpr;
-    *sexpr = sobj_to_sexpr(cdr);
-    sobj_free(cdr);
-    sexpr_free(node);
+    sexpr_free_pair(*sexpr); /* TODO define a free_pair() only */
+
+    *sexpr = cdr;
+    
     return value;
 }
 
@@ -49,7 +45,7 @@ sexpr_pop(struct sexpr ** sexpr) {
  * Returns TRUE if the stack can pop the top-most element, ie, is not empty.
  */
 int WEAK_FOR_UNIT_TEST
-sexpr_can_pop(struct sexpr * sexpr) {
-    return sexpr && sobj_is_cons(sexpr_cdr(sexpr));
+sexpr_can_pop(struct sexpression * sexpr) {
+    return sexpr && sexpr_is_cons(sexpr_cdr(sexpr));
 }
 

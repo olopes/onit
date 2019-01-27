@@ -24,7 +24,7 @@ build/main.c:
 build/ostr: build/ostr.o build/ostr_main.o build/main.c
 	gcc -DMAIN=ostr_main $(CFLAGS) $(LDFLAGS) -o $@ $^
 
-build/sexpr: build/sexpr.o build/sexpr_main.o build/sexpr_stack.o build/sobj.o build/svisitor.o build/main.c
+build/sexpr: build/sexpr.o build/sexpr_main.o build/sexpr_stack.o build/svisitor.o build/main.c
 	gcc -DMAIN=sexpr_main $(CFLAGS) $(LDFLAGS) -o $@ $^
 
 build/%.o: src/%.c
