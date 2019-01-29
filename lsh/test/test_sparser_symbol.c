@@ -1,5 +1,4 @@
 /* prod code includes */
-#include "sobj.h"
 #include "sparser.h"
 
 wchar_t * TEST_STREAM;
@@ -41,14 +40,14 @@ struct sparse_ctx {
 };
 
 int 
-sparse_symbol(struct sparse_ctx * ctx, struct sobj ** obj);
+sparse_symbol(struct sparse_ctx * ctx, struct sexpression ** obj);
 
 
 /* think about cmocka's setup and teardown methods? */
 void run_sparse_symbol_test(struct sparser_test_params * test_params) {
     /* arrange */
     struct sparse_ctx ctx = {NULL, L' ', L' ', NULL};
-    struct sobj * sobj = NULL;
+    struct sexpression * sobj = NULL;
     int retval;
     /* consume the first char like sparse_object() would do */
     ctx.next = *test_params->stream;
@@ -63,10 +62,10 @@ void run_sparse_symbol_test(struct sparser_test_params * test_params) {
     assert_int_equal(test_params->expected_fgetc_calls, FGET_CALLS);
     if(retval == SPARSE_OK) {
         assert_int_equal(0, wcscmp(sobj->data, test_params->expected));
-        assert_int_equal(T_SYMBOL, sobj->type);
+        /* FIXME define a sexpr_hint() function? */
+        assert_int_equal(SC_SYMBOL, sobj->hint);
         
-        free(sobj->data);
-        sobj_free(sobj);
+        sexpr_free(sobj);
     }
     
 }

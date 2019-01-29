@@ -1,6 +1,7 @@
 /* prod code includes */
 #include <wctype.h>
 #include <wchar.h>
+#include <string.h>
 #include "sexpr.h"
 
 void sexpr_cons_should_alloc_new_sexpression(void ** param)
@@ -12,8 +13,8 @@ void sexpr_cons_should_alloc_new_sexpression(void ** param)
     
     sexpr = sexpr_cons(&dummy_car, &dummy_cdr);
     
-    assert_not_null(sexpr);
-    assert_ptr_equal(sexpr->car, &dummy_car);
+    assert_non_null(sexpr);
+    assert_ptr_equal(sexpr->data, &dummy_car);
     assert_ptr_equal(sexpr->cdr, &dummy_cdr);
     assert_int_equal(sexpr->type, ST_CONS);
     
@@ -24,12 +25,10 @@ void sexpr_create_value_should_alloc_new_sexpression_and_alloc_value_string(void
 {
     (void) param; /* unused */
     struct sexpression * sexpr;
-    struct sexpression dummy_car;
-    struct sexpression dummy_cdr;
     
     sexpr = sexpr_create_value(L"TEST", 4);
     
-    assert_not_null(sexpr);
+    assert_non_null(sexpr);
     assert_int_equal(sexpr->type, ST_VALUE);
     assert_int_equal(sexpr->len, 4);
     assert_true(wcsncmp(L"TEST", (wchar_t *)sexpr->data, 4) == 0);
@@ -105,7 +104,7 @@ void sexpr_car_should_return_data_pointer_if_type_is_cons(void ** param)
 
     memset(&dummy, 0, sizeof(dummy));
     dummy.type=ST_CONS;
-    dummy.data = 12345;
+    dummy.data = (void *)12345;
     
     assert_ptr_equal(sexpr_car(&dummy), 12345);
 }
@@ -117,7 +116,7 @@ void sexpr_car_should_return_null_if_type_is_not_cons(void ** param)
 
     memset(&dummy, 0, sizeof(dummy));
     dummy.type=ST_VALUE;
-    dummy.data = 12345;
+    dummy.data = (void *)12345;
     
     assert_null(sexpr_car(&dummy));
 }
@@ -129,7 +128,7 @@ void sexpr_cdr_should_return_cdr_pointer_if_type_is_cons(void ** param)
 
     memset(&dummy, 0, sizeof(dummy));
     dummy.type=ST_CONS;
-    dummy.cdr = 12345;
+    dummy.cdr =  (struct sexpression *) 12345;
     
     assert_ptr_equal(sexpr_cdr(&dummy), 12345);
 }
@@ -141,7 +140,7 @@ void sexpr_cdr_should_return_null_if_type_is_not_cons(void ** param)
 
     memset(&dummy, 0, sizeof(dummy));
     dummy.type=ST_VALUE;
-    dummy.cdr = 12345;
+    dummy.cdr = (struct sexpression *) 12345;
     
     assert_null(sexpr_cdr(&dummy));
 }
@@ -154,7 +153,7 @@ void sexpr_value_should_return_data_pointer_if_type_is_value(void ** param)
 
     memset(&dummy, 0, sizeof(dummy));
     dummy.type=ST_VALUE;
-    dummy.data = 12345;
+    dummy.data = (void *)12345;
     
     assert_ptr_equal(sexpr_value(&dummy), 12345);
 }
@@ -166,7 +165,7 @@ void sexpr_value_should_return_null_if_type_is_not_value(void ** param)
 
     memset(&dummy, 0, sizeof(dummy));
     dummy.type=ST_CONS;
-    dummy.data = 12345;
+    dummy.data = (void *)12345;
     
     assert_null(sexpr_value(&dummy));
 }

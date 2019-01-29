@@ -10,7 +10,7 @@ struct svalue {
 
 enum stype {ST_NIL, ST_CONS, ST_VALUE};
 enum scontent {SC_CONS, SC_STRING, SC_SYMBOL, SC_PROCEDURE, SC_NUMBER};
-    
+
 struct sexpression { 
     size_t len;
     void *data;

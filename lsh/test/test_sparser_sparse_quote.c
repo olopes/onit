@@ -1,7 +1,4 @@
 /* prod code includes */
-#include "stype.h"
-#include "sobj.h"
-#include "sexpr.h"
 #include "sparser.h"
 
 /* borrow definitions from sparse.c */
@@ -12,35 +9,31 @@ struct sparse_ctx {
     struct sexpr * stack;
 };
 
-int sparse_object(struct sparse_ctx * ctx, struct sobj ** obj);
-int sparse_quote(struct sparse_ctx * ctx, struct sobj ** obj);
+int sparse_object(struct sparse_ctx * ctx, struct sexpression ** obj);
+int sparse_quote(struct sparse_ctx * ctx, struct sexpression ** obj);
 
 /* mocks and stubs */
 int 
-sparse_object(struct sparse_ctx * ctx, struct sobj ** obj) {
+sparse_object(struct sparse_ctx * ctx, struct sexpression ** obj) {
     function_called();
-    *obj = mock_ptr_type(struct sobj *);
+    *obj = mock_ptr_type(struct sexpression *);
     return mock();
 }
 
 
 /* dummy good pointer */
-struct sobj dummy;
-struct sobj * pdummy = &dummy;
+struct sexpression dummy;
+struct sexpression * pdummy = &dummy;
 
 
 void sparse_quote_should_call_sparse_object_and_create_quote_list_if_success(void ** param) {
     struct sparse_ctx ctx = {NULL, L' ', L' ', NULL};
-    wchar_t *yes_str;
-    struct sobj * a_object;
-    struct sobj * sobj;
-    struct sstr * expected_quote;
+    struct sexpression * a_object;
+    struct sexpression * sobj;
+    struct svalue * expected_quote;
     int retval;
     
-    yes_str = (wchar_t*)malloc(sizeof(wchar_t)*4);
-    wcscpy(yes_str, L"YES");
-
-    a_object = sobj_from_string(yes_str, 3);
+    a_object = sexpr_create_value(L"YES", 3);
     
     expect_function_call(sparse_object);
     will_return(sparse_object, a_object);
@@ -53,20 +46,20 @@ void sparse_quote_should_call_sparse_object_and_create_quote_list_if_success(voi
     assert_int_equal(SPARSE_OK, retval);
     
     /* sparse_quote will produce the following list: (quote (a_object . NULL)) */
-    expected_quote = sobj_to_symbol(sexpr_car(sobj_to_cons(sobj)));
+    expected_quote = sexpr_value(sexpr_car(sobj));
     assert_true(wcsncmp(expected_quote->data, L"quote", 5) == 0);
     
     /* FIXME - my API is crappy because it's getting complicated to check stuff ? */
-    assert_ptr_equal(a_object, sexpr_car(sobj_to_cons(sexpr_cdr(sobj_to_cons(sobj)))));
+    assert_ptr_equal(a_object, sexpr_car(sexpr_cdr(sobj)));
     
-    assert_ptr_equal(NULL, sexpr_cdr(sobj_to_cons(sexpr_cdr(sobj_to_cons(sobj)))));
+    assert_ptr_equal(NULL, sexpr_cdr(sexpr_cdr(sobj)));
     
-    sparse_free(sobj);
+    sexpr_free(sobj);
 }
 
 void sparse_quote_should_call_sparse_object_and_return_error_code(void ** param) {
     struct sparse_ctx ctx = {NULL, L' ', L' ', NULL};
-    struct sobj * sobj = NULL;
+    struct sexpression * sobj = NULL;
     int retval;
     
     expect_function_call(sparse_object);

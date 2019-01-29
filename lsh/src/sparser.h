@@ -2,7 +2,7 @@
 #define __SPARSER_H__
 
 #include <stdio.h>
-#include "stype.h"
+#include "sexpr.h"
 
 #define SPARSE_OK 0
 #define SPARSE_EOF 1
@@ -16,13 +16,7 @@
  * Read (parse) a S-Expression object from the specified stream 
  */
 int
-sparse(FILE * input, struct sobj ** parsed_object);
+sparse(FILE * input, struct sexpression ** parsed_object);
 
-
-/**
- * Release a sparsed S-Expression Object created by sparse function
- */
-void
-sparse_free(struct sobj *);
 
 #endif /* __SPARSER_H__ */

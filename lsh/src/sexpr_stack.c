@@ -6,7 +6,7 @@
  * Push a S-Expression object into the top of the stack
  */
 void WEAK_FOR_UNIT_TEST
-sexpr_push(struct sexpr ** sexpr, struct sobj * obj) {
+sexpr_push(struct sexpression ** sexpr, struct sexpression * obj) {
     struct sexpression * node;
     
     node = sexpr_cons(obj, *sexpr);
@@ -34,11 +34,11 @@ sexpr_pop(struct sexpression ** sexpr) {
 
     car = sexpr_car(*sexpr);
     cdr = sexpr_cdr(*sexpr);
-    sexpr_free_pair(*sexpr); /* TODO define a free_pair() only */
+    sexpr_free_pair(*sexpr);
 
     *sexpr = cdr;
     
-    return value;
+    return car;
 }
 
 /**

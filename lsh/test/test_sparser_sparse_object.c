@@ -1,5 +1,4 @@
 /* prod code includes */
-#include "stype.h"
 #include "sparser.h"
 
 /* borrow definitions from sparse.c */
@@ -10,11 +9,11 @@ struct sparse_ctx {
     struct sexpr * stack;
 };
 
-int sparse_object(struct sparse_ctx * ctx, struct sobj ** obj);
-int sparse_string(struct sparse_ctx * ctx, struct sobj ** obj);
-int sparse_symbol(struct sparse_ctx * ctx, struct sobj ** obj);
-int sparse_quote(struct sparse_ctx * ctx, struct sobj ** obj);
-int sparse_cons(struct sparse_ctx * ctx, struct sobj ** obj);
+int sparse_object(struct sparse_ctx * ctx, struct sexpression ** obj);
+int sparse_string(struct sparse_ctx * ctx, struct sexpression ** obj);
+int sparse_symbol(struct sparse_ctx * ctx, struct sexpression ** obj);
+int sparse_quote(struct sparse_ctx * ctx, struct sexpression ** obj);
+int sparse_cons(struct sparse_ctx * ctx, struct sexpression ** obj);
 
 /* mocks and stubs */
 wchar_t * TEST_STREAM;
@@ -36,39 +35,39 @@ wint_t __wrap_fgetwc(FILE * stream)
 }
 
 int 
-sparse_string(struct sparse_ctx * ctx, struct sobj ** obj) {
+sparse_string(struct sparse_ctx * ctx, struct sexpression ** obj) {
     function_called();
-    *obj = mock_ptr_type(struct sobj *);
+    *obj = mock_ptr_type(struct sexpression *);
     return mock();
 }
 int 
-sparse_symbol(struct sparse_ctx * ctx, struct sobj ** obj) {
+sparse_symbol(struct sparse_ctx * ctx, struct sexpression ** obj) {
     function_called();
-    *obj = mock_ptr_type(struct sobj *);
+    *obj = mock_ptr_type(struct sexpression *);
     return mock();
 }
 int 
-sparse_quote(struct sparse_ctx * ctx, struct sobj ** obj) {
+sparse_quote(struct sparse_ctx * ctx, struct sexpression ** obj) {
     function_called();
-    *obj = mock_ptr_type(struct sobj *);
+    *obj = mock_ptr_type(struct sexpression *);
     return mock();
 }
 int 
-sparse_cons(struct sparse_ctx * ctx, struct sobj ** obj) {
+sparse_cons(struct sparse_ctx * ctx, struct sexpression ** obj) {
     function_called();
-    *obj = mock_ptr_type(struct sobj *);
+    *obj = mock_ptr_type(struct sexpression *);
     return mock();
 }
 
 
 /* dummy good pointer */
-struct sobj dummy;
-struct sobj * pdummy = &dummy;
+struct sexpression dummy;
+struct sexpression * pdummy = &dummy;
 
 
 void sparse_object_should_never_call_sparse_functions_when_input_is_space(void ** param) {
     struct sparse_ctx ctx = {NULL, L' ', L'"', NULL};
-    struct sobj * sobj = pdummy;
+    struct sexpression * sobj = pdummy;
     int retval;
     TEST_STREAM = L" \r\n\t\f";
     
@@ -81,7 +80,7 @@ void sparse_object_should_never_call_sparse_functions_when_input_is_space(void *
 
 void sparse_object_should_call_sparse_string(void ** param) {
     struct sparse_ctx ctx = {NULL, L' ', L'"', NULL};
-    struct sobj * sobj = NULL;
+    struct sexpression * sobj = NULL;
     int retval;
     TEST_STREAM = L"\"X\"";
     
@@ -99,7 +98,7 @@ void sparse_object_should_call_sparse_string(void ** param) {
 
 void sparse_object_should_call_sparse_symbol(void ** param) {
     struct sparse_ctx ctx = {NULL, L' ', L'"', NULL};
-    struct sobj * sobj = NULL;
+    struct sexpression * sobj = NULL;
     int retval;
     TEST_STREAM = L"|X|";
     
@@ -117,7 +116,7 @@ void sparse_object_should_call_sparse_symbol(void ** param) {
 
 void sparse_object_should_call_sparse_list(void ** param) {
     struct sparse_ctx ctx = {NULL, L' ', L'"', NULL};
-    struct sobj * sobj = NULL;
+    struct sexpression * sobj = NULL;
     int retval;
     TEST_STREAM = L"(X)";
     
@@ -135,7 +134,7 @@ void sparse_object_should_call_sparse_list(void ** param) {
 
 void sparse_object_should_call_sparse_quote(void ** param) {
     struct sparse_ctx ctx = {NULL, L' ', L'"', NULL};
-    struct sobj * sobj = NULL;
+    struct sexpression * sobj = NULL;
     int retval;
     TEST_STREAM = L"'(X)";
     
@@ -153,7 +152,7 @@ void sparse_object_should_call_sparse_quote(void ** param) {
 
 void sparse_object_should_call_sparse_simple_symbol(void ** param) {
     struct sparse_ctx ctx = {NULL, L' ', L'"', NULL};
-    struct sobj * sobj = NULL;
+    struct sexpression * sobj = NULL;
     int retval;
     TEST_STREAM = L"X";
     

@@ -2,9 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <wchar.h>
-#include "stype.h"
 #include "sexpr.h"
-#include "sobj.h"
 #include "sexpr_stack.h"
 #include "svisitor.h"
 
@@ -24,11 +22,12 @@ Para stack usar uma S-Expression.
 
 /* syntatic sugar */
 typedef struct fn_holder {
-    void (*fn) (struct sobj *, struct scallback *);
+    size_t len;
+    void (*fn) (struct sexpression *, struct scallback *);
 } fn_holder;
 
 static void
-empty_cb (struct sobj * obj, struct scallback * callback) {
+empty_cb (struct sexpression * sexpr, struct scallback * callback) {
     /* do nothing */
 }
 
@@ -36,17 +35,16 @@ empty_cb (struct sobj * obj, struct scallback * callback) {
  * S-Expression visitor
  */
 void WEAK_FOR_UNIT_TEST
-svisitor(struct sobj * obj, struct scallback * callback) {
+svisitor(struct sexpression * obj, struct scallback * callback) {
     fn_holder cb_enter;
     fn_holder cb_visit;
     fn_holder cb_leave;
-    struct sobj event_enter = {0 , &cb_enter, T_SYMBOL};
-    struct sobj event_visit = {0 , &cb_visit, T_SYMBOL};
-    struct sobj event_leave = {0 , &cb_leave, T_SYMBOL};
-    struct sexpr * stack;
-    struct sexpr * cons;
-    struct sobj * value;
-    struct sobj * event;
+    struct sexpression event_enter = {0 , &cb_enter, ST_VALUE, 0, NULL};
+    struct sexpression event_visit = {0 , &cb_visit, ST_VALUE, 0, NULL};
+    struct sexpression event_leave = {0 , &cb_leave, ST_VALUE, 0, NULL};
+    struct sexpression * stack;
+    struct sexpression * value;
+    struct sexpression * event;
     
     if(obj == NULL || callback == NULL) {
         return;
@@ -69,14 +67,12 @@ svisitor(struct sobj * obj, struct scallback * callback) {
             value = sexpr_pop(&stack);
             ((fn_holder *) event->data)->fn(value, callback);
         } else {
-            /* handle value */
-            cons = sobj_to_cons(value);
             
             /* insert leave event and add cdr */
-            if(cons) {
+            if(sexpr_is_cons(value)) {
                 sexpr_push(&stack, value);
                 sexpr_push(&stack, &event_leave);
-                sexpr_push(&stack, sexpr_cdr(cons));
+                sexpr_push(&stack, sexpr_cdr(value));
             }
             
             /* insert visit event */
@@ -84,8 +80,8 @@ svisitor(struct sobj * obj, struct scallback * callback) {
             sexpr_push(&stack, &event_visit);
             
             /* insert enter event and add car */
-            if(cons) {
-                sexpr_push(&stack, sexpr_car(cons));
+            if(sexpr_is_cons(value)) {
+                sexpr_push(&stack, sexpr_car(value));
                 sexpr_push(&stack, value);
                 sexpr_push(&stack, &event_enter);
             }
@@ -94,36 +90,36 @@ svisitor(struct sobj * obj, struct scallback * callback) {
 }
 
 
-static void cb_enter(struct sobj *obj, struct scallback *cb) {
+static void cb_enter(struct sexpression *obj, struct scallback *cb) {
     FILE * out = (FILE *) cb->context;
     
     if(obj == NULL) {
         return;
     }
     
-    if(sobj_is_cons(obj)) {
+    if(sexpr_is_cons(obj)) {
         fputwc(L'(', out);
     }
 }
 
-static void cb_visit(struct sobj *obj, struct scallback *cb) {
+static void cb_visit(struct sexpression *obj, struct scallback *cb) {
     FILE * out = (FILE *) cb->context;
     
     if(obj == NULL) {
         return;
     }
     
-    switch(sobj_get_type(obj)) {
-    case T_NIL:
+    switch(sexpr_type(obj)) {
+    case ST_NIL:
         fputws(L"NIL", out);
         break;
-    case T_STRING:
-        fwprintf(out, L"\"%*ls\"", obj->len, (wchar_t *) obj->data);
+    case ST_VALUE:
+/*        fwprintf(out, L"\"%*ls\"", obj->len, (wchar_t *) obj->data);
         break;
-    case T_SYMBOL:
+    case T_SYMBOL:*/
         fwprintf(out, L"%*ls", obj->len, (wchar_t *) obj->data);
         break;
-    case T_CONS:
+    case ST_CONS:
         fputws(L" . ", out);
         break;
     default:
@@ -131,14 +127,14 @@ static void cb_visit(struct sobj *obj, struct scallback *cb) {
     }
 }
 
-static void cb_leave(struct sobj *obj, struct scallback *cb) {
+static void cb_leave(struct sexpression *obj, struct scallback *cb) {
     FILE * out = (FILE *) cb->context;
     
     if(obj == NULL) {
         return;
     }
     
-    if(sobj_is_cons(obj)) {
+    if(sexpr_is_cons(obj)) {
         fputwc(L')', out);
     }
 }
@@ -147,23 +143,7 @@ static void cb_leave(struct sobj *obj, struct scallback *cb) {
  * Dump S-Expression
  */
 void WEAK_FOR_UNIT_TEST
-dump_sexpr(struct sexpr * sexpr, FILE * out) {
-    struct sobj dummy;
-    if(sexpr == NULL)
-        return;
-    
-    dummy.data = sexpr;
-    dummy.type = T_CONS;
-    
-    dump_sobj(&dummy, out);
-
-}
-
-/**
- * Dump S-Expression Object
- */
-void WEAK_FOR_UNIT_TEST
-dump_sobj(struct sobj * sobj, FILE * out) {
+dump_sexpr(struct sexpression * sobj, FILE * out) {
     struct scallback print_callback = {
         &cb_enter,
         &cb_visit,
@@ -180,45 +160,28 @@ dump_sobj(struct sobj * sobj, FILE * out) {
  * Dump S-Expression
  */
 void WEAK_FOR_UNIT_TEST
-dump_sexpr_r(struct sexpr * sexpr, FILE * out) {
-    struct sobj dummy;
-    if(sexpr == NULL)
-        return;
-    
-    dummy.data = sexpr;
-    dummy.len  = -1;
-    dummy.type = T_CONS;
-    
-    dump_sobj_r(&dummy, out);
-}
-
-/**
- * Dump S-Expression Object
- */
-void WEAK_FOR_UNIT_TEST
-dump_sobj_r(struct sobj * value, FILE * out) {
-    struct sexpr * data;
-    
-    if(value == NULL) {
+dump_sexpr_r(struct sexpression * obj, FILE * out) {    
+    struct svalue * value;
+    if(obj == NULL) {
         return;
     }
     
-    switch(sobj_get_type(value)) {
-    case T_NIL:
+    switch(sexpr_type(obj)) {
+    case ST_NIL:
         fputws(L"NIL", out);
         break;
-    case T_STRING:
+/*    case ST_STRING:
         fwprintf(out, L"\"%*ls\"", value->len, (wchar_t *) value->data);
+        break;*/
+    case ST_VALUE:
+        value = sexpr_value(obj);
+        fwprintf(out, L"%*ls", value->len, value->data);
         break;
-    case T_SYMBOL:
-        fwprintf(out, L"%*ls", value->len, (wchar_t *) value->data);
-        break;
-    case T_CONS:
-        data = (struct sexpr *) value->data;
+    case ST_CONS:
         fputwc(L'(', out);
-        dump_sobj_r(data->car, out);
+        dump_sexpr_r(sexpr_car(obj), out);
         fputws(L" . ", out);
-        dump_sobj_r(data->cdr, out);
+        dump_sexpr_r(sexpr_cdr(obj), out);
         fputwc(L')', out);
         break;
     }

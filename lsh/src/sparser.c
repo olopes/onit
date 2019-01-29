@@ -4,8 +4,6 @@
 #include <wchar.h>
 #include "sparser.h"
 #include "ostr.h"
-#include "sobj.h"
-#include "sexpr.h"
 
 /*
 From Racket docs:
@@ -30,19 +28,19 @@ struct sparse_ctx {
 /* FIXME maybe these should belong to their own file instead 
     of this one alone? */
 int 
-sparse_object(struct sparse_ctx * ctx, struct sobj ** obj);
+sparse_object(struct sparse_ctx * ctx, struct sexpression ** obj);
 int 
-sparse_string(struct sparse_ctx * ctx, struct sobj ** obj);
+sparse_string(struct sparse_ctx * ctx, struct sexpression ** obj);
 int 
-sparse_symbol(struct sparse_ctx * ctx, struct sobj ** obj);
+sparse_symbol(struct sparse_ctx * ctx, struct sexpression ** obj);
 int 
-sparse_quote(struct sparse_ctx * ctx, struct sobj ** obj);
+sparse_quote(struct sparse_ctx * ctx, struct sexpression ** obj);
 int 
-sparse_cons(struct sparse_ctx * ctx, struct sobj ** obj);
+sparse_cons(struct sparse_ctx * ctx, struct sexpression ** obj);
 
 
 WEAK_FOR_UNIT_TEST int 
-sparse(FILE *in, struct sobj ** obj) {
+sparse(FILE *in, struct sexpression ** obj) {
     struct sparse_ctx ctx;
     ctx.in = in;
     ctx.next = L' ';
@@ -57,8 +55,8 @@ sparse(FILE *in, struct sobj ** obj) {
 }
 
 WEAK_FOR_UNIT_TEST int 
-sparse_object(struct sparse_ctx * ctx, struct sobj ** obj) {
-    struct sobj * ostr;
+sparse_object(struct sparse_ctx * ctx, struct sexpression ** obj) {
+    struct sexpression * ostr;
     int ret_val;
     ret_val = SPARSE_OK;
     ostr = NULL;
@@ -102,9 +100,10 @@ sparse_object(struct sparse_ctx * ctx, struct sobj ** obj) {
 
 
 WEAK_FOR_UNIT_TEST int 
-sparse_string(struct sparse_ctx * ctx, struct sobj ** obj) {
+sparse_string(struct sparse_ctx * ctx, struct sexpression ** obj) {
     struct ostr * str;
     wchar_t escaped_chars[5];
+    wchar_t *cstr;
     int escape_pos;
     int escape_state;
     
@@ -186,17 +185,20 @@ sparse_string(struct sparse_ctx * ctx, struct sobj ** obj) {
             ostr_append(str, ctx->next);
         }
     }
-        
-    *obj = sobj_from_string(ostr_str(str), ostr_length(str));
+
+    cstr=ostr_str(str);
+    *obj = sexpr_create_value(cstr, ostr_length(str));
+    (*obj)->hint = SC_STRING;
+    free(cstr);
 
     ostr_destroy(str);
     return SPARSE_OK;
 }
 
 WEAK_FOR_UNIT_TEST int 
-sparse_symbol(struct sparse_ctx * ctx, struct sobj ** obj) {
+sparse_symbol(struct sparse_ctx * ctx, struct sexpression ** obj) {
     struct ostr * str;
-    int escape_pos;
+    wchar_t * cstr;
     int escape_state;
     int return_value;
     
@@ -296,7 +298,10 @@ SYM_PARSE_END:
     }
     
     if(return_value == SPARSE_OK) {
-        *obj = sobj_from_symbol(ostr_str(str), ostr_length(str));
+        cstr=ostr_str(str);
+        *obj = sexpr_create_value(cstr, ostr_length(str));
+        free(cstr);
+        (*obj)->hint = SC_SYMBOL;
     } else {
         *obj = NULL;
     }
@@ -306,49 +311,24 @@ SYM_PARSE_END:
 }
 
 WEAK_FOR_UNIT_TEST int 
-sparse_quote(struct sparse_ctx * ctx, struct sobj ** obj) {
+sparse_quote(struct sparse_ctx * ctx, struct sexpression ** obj) {
     int parse_result;
-    struct sobj * parsed_object;
-    struct sobj * quote;
-    struct sobj * tail;
-    struct wchar_t * quote_str;
+    struct sexpression * parsed_object;
+    struct sexpression * quote;
     
     parse_result = sparse_object(ctx, &parsed_object);
     if(parse_result == SPARSE_OK) {
         /* (quote (parsed_object . NULL)) */
-        quote_str = (wchar_t*)malloc(sizeof(wchar_t)*6);
-        wcscpy(quote_str, L"quote");
-        quote = sobj_from_symbol(quote_str, 5);
-        tail = sobj_from_cons(sexpr_cons(parsed_object, NULL));
-        *obj = sobj_from_cons(sexpr_cons(quote, tail));
+        quote = sexpr_create_value(L"quote", 5);
+        quote->hint = SC_SYMBOL;
+        *obj = sexpr_cons(quote, sexpr_cons(parsed_object, NULL));
     }
     
     return parse_result;
 }
 
 WEAK_FOR_UNIT_TEST int 
-sparse_cons(struct sparse_ctx * ctx, struct sobj ** obj) {
+sparse_cons(struct sparse_ctx * ctx, struct sexpression ** obj) {
     return SPARSE_BAD_SYM;
 }
 
-/* TODO kill this method as soon as sobj/sexpr nonsense is refactored */
-void
-sparse_free(struct sobj *sobj) {
-    struct sexpr * sexpr;
-    struct sobj *car;
-    struct sobj *cdr;
-    
-    if(sobj_is_nil(sobj)) {
-        return;
-    }
-    
-    if(sobj_is_cons(sobj)) {
-        sexpr = sobj_to_cons(sobj);
-        sparse_free(sexpr_car(sexpr));
-        sparse_free(sexpr_cdr(sexpr));
-        sexpr_free(sexpr);
-    } else {
-        free(sobj->data);
-    }
-    sobj_free(sobj);
-}

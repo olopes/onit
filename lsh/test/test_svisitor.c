@@ -3,21 +3,21 @@
 #include "wraps.c"
 
 /* mock implementations */
-void svisitor(struct sobj * sobj, struct scallback * cb) {
+void svisitor(struct sexpression * sobj, struct scallback * cb) {
     check_expected(sobj);
     check_expected(cb->context);
 }
 
 /* test case */
 void dump_sobj_should_call_svisitor (void ** state) {
-    struct sobj dummy_obj;
+    struct sexpression dummy_obj;
     FILE dummy_file;
     
     expect_value(svisitor, sobj, &dummy_obj);
     expect_value(svisitor, cb->context, &dummy_file);
     
     
-    dump_sobj(&dummy_obj, &dummy_file);
+    dump_sexpr(&dummy_obj, &dummy_file);
     
 }
 

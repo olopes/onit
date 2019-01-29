@@ -14,23 +14,23 @@ para isto:
 (abc cd e f)
 */
 
-static struct sexpr * 
-sexpr_eval_expand(struct sexpr * list, struct sexpr * accum) {
-    struct sobj * value;
-    if(list->car->type == T_CONS) {
+WEAK_FOR_UNIT_TEST struct sexpression * 
+sexpr_eval_expand(struct sexpression * list, struct sexpression * accum) {
+    struct sexpression * value;
+    if(sexpr_is_cons(list)) {
         value = NULL;/* sexpr_eval(sobj_to_sexpr(list->car)); */
     } else {
-        value = list->car;
+        value = sexpr_car(list);
     }
     
-    return sexpr_cons(value, list->cdr);
+    return sexpr_cons(value, sexpr_cdr(list));
 }
 
-static struct sobj * 
-sexpr_eval_reduce(struct sexpr * list) {
+WEAK_FOR_UNIT_TEST struct sexpression * 
+sexpr_eval_reduce(struct sexpression * list) {
     /* TODO oh dear... please help me Mr. Sussman!! */
     
-    return list->car; /* dummy implementation for now */
+    return sexpr_car(list); /* dummy implementation for now */
 }
 
 
@@ -38,18 +38,18 @@ sexpr_eval_reduce(struct sexpr * list) {
 /**
  * Eval a S-Expression
  */
-struct sobj * WEAK_FOR_UNIT_TEST
-eval_sexpr(struct sobj * sexpr) {
-    struct sexpr * accum;
-    struct sobj * result;
+WEAK_FOR_UNIT_TEST struct sexpression * 
+eval_sexpr(struct sexpression * sexpr) {
+    struct sexpression * accum;
+    struct sexpression * result;
     
-    if(sexpr == NULL || sexpr->type != T_CONS) {
+    if(sexpr == NULL || !sexpr_is_cons(sexpr)) {
         return sexpr;
     }
     
     accum = sexpr_cons(NULL, NULL);
     
-    sexpr_eval_expand(sexpr, accum);
+    result = sexpr_eval_expand(sexpr, accum);
     
     
     
