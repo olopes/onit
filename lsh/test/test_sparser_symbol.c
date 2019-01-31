@@ -1,36 +1,7 @@
 /* prod code includes */
 #include "sparser.h"
 
-wchar_t * TEST_STREAM;
-int FGET_CALLS;
-int UNGET_CALLS;
-
-wint_t
-__wrap_fgetwc(FILE * stream)
-{
-    wint_t chr;
-    
-    FGET_CALLS++;
-    chr = *TEST_STREAM;
-    
-    if(chr) {
-        TEST_STREAM++;
-    } else {
-        chr = WEOF;
-    }
-    return chr;
-}
-        
-wint_t
-__wrap_ungetwc(wint_t chr, FILE * stream)
-{
-    UNGET_CALLS++;
-    
-    assert_int_equal(chr, *(TEST_STREAM-1));
-    
-    return chr;
-}
-        
+#include "mock_io.c"
 
 struct sparse_ctx {
     FILE *in;
@@ -48,19 +19,18 @@ void run_sparse_symbol_test(struct sparser_test_params * test_params) {
     /* arrange */
     struct sparse_ctx ctx = {NULL, L' ', L' ', NULL};
     struct sexpression * sobj = NULL;
-    int retval;
+    int return_value;
     /* consume the first char like sparse_object() would do */
+    mock_io(test_params->stream+1, wcslen(test_params->stream+1));
     ctx.next = *test_params->stream;
-    TEST_STREAM = test_params->stream+1;
-    FGET_CALLS = 0;
     
     /* act */
-    retval = sparse_symbol(&ctx, &sobj);
+    return_value = sparse_symbol(&ctx, &sobj);
     
     /* assert */
-    assert_int_equal(test_params->return_value, retval);
-    assert_int_equal(test_params->expected_fgetc_calls, FGET_CALLS);
-    if(retval == SPARSE_OK) {
+    assert_int_equal(test_params->return_value, return_value);
+    verify_fgetwc(test_params->expected_fgetc_calls);
+    if(return_value == SPARSE_OK) {
         assert_int_equal(0, wcscmp(sobj->data, test_params->expected));
         /* FIXME define a sexpr_hint() function? */
         assert_int_equal(SC_SYMBOL, sobj->hint);
@@ -156,9 +126,8 @@ void sparse_symbol_should_put_char_back_into_stream_and_stop_if_char_is_special(
     };
     
     for (i = 0; i < 3; i++) {
-        UNGET_CALLS = 0;
         run_sparse_symbol_test(test_params+i);
-        assert_int_equal(1,UNGET_CALLS);
+        verify_ungetwc(1);
     }
     
 }

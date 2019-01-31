@@ -1,23 +1,7 @@
 /* prod code includes */
 #include "sparser.h"
 
-wchar_t * TEST_STREAM;
-int FGET_CALLS;
-
-wint_t __wrap_fgetwc(FILE * stream)
-{
-    wint_t chr;
-    
-    FGET_CALLS++;
-    chr = *TEST_STREAM;
-    
-    if(chr) {
-        TEST_STREAM++;
-    } else {
-        chr = WEOF;
-    }
-    return chr;
-}
+#include "mock_io.c"
         
 
 struct sparse_ctx {
@@ -37,15 +21,14 @@ void run_sparse_string_test(struct sparser_test_params * test_params) {
     struct sparse_ctx ctx = {NULL, L' ', L'"', NULL};
     struct sexpression * sobj = NULL;
     int retval;
-    FGET_CALLS = 0;
-    TEST_STREAM = test_params->stream;
+    mock_io(test_params->stream, wcslen(test_params->stream));
 
     /* act */
     retval = sparse_string(&ctx, &sobj);
     
     /* assert */
     assert_int_equal(test_params->return_value, retval);
-    assert_int_equal(test_params->expected_fgetc_calls, FGET_CALLS);
+    verify_fgetwc(test_params->expected_fgetc_calls);
     if(retval == SPARSE_OK) {
         /* FIXME sexpr_hint() and sexpr_cstr() */
         assert_int_equal(0, wcscmp(sobj->data, test_params->expected));

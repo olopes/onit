@@ -102,7 +102,8 @@ sexpr_cdr(struct sexpression *sexpr) {
  */
 struct svalue * WEAK_FOR_UNIT_TEST
 sexpr_value(struct sexpression *sexpr) {
-    return sexpr && sexpr->type == ST_VALUE ? (struct svalue *) sexpr->data : NULL;
+    /* FIXME I'm assuming things here... */
+    return sexpr && sexpr->type == ST_VALUE ? (struct svalue *) sexpr : NULL;
 }
 
 /**

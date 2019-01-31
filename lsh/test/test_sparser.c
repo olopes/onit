@@ -1,24 +1,21 @@
 /* prod code includes */
 #include "sparser.h"
 
-/* borrow definitions from sparse.c */
-struct sparse_ctx {
-    FILE *in;
-    wint_t prev;
-    wint_t next;
-    struct sexpr * stack;
-};
+#include "mock_io.c"
 
-int sparse_object(struct sparse_ctx * ctx, struct sexpression ** obj);
-int sparse_string(struct sparse_ctx * ctx, struct sexpression ** obj);
-int sparse_symbol(struct sparse_ctx * ctx, struct sexpression ** obj);
-int sparse_simple_symbol(struct sparse_ctx * ctx, struct sexpression ** obj);
-int sparse_quote(struct sparse_ctx * ctx, struct sexpression ** obj);
-int sparse_cons(struct sparse_ctx * ctx, struct sexpression ** obj);
+static struct sexpression * actual_object;
 
+void sparse_should_do_something_not_specified_yet(void ** param) {
+    FILE dummy;
+    
+    mock_io(L"\"HEY!\"", 6);
+    
+    assert_int_equal(sparse(&dummy, &actual_object), SPARSE_OK);
+    
+    /* assert actual_object is a string? */
+    assert_int_equal(0, wcscmp(sobj->data, L"HEY!"));
 
-void null_test_failure(void ** param) {
-    assert_true(1);
+    
 }
 
 
@@ -31,6 +28,9 @@ int setup (void ** state)
 
 int teardown (void ** state)
 {
+    
+    sexpr_free(actual_object);
+    
     return 0;
 }
 
@@ -39,7 +39,7 @@ int main (void)
 {
     const struct CMUnitTest tests [] =
     {
-        cmocka_unit_test (null_test_failure),
+        cmocka_unit_test (sparse_should_do_something_not_specified_yet),
     };
 
     /* If setup and teardown functions are not

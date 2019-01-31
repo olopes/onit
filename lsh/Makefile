@@ -1,22 +1,23 @@
 $(shell mkdir -p build/test > /dev/null)
 $(shell mkdir -p build/.d/build/test   > /dev/null)
 
-DEPDIR := build/.d
+DEPDIR = build/.d
 DEPFLAGS = -MT $@ -MMD -MP -MF $(DEPDIR)/$*.Td
 
 CFLAGS=-O2 -ansi -std=c99 -Wall -pedantic -finput-charset=UTF-8 -fPIC $(DEPFLAGS) -DWEAK_FOR_UNIT_TEST=\ 
-LDFLAGS=-static 
+#LDFLAGS=-static 
+LDFLAGS = 
 
-TEST_CFLAGS=-g -ansi -std=c99 -Wall -pedantic -finput-charset=UTF-8 -fPIC $(DEPFLAGS) -Isrc -include test/test_definitions.h
-TEST_LDFLAGS=-lcmocka -Wl,--wrap=fgetwc -Wl,--wrap=getwc -Wl,--wrap=ungetwc -Wl,--wrap=fputwc 
+TEST_CFLAGS = -g -ansi -std=c99 -Wall -pedantic -finput-charset=UTF-8 -fPIC $(DEPFLAGS) -Isrc -include test/test_definitions.h
+TEST_LDFLAGS = -lcmocka -Wl,--wrap=fgetwc -Wl,--wrap=getwc -Wl,--wrap=ungetwc -Wl,--wrap=fputwc 
 
-TESTS_PROD_SRC=$(wildcard src/*.c)
-TESTS_PROD_OBJ := $(patsubst %.c,build/%.o,$(subst src/,test/,$(TESTS_PROD_SRC))) build/test/wrap_fn.o
-TESTS_EXECS := $(patsubst %.c,build/%.t,$(wildcard test/test*.c))
-TESTS := $(patsubst %.t,%.pass,$(TESTS_EXECS))
+TESTS_PROD_SRC = $(wildcard src/*.c)
+TESTS_PROD_OBJ = $(patsubst %.c,build/%.o,$(subst src/,test/,$(TESTS_PROD_SRC))) build/test/wrap_fn.o
+TESTS_EXECS = $(patsubst %.c,build/%.t,$(wildcard test/test*.c))
+TESTS = $(patsubst %.t,%.pass,$(TESTS_EXECS))
 
 
-all: build build/ostr build/sexpr tests 
+all: build/ostr build/sexpr tests 
 
 build/main.c:
 	echo 'int MAIN(int a, char ** b); int main(int a, char**b) { return MAIN(a,b); }' > build/main.c
@@ -35,9 +36,6 @@ clean:
 	rm -r -f -- build *.gcda *.gcno
 
 # Unit tests
-empty:=
-and:=$(empty) && $(empty)
-space:=$(empty) $(empty)
 
 build/test/wrap_fn.o: test/wraps.c
 	mkdir -p build/test

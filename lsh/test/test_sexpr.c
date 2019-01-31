@@ -155,7 +155,7 @@ void sexpr_value_should_return_data_pointer_if_type_is_value(void ** param)
     dummy.type=ST_VALUE;
     dummy.data = (void *)12345;
     
-    assert_ptr_equal(sexpr_value(&dummy), 12345);
+    assert_ptr_equal(sexpr_value(&dummy), &dummy);
 }
     
 void sexpr_value_should_return_null_if_type_is_not_value(void ** param)
