@@ -3,9 +3,9 @@
 
 #include "mock_io.c"
 
-static struct sexpression * actual_object;
 
 void sparse_should_do_something_not_specified_yet(void ** param) {
+    struct sexpression * actual_object;
     FILE dummy;
     
     mock_io(L"\"HEY!\"", 6);
@@ -13,9 +13,9 @@ void sparse_should_do_something_not_specified_yet(void ** param) {
     assert_int_equal(sparse(&dummy, &actual_object), SPARSE_OK);
     
     /* assert actual_object is a string? */
-    assert_int_equal(0, wcscmp(sobj->data, L"HEY!"));
+    assert_int_equal(0, wcscmp(actual_object->data, L"HEY!"));
 
-    
+    sexpr_free(actual_object);
 }
 
 
@@ -29,7 +29,6 @@ int setup (void ** state)
 int teardown (void ** state)
 {
     
-    sexpr_free(actual_object);
     
     return 0;
 }
