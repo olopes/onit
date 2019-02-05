@@ -17,15 +17,15 @@ int sparse_cons(struct sparse_ctx * ctx, struct sexpression ** obj);
 /* mocks and stubs */
 int 
 sparse_object(struct sparse_ctx * ctx, struct sexpression ** obj) {
-    function_called();
     *obj = mock_ptr_type(struct sexpression *);
     return mock();
 }
 
+#define sexpr_create_cstr(x) sexpr_create_value((x), wcslen(x))
+static int sexpr_equal(struct sexpression * a, struct sexpression * b);
+static void assert_sexpr_equal(struct sexpression * a, struct sexpression * b);
 
-/* dummy good pointer */
-struct sexpression dummy;
-struct sexpression * pdummy = &dummy;
+void prepare_test_data(struct sparse_ctx * ctx, wchar_t * input);
 
 /*
 what  should happen?
@@ -39,13 +39,13 @@ These are the requirements:
     create hint with list size
 */
 
-
-
 void sparse_cons_should_return_null_when_input_is_empty_paren(void ** param) {
     struct sparse_ctx ctx;
     struct sexpression * obj;
     int return_value;
-    mock_io(L"( )", 3);
+    
+    will_return(sparse_object, NULL);
+    will_return(sparse_object, SPARSE_PAREN);
     
     return_value = sparse_cons(&ctx, &obj);
     
@@ -54,27 +54,226 @@ void sparse_cons_should_return_null_when_input_is_empty_paren(void ** param) {
 }
 
 void sparse_cons_should_return_simplest_list_when_input_is_single_value(void ** param) {
-    fail_msg("not implemented");
+    struct sparse_ctx ctx;
+    struct sexpression * actual_obj;
+    struct sexpression * mock_value;
+    struct sexpression * mock_list;
+    int return_value;
+    
+    mock_value = sexpr_create_cstr(L"CORRECT");
+    mock_list  = sexpr_cons(mock_value, NULL);
+    
+    will_return(sparse_object, mock_value);
+    will_return(sparse_object, SPARSE_OK);
+    will_return(sparse_object, NULL);
+    will_return(sparse_object, SPARSE_PAREN);
+    
+    return_value = sparse_cons(&ctx, &actual_obj);
+    
+    assert_sexpr_equal(mock_list, actual_obj);
+    assert_int_equal(return_value, SPARSE_OK);
+    
+    sexpr_free_pair(mock_list);
+    sexpr_free(actual_obj);
 }
 
 void sparse_cons_should_return_pair_when_input_has_two_values_separated_by_dot(void ** param) {
-    fail_msg("not implemented");
+    struct sparse_ctx ctx;
+    struct sexpression * actual_obj;
+    struct sexpression * mock_car;
+    struct sexpression * mock_cdr;
+    struct sexpression * mock_cons;
+    int return_value;
+    
+    mock_car = sexpr_create_cstr(L"CORRECT CAR");
+    mock_cdr = sexpr_create_cstr(L"CORRECT CDR");
+    mock_cons  = sexpr_cons(mock_car, mock_cdr);
+    
+    will_return(sparse_object, mock_car);
+    will_return(sparse_object, SPARSE_OK);
+    will_return(sparse_object, NULL);
+    will_return(sparse_object, SPARSE_DOT_SYM);
+    will_return(sparse_object, mock_cdr);
+    will_return(sparse_object, SPARSE_OK);
+    will_return(sparse_object, NULL);
+    will_return(sparse_object, SPARSE_PAREN);
+    
+    return_value = sparse_cons(&ctx, &actual_obj);
+    
+    assert_sexpr_equal(mock_cons, actual_obj);
+    assert_int_equal(return_value, SPARSE_OK);
+    
+    sexpr_free_pair(mock_cons);
+    sexpr_free(actual_obj);
 }
 
 void sparse_cons_should_return_error_when_input_has_multiple_dots(void ** param) {
-    fail_msg("not implemented");
+    struct sparse_ctx ctx;
+    struct sexpression * actual_obj;
+    struct sexpression * mock_obj1;
+    struct sexpression * mock_obj2;
+    struct sexpression * mock_obj3;
+    int return_value;
+    
+    mock_obj1 = sexpr_create_cstr(L"CORRECT 1");
+    mock_obj2 = sexpr_create_cstr(L"CORRECT 2");
+    mock_obj3 = sexpr_create_cstr(L"CORRECT 3");
+    
+    
+    will_return(sparse_object, mock_obj1);
+    will_return(sparse_object, SPARSE_OK);
+    will_return(sparse_object, NULL);
+    will_return(sparse_object, SPARSE_DOT_SYM);
+    will_return(sparse_object, mock_obj2);
+    will_return(sparse_object, SPARSE_OK);
+    will_return(sparse_object, NULL);
+    will_return(sparse_object, SPARSE_DOT_SYM);
+    
+    return_value = sparse_cons(&ctx, &actual_obj);
+    
+    assert_null(actual_obj);
+    assert_int_equal(return_value, SPARSE_BAD_SYM);
+    
+    /* the other objects will be freed by sparse_cons */
+    sexpr_free(mock_obj3);
+}
+
+
+void sparse_cons_should_return_error_when_input_dot_does_not_follow_real_symbol(void ** param) {
+    struct sparse_ctx ctx;
+    struct sexpression * actual_obj;
+    struct sexpression * mock_obj;
+    int return_value;
+    
+    mock_obj = sexpr_create_cstr(L"CORRECT 1");
+    
+    will_return(sparse_object, mock_obj);
+    will_return(sparse_object, SPARSE_OK);
+    will_return(sparse_object, NULL);
+    will_return(sparse_object, SPARSE_DOT_SYM);
+    will_return(sparse_object, NULL);
+    will_return(sparse_object, SPARSE_DOT_SYM);
+    
+    return_value = sparse_cons(&ctx, &actual_obj);
+    
+    assert_null(actual_obj);
+    assert_int_equal(return_value, SPARSE_BAD_SYM);
+    
 }
 
 void sparse_cons_should_return_list_when_input_has_multiple_values(void ** param) {
-    fail_msg("not implemented");
+    struct sparse_ctx ctx;
+    struct sexpression * actual_obj;
+    struct sexpression * mock_obj1;
+    struct sexpression * mock_obj2;
+    struct sexpression * mock_obj3;
+    struct sexpression * mock_list1;
+    struct sexpression * mock_list2;
+    struct sexpression * mock_list3;
+    int return_value;
+    
+    mock_obj1 = sexpr_create_cstr(L"CORRECT 1");
+    mock_obj2 = sexpr_create_cstr(L"CORRECT 2");
+    mock_obj3 = sexpr_create_cstr(L"CORRECT 3");
+    
+    mock_list3 = sexpr_cons(mock_obj3, NULL);
+    mock_list2 = sexpr_cons(mock_obj2, mock_list3);
+    mock_list1 = sexpr_cons(mock_obj1, mock_list2);
+    
+    
+    will_return(sparse_object, mock_obj1);
+    will_return(sparse_object, SPARSE_OK);
+    will_return(sparse_object, mock_obj2);
+    will_return(sparse_object, SPARSE_OK);
+    will_return(sparse_object, mock_obj3);
+    will_return(sparse_object, SPARSE_OK);
+    will_return(sparse_object, NULL);
+    will_return(sparse_object, SPARSE_PAREN);
+    
+    return_value = sparse_cons(&ctx, &actual_obj);
+    
+    assert_sexpr_equal(mock_list1, actual_obj);
+    assert_int_equal(return_value, SPARSE_OK);
+    
+    /* the other objects will be freed by sparse_cons */
+    sexpr_free_pair(mock_list1);
+    sexpr_free_pair(mock_list2);
+    sexpr_free_pair(mock_list3);
+    sexpr_free(actual_obj);
 }
 
 void sparse_cons_should_create_size_hints_on_parsed_value(void ** param) {
-    fail_msg("not implemented");
+    struct sparse_ctx ctx;
+    struct sexpression * actual_obj;
+    
+    will_return(sparse_object, sexpr_create_cstr(L"CORRECT 1"));
+    will_return(sparse_object, SPARSE_OK);
+    will_return(sparse_object, sexpr_create_cstr(L"CORRECT 2"));
+    will_return(sparse_object, SPARSE_OK);
+    will_return(sparse_object, sexpr_create_cstr(L"CORRECT 3"));
+    will_return(sparse_object, SPARSE_OK);
+    will_return(sparse_object, NULL);
+    will_return(sparse_object, SPARSE_PAREN);
+    
+    sparse_cons(&ctx, &actual_obj);
+    
+    assert_int_equal(actual_obj->len, 3);
+    
+    /* the other objects will be freed by sparse_cons */
+    sexpr_free(actual_obj);
+}
+
+void sparse_cons_should_return_bad_sym_when_input_contains_incomplete_list(void ** param) {
+    struct sparse_ctx ctx;
+    struct sexpression * actual_obj;
+    int return_value;
+    
+    will_return(sparse_object, sexpr_create_cstr(L"BAD LIST"));
+    will_return(sparse_object, SPARSE_OK);
+    will_return(sparse_object, NULL);
+    will_return(sparse_object, SPARSE_EOF);
+    
+    return_value = sparse_cons(&ctx, &actual_obj);
+    
+    assert_null(actual_obj);
+    assert_int_equal(return_value, SPARSE_BAD_SYM);
+    
 }
 
 /* These functions will be used to initialize
    and clean resources up after each test run */
+static void assert_sexpr_equal(struct sexpression * a, struct sexpression * b) {
+    if(!sexpr_equal(a, b)) {
+        fail_msg("S-Expressions are different");
+    }
+}
+
+static int sexpr_equal(struct sexpression * a, struct sexpression * b) {
+    int are_equal;
+    
+    /* same object ? */
+    if(a == b) {
+        are_equal = 1;
+    } else if(a == NULL || b == NULL) {
+        are_equal = 0;
+    } else if (sexpr_type(a) != sexpr_type(b)) {
+        are_equal = 0;
+    } else if (sexpr_is_cons(a)) {
+        are_equal = (sexpr_equal(sexpr_car(a), sexpr_car(b)) && sexpr_equal(sexpr_cdr(a), sexpr_cdr(b)));
+    } else {
+        are_equal = wcsncmp(sexpr_value(a)->data, sexpr_value(b)->data, a->len);
+    }
+    return are_equal;
+}        
+    
+void prepare_test_data(struct sparse_ctx * ctx, wchar_t * input) {
+    size_t len;
+    len = wcslen(input);
+    ctx->next = *input;
+    ctx->prev = ' ';
+    mock_io(input+1, len - 1);
+}
+
 int setup (void ** state)
 {
     return 0;
@@ -94,8 +293,10 @@ int main (void)
         cmocka_unit_test (sparse_cons_should_return_simplest_list_when_input_is_single_value),
         cmocka_unit_test (sparse_cons_should_return_pair_when_input_has_two_values_separated_by_dot),
         cmocka_unit_test (sparse_cons_should_return_error_when_input_has_multiple_dots),
+        cmocka_unit_test (sparse_cons_should_return_error_when_input_dot_does_not_follow_real_symbol),
         cmocka_unit_test (sparse_cons_should_return_list_when_input_has_multiple_values),
         cmocka_unit_test (sparse_cons_should_create_size_hints_on_parsed_value),
+        cmocka_unit_test (sparse_cons_should_return_bad_sym_when_input_contains_incomplete_list),
     };
 
     /* If setup and teardown functions are not

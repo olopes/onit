@@ -85,7 +85,7 @@ sexpr_free_pair(struct sexpression * sexpr) {
 struct sexpression * WEAK_FOR_UNIT_TEST
 sexpr_car(struct sexpression *sexpr) {
     /* how to raise error? */
-    return sexpr && sexpr->type == ST_CONS ? (struct sexpression *) sexpr->data : NULL;
+    return sexpr_type(sexpr) == ST_CONS ? (struct sexpression *) sexpr->data : NULL;
 }
 
 /**
@@ -94,7 +94,7 @@ sexpr_car(struct sexpression *sexpr) {
 struct sexpression * WEAK_FOR_UNIT_TEST
 sexpr_cdr(struct sexpression *sexpr) {
     /* how to raise error? */
-    return sexpr && sexpr->type == ST_CONS ? (struct sexpression *) sexpr->cdr : NULL;
+    return sexpr_type(sexpr) == ST_CONS ? (struct sexpression *) sexpr->cdr : NULL;
 }
 
 /**
@@ -103,7 +103,7 @@ sexpr_cdr(struct sexpression *sexpr) {
 struct svalue * WEAK_FOR_UNIT_TEST
 sexpr_value(struct sexpression *sexpr) {
     /* FIXME I'm assuming things here... */
-    return sexpr && sexpr->type == ST_VALUE ? (struct svalue *) sexpr : NULL;
+    return sexpr_type(sexpr) == ST_VALUE ? (struct svalue *) sexpr : NULL;
 }
 
 /**
@@ -119,7 +119,7 @@ sexpr_type(struct sexpression * sexpr) {
  */
 int
 sexpr_is_nil(struct sexpression * sexpr) {
-    return sexpr == NULL || sexpr->type == ST_NIL;
+    return sexpr_type(sexpr) == ST_NIL;
 }
 
 /**
@@ -127,7 +127,7 @@ sexpr_is_nil(struct sexpression * sexpr) {
  */
 int
 sexpr_is_cons(struct sexpression * sexpr) {
-    return sexpr && sexpr->type == ST_CONS;
+    return sexpr_type(sexpr) == ST_CONS;
 }
 
 /**
@@ -135,6 +135,6 @@ sexpr_is_cons(struct sexpression * sexpr) {
  */
 int
 sexpr_is_value(struct sexpression * sexpr) {
-    return sexpr && sexpr->type == ST_VALUE;
+    return sexpr_type(sexpr) == ST_VALUE;
 }
 

@@ -56,10 +56,10 @@ sparse(FILE *in, struct sexpression ** obj) {
 
 WEAK_FOR_UNIT_TEST int 
 sparse_object(struct sparse_ctx * ctx, struct sexpression ** obj) {
-    struct sexpression * ostr;
+    struct sexpression * sexpr;
     int ret_val;
     ret_val = SPARSE_OK;
-    ostr = NULL;
+    sexpr = NULL;
     
     while(1) {
         ctx->prev = ctx->next;
@@ -75,25 +75,28 @@ sparse_object(struct sparse_ctx * ctx, struct sexpression ** obj) {
 
             if(ctx->next == L'"') {
                 // start or end str
-                ret_val = sparse_string(ctx, &ostr);
+                ret_val = sparse_string(ctx, &sexpr);
             } else if(ctx->next == L'(') {
                 /* start cons */
-                ret_val = sparse_cons(ctx, &ostr);
+                ret_val = sparse_cons(ctx, &sexpr);
+            } else if(ctx->next == L')') {
+                /* start cons */
+                ret_val = SPARSE_PAREN;
             } else if(ctx->next == L'\'') {
                 /* 
                 start quote - the quote ends with the current expression. 
                 translates to (quote xxxx)
                 */
-                ret_val = sparse_quote(ctx, &ostr);
+                ret_val = sparse_quote(ctx, &sexpr);
             } else {
                 /* start or end symbol */
-                ret_val = sparse_symbol(ctx, &ostr);
+                ret_val = sparse_symbol(ctx, &sexpr);
             }
             break;
         }
     }
     
-    *obj = ostr;
+    *obj = sexpr;
     
     return ret_val;
 }
@@ -329,6 +332,58 @@ sparse_quote(struct sparse_ctx * ctx, struct sexpression ** obj) {
 
 WEAK_FOR_UNIT_TEST int 
 sparse_cons(struct sparse_ctx * ctx, struct sexpression ** obj) {
-    return SPARSE_BAD_SYM;
+    struct sexpression * sexpr;
+    struct sexpression * list;
+    int sparse_object_result;
+    int return_value;
+    int state;
+    int last_size;
+    
+    list = NULL;
+    state = 0;
+    last_size = 0;
+
+    /* FIXME here be memleaks */
+    
+    while(1) {
+        sparse_object_result = sparse_object(ctx, &sexpr);
+        
+        if(sparse_object_result == SPARSE_EOF) {
+            goto EXIT_WITH_ERROR;
+        } else if(sparse_object_result == SPARSE_PAREN) {
+            return_value = SPARSE_OK;
+            *obj = list;
+            goto EXIT_WITH_SUCCESS;
+        } else if(state == 1 && sparse_object_result != SPARSE_OK) {
+            goto EXIT_WITH_ERROR;
+        } else if(sparse_object_result == SPARSE_DOT_SYM && list == NULL) {
+            goto EXIT_WITH_ERROR;
+        } else if(sparse_object_result == SPARSE_DOT_SYM) {
+            state = 1;
+        } else if(state == 1 && sparse_object_result == SPARSE_OK) {
+            if(list->cdr) {
+                goto EXIT_WITH_ERROR;
+            } else {
+                list->cdr = sexpr;
+            }
+        } else if(sparse_object_result == SPARSE_OK) {
+            list = sexpr_cons(sexpr, list);
+            list->len = ++last_size;
+        } else {
+            return_value = sparse_object_result;
+            *obj = NULL;
+            goto EXIT_WITH_SUCCESS;
+        }
+        
+    }
+
+EXIT_WITH_ERROR:
+    sexpr_free(list);
+    return_value = SPARSE_BAD_SYM;
+    *obj = NULL;
+    
+EXIT_WITH_SUCCESS:
+    return return_value;
 }
 
+    

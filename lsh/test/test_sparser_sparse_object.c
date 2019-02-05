@@ -142,14 +142,28 @@ void sparse_object_should_call_sparse_simple_symbol(void ** param) {
     
     expect_function_call(sparse_symbol);
     will_return(sparse_symbol, pdummy);
-    will_return(sparse_symbol, 5);
+    will_return(sparse_symbol, SPARSE_DOT_SYM);
     
     
     retval = sparse_object(&ctx, &sobj);
     
     /* must return the value and sobj returned by the called function */
-    assert_int_equal(5, retval);
+    assert_int_equal(SPARSE_DOT_SYM, retval);
     assert_ptr_equal(pdummy, sobj);
+}
+
+void sparse_object_should_return_paren_when_next_input_char_is_close_paren(void ** param) {
+    struct sparse_ctx ctx = {NULL, L' ', L'"', NULL};
+    struct sexpression * sobj = NULL;
+    int retval;
+    mock_io(L")", 1);
+    
+    
+    retval = sparse_object(&ctx, &sobj);
+    
+    /* must return the value and sobj returned by the called function */
+    assert_int_equal(SPARSE_PAREN, retval);
+    assert_ptr_equal(NULL, sobj);
 }
 
 /* These functions will be used to initialize
@@ -175,6 +189,7 @@ int main (void)
         cmocka_unit_test (sparse_object_should_call_sparse_list),
         cmocka_unit_test (sparse_object_should_call_sparse_quote),
         cmocka_unit_test (sparse_object_should_call_sparse_simple_symbol),
+        cmocka_unit_test (sparse_object_should_return_paren_when_next_input_char_is_close_paren),
     };
 
     /* If setup and teardown functions are not
