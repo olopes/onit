@@ -1,6 +1,8 @@
 onit
 bin/
 build/
+busybox/
+cmocka/
 
 *.gcda
 *.gcno
