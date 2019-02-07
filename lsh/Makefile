@@ -4,12 +4,14 @@ $(shell mkdir -p build/.d/build/test   > /dev/null)
 DEPDIR = build/.d
 DEPFLAGS = -MT $@ -MMD -MP -MF $(DEPDIR)/$*.Td
 
-CFLAGS=-O2 -ansi -std=c99 -Wall -pedantic -finput-charset=UTF-8 -fPIC $(DEPFLAGS) -DWEAK_FOR_UNIT_TEST=\  -I/data/data/com.termux/files/home/cmocka/include
+CMOCKA_ROOT=../cmocka
+
+CFLAGS=-O2 -ansi -std=c99 -Wall -pedantic -finput-charset=UTF-8 -fPIC $(DEPFLAGS) -DWEAK_FOR_UNIT_TEST=\ 
 #LDFLAGS=-static 
 LDFLAGS =  
 
-TEST_CFLAGS = -g -ansi -std=c99 -Wall -pedantic -finput-charset=UTF-8 -fPIC $(DEPFLAGS) -Isrc -I../cmocka/include -include test/test_definitions.h
-TEST_LDFLAGS = -lcmocka -Wl,--wrap=fgetwc -Wl,--wrap=getwc -Wl,--wrap=ungetwc -Wl,--wrap=fputwc -L../cmocka/lib
+TEST_CFLAGS = -g -ansi -std=c99 -Wall -pedantic -finput-charset=UTF-8 -fPIC $(DEPFLAGS) -Isrc -I$(CMOCKA_ROOT)/include -include test/test_definitions.h
+TEST_LDFLAGS = -lcmocka -Wl,--wrap=fgetwc -Wl,--wrap=getwc -Wl,--wrap=ungetwc -Wl,--wrap=fputwc -L$(CMOCKA_ROOT)/lib
 
 TESTS_PROD_SRC = $(wildcard src/*.c)
 TESTS_PROD_OBJ = $(patsubst %.c,build/%.o,$(subst src/,test/,$(TESTS_PROD_SRC))) build/test/wrap_fn.o
@@ -50,7 +52,7 @@ build/test/%.t: test/%.c $(TESTS_PROD_OBJ)
 
 build/test/%.pass: build/test/%.t
 	# CMOCKA_MESSAGE_OUTPUT=XML CMOCKA_XML_FILE=$(patsubst %.t,%.xml,$<) $<
-	LD_LIBRARY_PATH=../cmocka/lib $<
+	LD_LIBRARY_PATH=$(CMOCKA_ROOT)/lib $<
 	touch $@
 
 tests: $(TESTS)

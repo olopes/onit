@@ -13,5 +13,10 @@ make && make install
 cd ../..
 rm -fr cmocka-1.1.3
 rm -fr cmocka-1.1.3.tar.xz
+cd ../cmocka
+if [ -d "lib64" -a ! -e "lib" ]
+then
+	ln -s lib64 lib
+fi
 popd
 
