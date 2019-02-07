@@ -21,7 +21,7 @@ void run_sparse_symbol_test(struct sparser_test_params * test_params) {
     struct sexpression * sobj = NULL;
     int return_value;
     /* consume the first char like sparse_object() would do */
-    mock_io(test_params->stream+1, wcslen(test_params->stream+1));
+    mock_io(test_params->stream+1);
     ctx.next = *test_params->stream;
     
     /* act */

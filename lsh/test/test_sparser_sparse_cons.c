@@ -25,8 +25,6 @@ sparse_object(struct sparse_ctx * ctx, struct sexpression ** obj) {
 static int sexpr_equal(struct sexpression * a, struct sexpression * b);
 static void assert_sexpr_equal(struct sexpression * a, struct sexpression * b);
 
-void prepare_test_data(struct sparse_ctx * ctx, wchar_t * input);
-
 /*
 what  should happen?
 These are the requirements:
@@ -266,14 +264,6 @@ static int sexpr_equal(struct sexpression * a, struct sexpression * b) {
     return are_equal;
 }        
     
-void prepare_test_data(struct sparse_ctx * ctx, wchar_t * input) {
-    size_t len;
-    len = wcslen(input);
-    ctx->next = *input;
-    ctx->prev = ' ';
-    mock_io(input+1, len - 1);
-}
-
 int setup (void ** state)
 {
     return 0;

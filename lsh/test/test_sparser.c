@@ -4,11 +4,25 @@
 #include "mock_io.c"
 
 
-void sparse_should_do_something_not_specified_yet(void ** param) {
+void sparse_should_do_parse_string_and_return_ok(void ** param) {
     struct sexpression * actual_object;
     FILE dummy;
     
-    mock_io(L"\"HEY!\"", 6);
+    mock_io(L"\"HEY!\"");
+    
+    assert_int_equal(sparse(&dummy, &actual_object), SPARSE_OK);
+    
+    /* assert actual_object is a string? */
+    assert_int_equal(0, wcscmp(actual_object->data, L"HEY!"));
+
+    sexpr_free(actual_object);
+}
+
+void sparse_should_do_parse_symbol_and_return_ok(void ** param) {
+    struct sexpression * actual_object;
+    FILE dummy;
+    
+    mock_io(L" HEY!");
     
     assert_int_equal(sparse(&dummy, &actual_object), SPARSE_OK);
     
@@ -38,7 +52,8 @@ int main (void)
 {
     const struct CMUnitTest tests [] =
     {
-        cmocka_unit_test (sparse_should_do_something_not_specified_yet),
+        cmocka_unit_test (sparse_should_do_parse_string_and_return_ok),
+        cmocka_unit_test (sparse_should_do_parse_symbol_and_return_ok),
     };
 
     /* If setup and teardown functions are not

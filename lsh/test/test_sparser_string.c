@@ -21,7 +21,7 @@ void run_sparse_string_test(struct sparser_test_params * test_params) {
     struct sparse_ctx ctx = {NULL, L' ', L'"', NULL};
     struct sexpression * sobj = NULL;
     int retval;
-    mock_io(test_params->stream, wcslen(test_params->stream));
+    mock_io(test_params->stream);
 
     /* act */
     retval = sparse_string(&ctx, &sobj);

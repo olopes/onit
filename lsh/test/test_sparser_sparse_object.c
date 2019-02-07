@@ -53,7 +53,7 @@ void sparse_object_should_never_call_sparse_functions_when_input_is_space(void *
     struct sexpression * sobj = pdummy;
     int retval;
     
-    mock_io(L" \r\n\t\f", 5);
+    mock_io(L" \r\n\t\f");
     
     retval = sparse_object(&ctx, &sobj);
     
@@ -66,7 +66,7 @@ void sparse_object_should_call_sparse_string(void ** param) {
     struct sparse_ctx ctx = {NULL, L' ', L'"', NULL};
     struct sexpression * sobj = NULL;
     int retval;
-    mock_io(L"\"X\"", 3);
+    mock_io(L"\"X\"");
     
     expect_function_call(sparse_string);
     will_return(sparse_string, pdummy);
@@ -84,7 +84,7 @@ void sparse_object_should_call_sparse_symbol(void ** param) {
     struct sparse_ctx ctx = {NULL, L' ', L'"', NULL};
     struct sexpression * sobj = NULL;
     int retval;
-    mock_io(L"|X|", 3);
+    mock_io(L"|X|");
     
     expect_function_call(sparse_symbol);
     will_return(sparse_symbol, pdummy);
@@ -102,7 +102,7 @@ void sparse_object_should_call_sparse_list(void ** param) {
     struct sparse_ctx ctx = {NULL, L' ', L'"', NULL};
     struct sexpression * sobj = NULL;
     int retval;
-    mock_io(L"(X)", 3);
+    mock_io(L"(X)");
     
     expect_function_call(sparse_cons);
     will_return(sparse_cons, pdummy);
@@ -120,7 +120,7 @@ void sparse_object_should_call_sparse_quote(void ** param) {
     struct sparse_ctx ctx = {NULL, L' ', L'"', NULL};
     struct sexpression * sobj = NULL;
     int retval;
-    mock_io(L"'(X)", 4);
+    mock_io(L"'(X)");
     
     expect_function_call(sparse_quote);
     will_return(sparse_quote, pdummy);
@@ -138,7 +138,7 @@ void sparse_object_should_call_sparse_simple_symbol(void ** param) {
     struct sparse_ctx ctx = {NULL, L' ', L'"', NULL};
     struct sexpression * sobj = NULL;
     int retval;
-    mock_io(L"X", 1);
+    mock_io(L"X");
     
     expect_function_call(sparse_symbol);
     will_return(sparse_symbol, pdummy);
@@ -156,7 +156,7 @@ void sparse_object_should_return_paren_when_next_input_char_is_close_paren(void 
     struct sparse_ctx ctx = {NULL, L' ', L'"', NULL};
     struct sexpression * sobj = NULL;
     int retval;
-    mock_io(L")", 1);
+    mock_io(L")");
     
     
     retval = sparse_object(&ctx, &sobj);

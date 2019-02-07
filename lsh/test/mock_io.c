@@ -14,12 +14,12 @@ struct mock_file {
     int unget_flag;
 } MOCK_FILE;
 
-void mock_io(wchar_t * chars, size_t size) {
+void mock_io(wchar_t * chars) {
     MOCK_FILE.data = chars;
     MOCK_FILE.fget_calls = 0;
     MOCK_FILE.unget_calls = 0;
     MOCK_FILE.position = 0;
-    MOCK_FILE.size = size;
+    MOCK_FILE.size = wcslen(chars);
     MOCK_FILE.unget_flag = 0;
 }
 
@@ -54,7 +54,7 @@ wint_t __wrap_ungetwc(wint_t chr, FILE * stream)
     MOCK_FILE.unget_calls++;
     
     if(MOCK_FILE.unget_flag) {
-        fail_msg("ungetwc() called twice without fgetwc() in the middle");
+        fail_msg("%s", "ungetwc() called twice without fgetwc() in the middle");
     } else if(MOCK_FILE.position > 0) {
         MOCK_FILE.unget_flag = 1;
         MOCK_FILE.position--;
@@ -62,7 +62,7 @@ wint_t __wrap_ungetwc(wint_t chr, FILE * stream)
         
         assert_int_equal(chr, *MOCK_FILE.data);
     } else {
-        fail_msg("Tried to call ungetwc at the begining of the stream.");
+        fail_msg("%s", "Tried to call ungetwc at the begining of the stream.");
     }
         
     return chr;
