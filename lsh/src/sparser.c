@@ -46,12 +46,8 @@ sparse(FILE *in, struct sexpression ** obj) {
     ctx.next = L' ';
     ctx.stack = NULL;
 
-    sparse_object(&ctx, obj);
+    return sparse_object(&ctx, obj);
     
-    /* be careful! it might be WEOF or no read at all! */
-    ungetwc(ctx.next, in);
-
-    return 0;
 }
 
 WEAK_FOR_UNIT_TEST int 

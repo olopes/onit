@@ -1,6 +1,7 @@
 /* prod code includes */
 #include "sparser.h"
 
+#include "assert_sexpr.c"
 #include "mock_io.c"
 
 /* borrow definitions from sparse.c */
@@ -21,9 +22,6 @@ sparse_object(struct sparse_ctx * ctx, struct sexpression ** obj) {
     return mock();
 }
 
-#define sexpr_create_cstr(x) sexpr_create_value((x), wcslen(x))
-static int sexpr_equal(struct sexpression * a, struct sexpression * b);
-static void assert_sexpr_equal(struct sexpression * a, struct sexpression * b);
 
 /*
 what  should happen?
@@ -240,29 +238,6 @@ void sparse_cons_should_return_bad_sym_when_input_contains_incomplete_list(void 
 
 /* These functions will be used to initialize
    and clean resources up after each test run */
-static void assert_sexpr_equal(struct sexpression * a, struct sexpression * b) {
-    if(!sexpr_equal(a, b)) {
-        fail_msg("S-Expressions are different");
-    }
-}
-
-static int sexpr_equal(struct sexpression * a, struct sexpression * b) {
-    int are_equal;
-    
-    /* same object ? */
-    if(a == b) {
-        are_equal = 1;
-    } else if(a == NULL || b == NULL) {
-        are_equal = 0;
-    } else if (sexpr_type(a) != sexpr_type(b)) {
-        are_equal = 0;
-    } else if (sexpr_is_cons(a)) {
-        are_equal = (sexpr_equal(sexpr_car(a), sexpr_car(b)) && sexpr_equal(sexpr_cdr(a), sexpr_cdr(b)));
-    } else {
-        are_equal = wcsncmp(sexpr_value(a)->data, sexpr_value(b)->data, a->len);
-    }
-    return are_equal;
-}        
     
 int setup (void ** state)
 {

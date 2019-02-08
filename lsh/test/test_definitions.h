@@ -37,5 +37,6 @@ struct sparser_test_params {
 };
 
 
+#define sexpr_create_cstr(x) sexpr_create_value((x), wcslen(x))
 
 #endif /* UNIT_TESTING */
