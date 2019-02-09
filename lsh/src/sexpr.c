@@ -21,6 +21,12 @@ sexpr_cons(struct sexpression * car, struct sexpression * cdr) {
     sexpr->data = car;
     sexpr->cdr = cdr;
     
+    if(sexpr_is_cons(cdr)) {
+        sexpr->len = cdr->len + 1;
+    } else {
+        sexpr->len = 0;
+    }
+    
     return sexpr;
 }
 
@@ -138,3 +144,75 @@ sexpr_is_value(struct sexpression * sexpr) {
     return sexpr_type(sexpr) == ST_VALUE;
 }
 
+
+/**
+ * Return TRUE if both S-Expressions are equal
+ */
+int sexpr_equal(struct sexpression * a, struct sexpression * b) {
+    int are_equal;
+    
+    /* same object ? */
+    if(a == b) {
+        are_equal = 1;
+    } else if(a == NULL || b == NULL) {
+        are_equal = 0;
+    } else if (sexpr_type(a) != sexpr_type(b)) {
+        are_equal = 0;
+    } else if (sexpr_is_cons(a)) {
+        are_equal = (sexpr_equal(sexpr_car(a), sexpr_car(b)) && sexpr_equal(sexpr_cdr(a), sexpr_cdr(b)));
+    } else {
+        are_equal = wcsncmp((wchar_t *) a->data, (wchar_t *) b->data, a->len) == 0;
+    }
+    return are_equal;
+}
+
+/**
+ * Reverse a S-Expression list
+ */
+struct sexpression * 
+sexpr_reverse(struct sexpression * sexpr) {
+    struct sexpression * car;
+    struct sexpression * cdr;
+    struct sexpression * iter;
+    struct sexpression * reversed;
+    size_t length;
+    size_t sexpr_length;
+    
+    if(!sexpr_is_cons(sexpr)) {
+        return sexpr;
+    }
+    
+    car = sexpr_car(sexpr);
+    cdr = sexpr_cdr(sexpr);
+    
+    /* handle a "list" with size 1*/
+    if(sexpr_is_nil(cdr)) {
+        sexpr->len = 1;
+        return sexpr;
+    }
+    
+    /* handle a pair */
+    if(!sexpr_is_cons(cdr)) {
+        sexpr->data = cdr;
+        sexpr->cdr = car;
+        return sexpr;
+    }
+    
+    /* handle a "list" */
+    
+    sexpr_length = 0;
+    reversed = NULL;
+    iter = sexpr;
+    while(iter) {
+        sexpr_length++;
+        iter->len = sexpr_length;
+        cdr = sexpr_cdr(iter);
+        
+        /* manipulate pointers */
+        iter->cdr = reversed;
+        reversed = iter;
+        iter = cdr;
+    }
+    
+    return reversed;
+}

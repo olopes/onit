@@ -333,11 +333,9 @@ sparse_cons(struct sparse_ctx * ctx, struct sexpression ** obj) {
     int sparse_object_result;
     int return_value;
     int state;
-    int last_size;
     
     list = NULL;
     state = 0;
-    last_size = 0;
 
     /* FIXME here be memleaks */
     
@@ -348,7 +346,11 @@ sparse_cons(struct sparse_ctx * ctx, struct sexpression ** obj) {
             goto EXIT_WITH_ERROR;
         } else if(sparse_object_result == SPARSE_PAREN) {
             return_value = SPARSE_OK;
-            *obj = list;
+            if(state == 1) {
+                *obj = list;
+            } else {
+                *obj = sexpr_reverse(list);
+            }
             goto EXIT_WITH_SUCCESS;
         } else if(state == 1 && sparse_object_result != SPARSE_OK) {
             goto EXIT_WITH_ERROR;
@@ -364,7 +366,6 @@ sparse_cons(struct sparse_ctx * ctx, struct sexpression ** obj) {
             }
         } else if(sparse_object_result == SPARSE_OK) {
             list = sexpr_cons(sexpr, list);
-            list->len = ++last_size;
         } else {
             return_value = sparse_object_result;
             *obj = NULL;

@@ -4,6 +4,8 @@
 #include <string.h>
 #include "sexpr.h"
 
+#include "assert_sexpr.c"
+
 void sexpr_cons_should_alloc_new_sexpression(void ** param)
 {
     (void) param; /* unused */
@@ -239,7 +241,131 @@ void sexpr_is_value_should_return_true_if_type_is_value(void ** param)
     assert_true(sexpr_is_value(&dummy));
 }
 
+/* couple of tests for sexpr_equal */
+void sexpr_equal_should_return_true_if_both_sexpressions_are_equal(void ** param) {
+    struct sexpression * a;
+    struct sexpression * b;
     
+    assert_true(sexpr_equal(NULL, NULL));
+    
+    a = sexpr_create_cstr(L"EQUAL");
+    assert_true(sexpr_equal(a, a));
+    b = sexpr_create_cstr(L"EQUAL");
+    assert_true(sexpr_equal(a, b));
+    
+    a = sexpr_cons(sexpr_create_cstr(L"VALUE"), sexpr_cons(a, NULL));
+    b = sexpr_cons(sexpr_create_cstr(L"VALUE"), sexpr_cons(b, NULL));
+    assert_true(sexpr_equal(a, b));
+    
+    sexpr_free(a);
+    sexpr_free(b);
+    
+}
+
+void sexpr_equal_should_return_false_if_both_sexpressions_are_not_equal(void ** param) {
+    struct sexpression * a;
+    struct sexpression * b;
+    
+    a = sexpr_create_cstr(L"EQUAL");
+    b = sexpr_create_cstr(L"DIFFERENT");
+    assert_false(sexpr_equal(NULL, a));
+    assert_false(sexpr_equal(a, NULL));
+    
+    assert_false(sexpr_equal(a, b));
+    assert_false(sexpr_equal(b, a));
+    
+    a = sexpr_cons(sexpr_create_cstr(L"VALUE"), sexpr_cons(a, NULL));
+    b = sexpr_cons(sexpr_create_cstr(L"VALUE"), sexpr_cons(b, NULL));
+    assert_false(sexpr_equal(a, b));
+    
+    sexpr_free(a);
+    sexpr_free(b);
+    
+    a = sexpr_create_cstr(L"VALUE");
+    b = sexpr_cons(NULL, sexpr_create_cstr(L"VALUE"));
+    assert_false(sexpr_equal(a, b));
+    
+    sexpr_free(a);
+    sexpr_free(b);
+    
+}
+
+
+/* few tests for sexpr_reverse */
+void sexpr_reverse_should_return_same_sexpression_if_param_is_not_cons(void ** param) {
+    struct sexpression * a;
+    struct sexpression * b;
+    
+    assert_null(sexpr_reverse(NULL));
+    
+    a = sexpr_create_cstr(L"EQUAL");
+    b = sexpr_reverse(a);
+    assert_ptr_equal(a, b);
+    
+    sexpr_free(a);
+    
+}
+
+void sexpr_reverse_should_should_swap_car_with_cdr_if_param_is_a_pair(void ** param) {
+    struct sexpression * a;
+    struct sexpression * b;
+    struct sexpression * c;
+    struct sexpression * d;
+    
+    a = sexpr_create_cstr(L"CAR");
+    b = sexpr_create_cstr(L"CDR");
+    c = sexpr_cons(a, b);
+    
+    d = sexpr_reverse(c);
+    
+    assert_ptr_equal(c, d);
+    
+    assert_ptr_equal(sexpr_car(d), b);
+    assert_ptr_equal(sexpr_cdr(d), a);
+    
+    sexpr_free(d);
+    
+}
+
+void sexpr_reverse_should_should_return_same_param_if_param_is_len_1(void ** param) {
+    struct sexpression * sexpr;
+    struct sexpression * expected;
+    struct sexpression * actual;
+
+    expected = sexpr_cons(sexpr_create_cstr(L"CAR"), NULL);
+    sexpr = sexpr_cons(sexpr_create_cstr(L"CAR"), NULL);
+    
+    actual = sexpr_reverse(sexpr);
+    
+    assert_ptr_equal(actual, sexpr);
+    /* also mitigate bug in sexpr_reverse  with size 1 list*/
+    assert_sexpr_equal(expected, actual);
+    
+    sexpr_free(actual);
+    sexpr_free(expected);
+    
+}
+
+void sexpr_reverse_should_should_return_a_reversed_list_if_param_is_a_list(void ** param) {
+    struct sexpression * sexpr;
+    struct sexpression * expected;
+    struct sexpression * actual;
+    
+    sexpr = sexpr_cons(sexpr_create_cstr(L"A"), sexpr_cons(sexpr_create_cstr(L"B"), sexpr_cons(sexpr_create_cstr(L"C"), sexpr_cons(sexpr_create_cstr(L"D"), NULL))));
+    expected = sexpr_cons(sexpr_create_cstr(L"D"), sexpr_cons(sexpr_create_cstr(L"C"), sexpr_cons(sexpr_create_cstr(L"B"), sexpr_cons(sexpr_create_cstr(L"A"),NULL))));
+    
+    actual = sexpr_reverse(sexpr);
+    
+    assert_sexpr_equal(actual, expected);
+    
+    sexpr_free(actual);
+    sexpr_free(expected);
+    
+}
+
+
+
+
 /* These functions will be used to initialize
    and clean resources up after each test run */
 int setup (void ** state)
@@ -260,17 +386,29 @@ int main (void)
         cmocka_unit_test (sexpr_cons_should_alloc_new_sexpression),
         cmocka_unit_test (sexpr_create_value_should_alloc_new_sexpression_and_alloc_value_string),
         cmocka_unit_test (sexpr_free_value_should_release_sexpression_recursively),
+        
         cmocka_unit_test (sexpr_car_should_return_data_pointer_if_type_is_cons),
         cmocka_unit_test (sexpr_car_should_return_null_if_type_is_not_cons),
+        
         cmocka_unit_test (sexpr_cdr_should_return_cdr_pointer_if_type_is_cons),
         cmocka_unit_test (sexpr_cdr_should_return_null_if_type_is_not_cons),
+        
         cmocka_unit_test (sexpr_value_should_return_data_pointer_if_type_is_value),
         cmocka_unit_test (sexpr_value_should_return_null_if_type_is_not_value),
+        
         cmocka_unit_test (sexpr_type_should_return_sexpression_type),
         cmocka_unit_test (sexpr_value_should_return_NIL_if_sexpression_is_null),
         cmocka_unit_test (sexpr_is_nil_should_return_true_if_type_is_nil_or_sexpression_is_null),
         cmocka_unit_test (sexpr_is_cons_should_return_true_if_type_is_cons),
         cmocka_unit_test (sexpr_is_value_should_return_true_if_type_is_value),
+        
+        cmocka_unit_test (sexpr_equal_should_return_true_if_both_sexpressions_are_equal),
+        cmocka_unit_test (sexpr_equal_should_return_false_if_both_sexpressions_are_not_equal),
+        
+        cmocka_unit_test (sexpr_reverse_should_return_same_sexpression_if_param_is_not_cons),
+        cmocka_unit_test (sexpr_reverse_should_should_swap_car_with_cdr_if_param_is_a_pair),
+        cmocka_unit_test (sexpr_reverse_should_should_return_same_param_if_param_is_len_1),
+        cmocka_unit_test (sexpr_reverse_should_should_return_a_reversed_list_if_param_is_a_list),
     };
 
     /* If setup and teardown functions are not

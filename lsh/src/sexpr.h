@@ -85,4 +85,16 @@ sexpr_is_cons(struct sexpression * sexpr);
 extern int
 sexpr_is_value(struct sexpression *);
 
+/**
+ * Reverse a S-Expression list
+ */
+extern struct sexpression * 
+sexpr_reverse(struct sexpression * sexpr);
+
+/**
+ * Return TRUE if both S-Expressions are equal
+ */
+extern int 
+sexpr_equal(struct sexpression * a, struct sexpression * b);
+
 #endif /* __SEXPR__H__ */
