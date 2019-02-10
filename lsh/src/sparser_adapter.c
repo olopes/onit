@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include "sparser.h"
 
 struct sparser_stream *

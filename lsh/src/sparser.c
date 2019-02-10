@@ -101,6 +101,7 @@ sparse_string(struct sparse_ctx * ctx, struct sexpression ** obj) {
     str = ostr_new(NULL);
 
     escape_state = 0;
+    escape_pos = 0;
     /* read everything until " */
     while(1) {
         ctx->prev = ctx->next;
