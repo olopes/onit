@@ -282,7 +282,7 @@ void ostr_compact_should_reorganize_string_internals(void ** param)
 wchar_t * TEST_STR;
 FILE * TEST_STREAM;
 int TEST_CALLS;
-wint_t WEAK_FOR_UNIT_TEST
+wint_t 
 __wrap_fputwc(wchar_t wc, FILE * stream) {
     assert_int_equal(*TEST_STR, wc);
     

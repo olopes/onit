@@ -1,11 +1,8 @@
 /* prod code includes */
 #include "sparser.h"
-
-#include "assert_sexpr.c"
-#include "mock_io.c"
-
-/* borrow definitions from sparse.c */
 #include "sparser_privates.h"
+#include "wcstr_sparser_adapter.h"
+#include "assert_sexpr.c"
 
 /* mocks and stubs */
 int 

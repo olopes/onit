@@ -1,6 +1,5 @@
 /* prod code includes */
 #include "svisitor.h"
-#include "wraps.c"
 
 /* mock implementations */
 void svisitor(struct sexpression * sobj, struct scallback * cb) {

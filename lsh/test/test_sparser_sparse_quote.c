@@ -1,8 +1,7 @@
 /* prod code includes */
 #include "sparser.h"
-
-/* borrow definitions from sparse.c */
 #include "sparser_privates.h"
+#include "wcstr_sparser_adapter.h"
 
 /* mocks and stubs */
 int 
@@ -19,7 +18,7 @@ struct sexpression * pdummy = &dummy;
 
 
 void sparse_quote_should_call_sparse_object_and_create_quote_list_if_success(void ** param) {
-    struct sparse_ctx ctx = {NULL, L' ', L' ', NULL};
+    struct sparse_ctx ctx = {NULL, L' ', L' '};
     struct sexpression * a_object;
     struct sexpression * sobj;
     struct svalue * expected_quote;
@@ -50,7 +49,7 @@ void sparse_quote_should_call_sparse_object_and_create_quote_list_if_success(voi
 }
 
 void sparse_quote_should_call_sparse_object_and_return_error_code(void ** param) {
-    struct sparse_ctx ctx = {NULL, L' ', L' ', NULL};
+    struct sparse_ctx ctx = {NULL, L' ', L' '};
     struct sexpression * sobj = NULL;
     int retval;
     

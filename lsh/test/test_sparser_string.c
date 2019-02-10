@@ -1,25 +1,25 @@
 /* prod code includes */
 #include "sparser.h"
-
-#include "mock_io.c"
-        
 #include "sparser_privates.h"
+#include "wcstr_sparser_adapter.h"
 
 
 /* think about cmocka's setup and teardown methods? */
 void run_sparse_string_test(struct sparser_test_params * test_params) {
     /* arrange */
-    struct sparse_ctx ctx = {NULL, L' ', L'"', NULL};
+    struct sparse_ctx ctx;
     struct sexpression * sobj = NULL;
     int retval;
-    mock_io(test_params->stream);
-
+    
+    ctx.stream = create_sparser_stream(WCSTR_ADAPTER, test_params->stream, wcslen(test_params->stream));
+    ctx.prev = L' ';
+    ctx.next = L'"';
+    
     /* act */
     retval = sparse_string(&ctx, &sobj);
     
     /* assert */
     assert_int_equal(test_params->return_value, retval);
-    verify_fgetwc(test_params->expected_fgetc_calls);
     if(retval == SPARSE_OK) {
         /* FIXME sexpr_hint() and sexpr_cstr() */
         assert_int_equal(0, wcscmp(sobj->data, test_params->expected));
@@ -28,6 +28,7 @@ void run_sparse_string_test(struct sparser_test_params * test_params) {
         sexpr_free(sobj);
     }
     
+    release_sparser_stream(ctx.stream);
 }
 
 

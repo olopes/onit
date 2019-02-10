@@ -19,7 +19,7 @@ cstr_init_stream(struct sparser_stream * ctx, va_list ap) {
     fptr = va_arg(ap, char *);
     length = va_arg(ap, size_t);
     
-    if(!ctx || !fptr || length <= 0) {
+    if(!ctx || !fptr || length < 0) {
         return 1;
     }
     

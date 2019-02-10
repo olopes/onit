@@ -11,10 +11,10 @@ CFLAGS=-O2 -ansi -std=c99 -Wall -pedantic -finput-charset=UTF-8 -fPIC $(DEPFLAGS
 LDFLAGS =  
 
 TEST_CFLAGS = -g -ansi -std=c99 -Wall -pedantic -finput-charset=UTF-8 -fPIC $(DEPFLAGS) -Isrc -I$(CMOCKA_ROOT)/include -include test/test_definitions.h
-TEST_LDFLAGS = -lcmocka -Wl,--wrap=fgetwc -Wl,--wrap=getwc -Wl,--wrap=ungetwc -Wl,--wrap=fputwc -L$(CMOCKA_ROOT)/lib
+TEST_LDFLAGS = -lcmocka -L$(CMOCKA_ROOT)/lib
 
 TESTS_PROD_SRC = $(wildcard src/*.c)
-TESTS_PROD_OBJ = $(patsubst %.c,build/%.o,$(subst src/,test/,$(TESTS_PROD_SRC))) build/test/wrap_fn.o
+TESTS_PROD_OBJ = $(patsubst %.c,build/%.o,$(subst src/,test/,$(TESTS_PROD_SRC)))
 TESTS_EXECS = $(patsubst %.c,build/%.t,$(wildcard test/test*.c))
 TESTS = $(patsubst %.t,%.pass,$(TESTS_EXECS))
 
@@ -39,16 +39,15 @@ clean:
 
 # Unit tests
 
-build/test/wrap_fn.o: test/wraps.c
-	mkdir -p build/test
-	gcc $(TEST_CFLAGS) -c -o $@ $<
-
 build/test/%.o: src/%.c
 	mkdir -p build/test
 	gcc $(TEST_CFLAGS) -c -o $@ $<
 
 build/test/%.t: test/%.c $(TESTS_PROD_OBJ)
 	gcc $(TEST_LDFLAGS) $(TEST_CFLAGS) -o $@ $^
+
+build/test/test_ostr.t: test/test_ostr.c $(TESTS_PROD_OBJ)
+	gcc $(TEST_LDFLAGS) -Wl,--wrap=fputwc $(TEST_CFLAGS) -o $@ $^
 
 build/test/%.pass: build/test/%.t
 	# CMOCKA_MESSAGE_OUTPUT=XML CMOCKA_XML_FILE=$(patsubst %.t,%.xml,$<) $<

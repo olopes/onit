@@ -1,19 +1,18 @@
 /* prod code includes */
 #include "sparser.h"
-
-#include "mock_io.c"
-
 #include "sparser_privates.h"
+#include "wcstr_sparser_adapter.h"
 
 
 /* think about cmocka's setup and teardown methods? */
 void run_sparse_symbol_test(struct sparser_test_params * test_params) {
     /* arrange */
-    struct sparse_ctx ctx = {NULL, L' ', L' '};
+    struct sparse_ctx ctx;
     struct sexpression * sobj = NULL;
     int return_value;
-    /* consume the first char like sparse_object() would do */
-    mock_io(test_params->stream+1);
+    
+    ctx.stream = create_sparser_stream(WCSTR_ADAPTER, test_params->stream+1, wcslen(test_params->stream)-1);
+    ctx.prev = L' ';
     ctx.next = *test_params->stream;
     
     /* act */
@@ -21,7 +20,6 @@ void run_sparse_symbol_test(struct sparser_test_params * test_params) {
     
     /* assert */
     assert_int_equal(test_params->return_value, return_value);
-    verify_fgetwc(test_params->expected_fgetc_calls);
     if(return_value == SPARSE_OK) {
         assert_int_equal(0, wcscmp(sobj->data, test_params->expected));
         /* FIXME define a sexpr_hint() function? */
@@ -30,6 +28,7 @@ void run_sparse_symbol_test(struct sparser_test_params * test_params) {
         sexpr_free(sobj);
     }
     
+    release_sparser_stream(ctx.stream);
 }
 
 /* 
@@ -119,7 +118,6 @@ void sparse_symbol_should_put_char_back_into_stream_and_stop_if_char_is_special(
     
     for (i = 0; i < 3; i++) {
         run_sparse_symbol_test(test_params+i);
-        verify_ungetwc(1);
     }
     
 }

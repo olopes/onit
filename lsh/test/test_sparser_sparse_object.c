@@ -1,10 +1,7 @@
 /* prod code includes */
 #include "sparser.h"
-
-#include "mock_io.c"
-
-/* borrow definitions from sparse.c */
 #include "sparser_privates.h"
+#include "wcstr_sparser_adapter.h"
 
 int 
 sparse_string(struct sparse_ctx * ctx, struct sexpression ** obj) {
@@ -36,27 +33,15 @@ sparse_cons(struct sparse_ctx * ctx, struct sexpression ** obj) {
 struct sexpression dummy;
 struct sexpression * pdummy = &dummy;
 
-struct stdio_stream {
-    FILE * in;
-} stream;
-
-static wint_t 
-mock_read_char(struct sparse_ctx * ctx) {
-    return __wrap_fgetwc(NULL);
-}
-
-static wint_t 
-mock_unread_char(struct sparse_ctx * ctx, wint_t chr) {
-    return __wrap_ungetwc(chr, NULL);
-}
-
 void sparse_object_should_never_call_sparse_functions_when_input_is_space(void ** param) {
-    struct sparse_ctx ctx = {NULL, L' ', L'"', NULL};
+    struct sparse_ctx ctx;
     struct sexpression * sobj = pdummy;
     int retval;
+    wchar_t * data = L" \r\n\t\f";
     
-    mock_io(L" \r\n\t\f");
-    
+    ctx.stream = create_sparser_stream(WCSTR_ADAPTER, data, wcslen(data));
+    ctx.prev = L' ';
+    ctx.next = L'"';
     
     
     retval = sparse_object(&ctx, &sobj);
@@ -64,110 +49,142 @@ void sparse_object_should_never_call_sparse_functions_when_input_is_space(void *
     /* EOF found and sobj set to NULL */
     assert_int_equal(SPARSE_EOF, retval);
     assert_null(sobj);
+    
+    release_sparser_stream(ctx.stream);
 }
 
 void sparse_object_should_call_sparse_string(void ** param) {
-    struct sparse_ctx ctx = {NULL, L' ', L'"', NULL};
+    struct sparse_ctx ctx = {NULL, L' ', L'"'};
     struct sexpression * sobj = NULL;
     int retval;
-    mock_io(L"\"X\"");
+    wchar_t *data = (L"\"X\"");
     
     expect_function_call(sparse_string);
     will_return(sparse_string, pdummy);
     will_return(sparse_string, 1);
     
+    ctx.stream = create_sparser_stream(WCSTR_ADAPTER, data, wcslen(data));
+    ctx.prev = L' ';
+    ctx.next = L'"';
     
     retval = sparse_object(&ctx, &sobj);
     
     /* must return the value and sobj returned by the called function */
     assert_int_equal(1, retval);
     assert_ptr_equal(pdummy, sobj);
+    
+    release_sparser_stream(ctx.stream);
 }
 
 void sparse_object_should_call_sparse_symbol(void ** param) {
-    struct sparse_ctx ctx = {NULL, L' ', L'"', NULL};
+    struct sparse_ctx ctx = {NULL, L' ', L'"'};
     struct sexpression * sobj = NULL;
     int retval;
-    mock_io(L"|X|");
+    wchar_t *data = (L"|X|");
     
     expect_function_call(sparse_symbol);
     will_return(sparse_symbol, pdummy);
     will_return(sparse_symbol, 2);
     
+    ctx.stream = create_sparser_stream(WCSTR_ADAPTER, data, wcslen(data));
+    ctx.prev = L' ';
+    ctx.next = L'"';
     
     retval = sparse_object(&ctx, &sobj);
     
     /* must return the value and sobj returned by the called function */
     assert_int_equal(2, retval);
     assert_ptr_equal(pdummy, sobj);
+    
+    release_sparser_stream(ctx.stream);
 }
 
 void sparse_object_should_call_sparse_list(void ** param) {
-    struct sparse_ctx ctx = {NULL, L' ', L'"', NULL};
+    struct sparse_ctx ctx = {NULL, L' ', L'"'};
     struct sexpression * sobj = NULL;
     int retval;
-    mock_io(L"(X)");
+    wchar_t *data = (L"(X)");
     
     expect_function_call(sparse_cons);
     will_return(sparse_cons, pdummy);
     will_return(sparse_cons, 3);
     
+    ctx.stream = create_sparser_stream(WCSTR_ADAPTER, data, wcslen(data));
+    ctx.prev = L' ';
+    ctx.next = L'"';
     
     retval = sparse_object(&ctx, &sobj);
     
     /* must return the value and sobj returned by the called function */
     assert_int_equal(3, retval);
     assert_ptr_equal(pdummy, sobj);
+    
+    release_sparser_stream(ctx.stream);
 }
 
 void sparse_object_should_call_sparse_quote(void ** param) {
-    struct sparse_ctx ctx = {NULL, L' ', L'"', NULL};
+    struct sparse_ctx ctx = {NULL, L' ', L'"'};
     struct sexpression * sobj = NULL;
     int retval;
-    mock_io(L"'(X)");
+    wchar_t *data = (L"'(X)");
     
     expect_function_call(sparse_quote);
     will_return(sparse_quote, pdummy);
     will_return(sparse_quote, 4);
     
+    ctx.stream = create_sparser_stream(WCSTR_ADAPTER, data, wcslen(data));
+    ctx.prev = L' ';
+    ctx.next = L'"';
     
     retval = sparse_object(&ctx, &sobj);
     
     /* must return the value and sobj returned by the called function */
     assert_int_equal(4, retval);
     assert_ptr_equal(pdummy, sobj);
+    
+    release_sparser_stream(ctx.stream);
 }
 
 void sparse_object_should_call_sparse_simple_symbol(void ** param) {
-    struct sparse_ctx ctx = {NULL, L' ', L'"', NULL};
+    struct sparse_ctx ctx = {NULL, L' ', L'"'};
     struct sexpression * sobj = NULL;
     int retval;
-    mock_io(L"X");
+    wchar_t *data = (L"X");
     
     expect_function_call(sparse_symbol);
     will_return(sparse_symbol, pdummy);
     will_return(sparse_symbol, SPARSE_DOT_SYM);
     
+    ctx.stream = create_sparser_stream(WCSTR_ADAPTER, data, wcslen(data));
+    ctx.prev = L' ';
+    ctx.next = L'"';
     
     retval = sparse_object(&ctx, &sobj);
     
     /* must return the value and sobj returned by the called function */
     assert_int_equal(SPARSE_DOT_SYM, retval);
     assert_ptr_equal(pdummy, sobj);
+    
+    release_sparser_stream(ctx.stream);
 }
 
 void sparse_object_should_return_paren_when_next_input_char_is_close_paren(void ** param) {
-    struct sparse_ctx ctx = {NULL, L' ', L'"', NULL};
+    struct sparse_ctx ctx = {NULL, L' ', L'"'};
     struct sexpression * sobj = NULL;
     int retval;
-    mock_io(L")");
+    wchar_t *data = (L")");
     
+    ctx.stream = create_sparser_stream(WCSTR_ADAPTER, data, wcslen(data));
+    ctx.prev = L' ';
+    ctx.next = L'"';
     
     retval = sparse_object(&ctx, &sobj);
     
     /* must return the value and sobj returned by the called function */
     assert_int_equal(SPARSE_PAREN, retval);
     assert_ptr_equal(NULL, sobj);
+    
+    release_sparser_stream(ctx.stream);
 }
 
 /* These functions will be used to initialize
