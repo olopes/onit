@@ -9,6 +9,7 @@ CMOCKA_ROOT=../cmocka
 CFLAGS=-O2 -ansi -std=c99 -Wall -pedantic -finput-charset=UTF-8 -fPIC $(DEPFLAGS) -DWEAK_FOR_UNIT_TEST=\ 
 #LDFLAGS=-static 
 LDFLAGS =  
+PROD_OBJ = $(patsubst %.c,%.o,$(subst src/,build/,$(wildcard src/*.c))) build/main.c
 
 TEST_CFLAGS = -g -ansi -std=c99 -Wall -pedantic -finput-charset=UTF-8 -fPIC $(DEPFLAGS) -Isrc -I$(CMOCKA_ROOT)/include -include test/test_definitions.h
 TEST_LDFLAGS = -lcmocka -L$(CMOCKA_ROOT)/lib
@@ -19,19 +20,22 @@ TESTS_EXECS = $(patsubst %.c,build/%.t,$(wildcard test/test*.c))
 TESTS = $(patsubst %.t,%.pass,$(TESTS_EXECS))
 
 
-all: build/ostr build/sexpr build/sparse tests 
+all: build/ostr build/sexpr build/sparse build/lsh tests 
 
 build/main.c:
 	echo 'int MAIN(int a, char ** b); int main(int a, char**b) { return MAIN(a,b); }' > build/main.c
 
-build/ostr: build/ostr.o build/ostr_main.o build/main.c
+build/ostr: $(PROD_OBJ)
 	gcc -DMAIN=ostr_main $(CFLAGS) $(LDFLAGS) -o $@ $^
 
-build/sexpr: build/sexpr.o build/sexpr_main.o build/sexpr_stack.o build/svisitor.o build/main.c
+build/sexpr: $(PROD_OBJ)
 	gcc -DMAIN=sexpr_main $(CFLAGS) $(LDFLAGS) -o $@ $^
 
-build/sparse: $(patsubst %.c,%.o,$(subst src/,build/,$(wildcard src/*.c))) build/main.c
+build/sparse: $(PROD_OBJ)
 	gcc -DMAIN=sparser_main $(CFLAGS) $(LDFLAGS) -o $@ $^
+
+build/lsh: $(PROD_OBJ)
+	gcc -DMAIN=lsh_main $(CFLAGS) $(LDFLAGS) -o $@ $^
 
 build/%.o: src/%.c
 	gcc -c $(CFLAGS) -o $@ $^
