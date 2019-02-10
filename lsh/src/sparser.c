@@ -3,7 +3,15 @@
 #include <wctype.h>
 #include <wchar.h>
 #include "sparser.h"
+#include "sparser_privates.h"
 #include "ostr.h"
+
+
+/* sintatic suggar */
+#define READ_CHAR(stream) (stream)->adapter->read_char((stream))
+
+#define UNREAD_CHAR(stream, chr) (stream)->adapter->unread_char((stream), (chr))
+
 
 /*
 From Racket docs:
@@ -18,37 +26,21 @@ Whitespace or special characters can be included in an identifier by quoting the
 ; is a comment
 */
 
-struct sparse_ctx {
-    FILE *in;
-    wint_t prev;
-    wint_t next;
-    struct sexpr * stack;
-};
 
-/* FIXME maybe these should belong to their own file instead 
-    of this one alone? */
-int 
-sparse_object(struct sparse_ctx * ctx, struct sexpression ** obj);
-int 
-sparse_string(struct sparse_ctx * ctx, struct sexpression ** obj);
-int 
-sparse_symbol(struct sparse_ctx * ctx, struct sexpression ** obj);
-int 
-sparse_quote(struct sparse_ctx * ctx, struct sexpression ** obj);
-int 
-sparse_cons(struct sparse_ctx * ctx, struct sexpression ** obj);
+
 
 
 WEAK_FOR_UNIT_TEST int 
-sparse(FILE *in, struct sexpression ** obj) {
+sparse(struct sparser_stream * stream, struct sexpression ** obj) {
     struct sparse_ctx ctx;
-    ctx.in = in;
+    ctx.stream = stream;
     ctx.next = L' ';
-    ctx.stack = NULL;
+    ctx.prev = L' ';
 
     return sparse_object(&ctx, obj);
     
 }
+
 
 WEAK_FOR_UNIT_TEST int 
 sparse_object(struct sparse_ctx * ctx, struct sexpression ** obj) {
@@ -59,7 +51,7 @@ sparse_object(struct sparse_ctx * ctx, struct sexpression ** obj) {
     
     while(1) {
         ctx->prev = ctx->next;
-        ctx->next = fgetwc(ctx->in);
+        ctx->next = READ_CHAR(ctx->stream);
         if(ctx->next == WEOF) {
             ret_val = SPARSE_EOF;
             break;
@@ -112,7 +104,7 @@ sparse_string(struct sparse_ctx * ctx, struct sexpression ** obj) {
     /* read everything until " */
     while(1) {
         ctx->prev = ctx->next;
-        ctx->next = fgetwc(ctx->in);
+        ctx->next = READ_CHAR(ctx->stream);
         if(ctx->next == WEOF) {
             ostr_destroy(str);
             return SPARSE_EOF;
@@ -275,7 +267,7 @@ sparse_symbol(struct sparse_ctx * ctx, struct sexpression ** obj) {
             case L'`': 
             case L';': 
                 /* handle special chars. Put the special char back and finish */
-                ungetwc(ctx->next, ctx->in);
+                UNREAD_CHAR(ctx->stream, ctx->next);
                 return_value = SPARSE_OK;
                 goto SYM_PARSE_END;
                 
@@ -287,7 +279,7 @@ sparse_symbol(struct sparse_ctx * ctx, struct sexpression ** obj) {
         }
         
         ctx->prev = ctx->next;
-        ctx->next = fgetwc(ctx->in);
+        ctx->next = READ_CHAR(ctx->stream);
     }
     
 SYM_PARSE_END:
@@ -383,4 +375,3 @@ EXIT_WITH_SUCCESS:
     return return_value;
 }
 
-    

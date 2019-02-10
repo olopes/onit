@@ -176,7 +176,6 @@ sexpr_reverse(struct sexpression * sexpr) {
     struct sexpression * iter;
     struct sexpression * reversed;
     size_t length;
-    size_t sexpr_length;
     
     if(!sexpr_is_cons(sexpr)) {
         return sexpr;
@@ -200,12 +199,12 @@ sexpr_reverse(struct sexpression * sexpr) {
     
     /* handle a "list" */
     
-    sexpr_length = 0;
+    length = 0;
     reversed = NULL;
     iter = sexpr;
     while(iter) {
-        sexpr_length++;
-        iter->len = sexpr_length;
+        length++;
+        iter->len = length;
         cdr = sexpr_cdr(iter);
         
         /* manipulate pointers */

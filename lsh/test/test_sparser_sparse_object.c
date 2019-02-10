@@ -4,18 +4,7 @@
 #include "mock_io.c"
 
 /* borrow definitions from sparse.c */
-struct sparse_ctx {
-    FILE *in;
-    wint_t prev;
-    wint_t next;
-    struct sexpr * stack;
-};
-
-int sparse_object(struct sparse_ctx * ctx, struct sexpression ** obj);
-int sparse_string(struct sparse_ctx * ctx, struct sexpression ** obj);
-int sparse_symbol(struct sparse_ctx * ctx, struct sexpression ** obj);
-int sparse_quote(struct sparse_ctx * ctx, struct sexpression ** obj);
-int sparse_cons(struct sparse_ctx * ctx, struct sexpression ** obj);
+#include "sparser_privates.h"
 
 int 
 sparse_string(struct sparse_ctx * ctx, struct sexpression ** obj) {
@@ -47,6 +36,19 @@ sparse_cons(struct sparse_ctx * ctx, struct sexpression ** obj) {
 struct sexpression dummy;
 struct sexpression * pdummy = &dummy;
 
+struct stdio_stream {
+    FILE * in;
+} stream;
+
+static wint_t 
+mock_read_char(struct sparse_ctx * ctx) {
+    return __wrap_fgetwc(NULL);
+}
+
+static wint_t 
+mock_unread_char(struct sparse_ctx * ctx, wint_t chr) {
+    return __wrap_ungetwc(chr, NULL);
+}
 
 void sparse_object_should_never_call_sparse_functions_when_input_is_space(void ** param) {
     struct sparse_ctx ctx = {NULL, L' ', L'"', NULL};
@@ -54,6 +56,8 @@ void sparse_object_should_never_call_sparse_functions_when_input_is_space(void *
     int retval;
     
     mock_io(L" \r\n\t\f");
+    
+    
     
     retval = sparse_object(&ctx, &sobj);
     

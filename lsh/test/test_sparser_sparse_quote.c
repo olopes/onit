@@ -2,15 +2,7 @@
 #include "sparser.h"
 
 /* borrow definitions from sparse.c */
-struct sparse_ctx {
-    FILE *in;
-    wint_t prev;
-    wint_t next;
-    struct sexpr * stack;
-};
-
-int sparse_object(struct sparse_ctx * ctx, struct sexpression ** obj);
-int sparse_quote(struct sparse_ctx * ctx, struct sexpression ** obj);
+#include "sparser_privates.h"
 
 /* mocks and stubs */
 int 

@@ -3,16 +3,7 @@
 
 #include "mock_io.c"
         
-
-struct sparse_ctx {
-    FILE *in;
-    wint_t prev;
-    wint_t next;
-    struct sexpr * stack;
-};
-
-int 
-sparse_string(struct sparse_ctx * ctx, struct sexpression ** obj);
+#include "sparser_privates.h"
 
 
 /* think about cmocka's setup and teardown methods? */

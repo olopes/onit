@@ -3,21 +3,13 @@
 
 #include "mock_io.c"
 
-struct sparse_ctx {
-    FILE *in;
-    wint_t prev;
-    wint_t next;
-    struct sexpr * stack;
-};
-
-int 
-sparse_symbol(struct sparse_ctx * ctx, struct sexpression ** obj);
+#include "sparser_privates.h"
 
 
 /* think about cmocka's setup and teardown methods? */
 void run_sparse_symbol_test(struct sparser_test_params * test_params) {
     /* arrange */
-    struct sparse_ctx ctx = {NULL, L' ', L' ', NULL};
+    struct sparse_ctx ctx = {NULL, L' ', L' '};
     struct sexpression * sobj = NULL;
     int return_value;
     /* consume the first char like sparse_object() would do */
