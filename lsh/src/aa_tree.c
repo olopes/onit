@@ -137,11 +137,6 @@ struct sexpression * aa_delete(struct aa_tree * tree, struct svalue * key) {
     value = aa_search(tree, key);
     
     node = delete(tree->root, key);
-    if(node == NULL) {
-        return NULL;
-    }
-    
-    /* do stuff */
     
     tree->root = node;
     return value;
@@ -170,16 +165,16 @@ static struct aa_node * delete(struct aa_node * subtree, struct svalue * key) {
         } else if(left(subtree) == NULL) {
             /* swap right */
             node = successor(subtree);
-	    sub_key = node->key;
-	    sub_value = node->value;
+            sub_key = node->key;
+            sub_value = node->value;
             subtree->right = delete(right(subtree), node->key);
             subtree->key = sub_key;
             subtree->value = sub_value;
         } else {
             /* swap left */
             node = predecessor(subtree);
-	    sub_key = node->key;
-	    sub_value = node->value;
+            sub_key = node->key;
+            sub_value = node->value;
             subtree->left = delete(left(subtree), node->key);
             subtree->key = sub_key;
             subtree->value = sub_value;

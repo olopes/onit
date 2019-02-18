@@ -24,21 +24,71 @@ static void assert_visit(struct svalue * key, struct sexpression * value) {
 static void test_aa_tree_operations(void ** state) {
     struct aa_tree tree;
     int i;
+    int position;
     
     memset(&tree, 0, sizeof(struct aa_tree));
     
     /* insert everything! */
     for(i = 0; i < TEST_DATA_SIZE; i++) {
-        assert_false(aa_insert(&tree, test_keys + insertion_order[i], test_values + insertion_order[i]));
+        position = insertion_order[i];
+        assert_false(aa_insert(&tree, &test_keys[position], &test_values[position]));
     }
     
     current_level = 0;
     aa_visit(&tree, assert_visit);
     
     for(i = 0; i < TEST_DATA_SIZE; i++) {
-        assert_ptr_equal(aa_delete(&tree, test_keys + deletion_order[i]), test_values + deletion_order[i]);
+        position = deletion_order[i];
+        assert_ptr_equal(aa_delete(&tree, &test_keys[position]), &test_values[position]);
     }
+    
 }
+
+
+static void test_aa_tree_find_with_single_node(void ** state) {
+    struct aa_tree tree;
+    
+    memset(&tree, 0, sizeof(struct aa_tree));
+    
+    aa_insert(&tree, &test_keys[0], &test_values[0]);
+
+    assert_ptr_equal(aa_search(&tree, &test_keys[0]), &test_values[0]);
+    
+    assert_null(aa_search(&tree, &test_keys[10]));
+    
+    aa_delete(&tree, &test_keys[0]);
+
+}
+
+static void test_aa_tree_has_key(void ** state) {
+    struct aa_tree tree;
+    struct sexpression * found;
+    
+    memset(&tree, 0, sizeof(struct aa_tree));
+    
+    aa_insert(&tree, &test_keys[0], &test_values[0]);
+    aa_insert(&tree, &test_keys[1], &test_values[1]);
+    aa_insert(&tree, &test_keys[2], &test_values[2]);
+    aa_insert(&tree, &test_keys[3], &test_values[3]);
+    aa_insert(&tree, &test_keys[4], &test_values[4]);
+
+    assert_true(aa_has_key(&tree, &test_keys[2]));
+    
+    assert_false(aa_has_key(&tree, &test_keys[10]));
+    
+    found = aa_search(&tree, &test_keys[0]);
+    
+    assert_ptr_equal(found, &test_values[0]);
+    
+    aa_delete(&tree, &test_keys[0]);
+    aa_delete(&tree, &test_keys[1]);
+    aa_delete(&tree, &test_keys[2]);
+    aa_delete(&tree, &test_keys[3]);
+    aa_delete(&tree, &test_keys[4]);
+
+}
+
+
 
 
 /* Arrange the N elements of ARRAY in random order.
@@ -96,9 +146,11 @@ int main (void)
 {
     const struct CMUnitTest tests [] =
     {
-        cmocka_unit_test (test_aa_tree_operations),
-        cmocka_unit_test (test_aa_tree_operations),
-        cmocka_unit_test (test_aa_tree_operations),
+        cmocka_unit_test_setup (test_aa_tree_operations, setup),
+        cmocka_unit_test_setup (test_aa_tree_operations, setup),
+        cmocka_unit_test_setup (test_aa_tree_operations, setup),
+        cmocka_unit_test (test_aa_tree_find_with_single_node),
+        cmocka_unit_test (test_aa_tree_has_key),
     };
 
     srand(131071);
@@ -107,7 +159,7 @@ int main (void)
        needed, then NULL may be passed instead */
 
     int count_fail_tests =
-        cmocka_run_group_tests (tests, setup, teardown);
+        cmocka_run_group_tests (tests, NULL, NULL);
 
     return count_fail_tests;
 }
