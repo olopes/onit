@@ -150,6 +150,8 @@ struct sexpression * aa_delete(struct aa_tree * tree, struct svalue * key) {
 
 static struct aa_node * delete(struct aa_node * subtree, struct svalue * key) {
     struct aa_node * node;
+    struct svalue * sub_key;
+    struct sexpression * sub_value;
     int cmp;
     
     if(subtree == NULL) {
@@ -168,15 +170,19 @@ static struct aa_node * delete(struct aa_node * subtree, struct svalue * key) {
         } else if(left(subtree) == NULL) {
             /* swap right */
             node = successor(subtree);
+	    sub_key = node->key;
+	    sub_value = node->value;
             subtree->right = delete(right(subtree), node->key);
-            subtree->key = node->key;
-            subtree->value = node->value;
+            subtree->key = sub_key;
+            subtree->value = sub_value;
         } else {
             /* swap left */
             node = predecessor(subtree);
+	    sub_key = node->key;
+	    sub_value = node->value;
             subtree->left = delete(left(subtree), node->key);
-            subtree->key = node->key;
-            subtree->value = node->value;
+            subtree->key = sub_key;
+            subtree->value = sub_value;
         }
     }
     
