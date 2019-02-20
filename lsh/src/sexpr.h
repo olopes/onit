@@ -2,11 +2,7 @@
 #define __SEXPR__H__
 
 #include <wchar.h>
-
-struct svalue {
-    size_t len;
-    wchar_t *data;
-};
+#include "svalue.h"
 
 enum stype {ST_NIL, ST_CONS, ST_VALUE};
 enum scontent {SC_CONS, SC_STRING, SC_SYMBOL, SC_PROCEDURE, SC_NUMBER};

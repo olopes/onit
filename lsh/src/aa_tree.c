@@ -3,7 +3,7 @@
 #include <wchar.h>
 #include "aa_tree.h"
 
-
+/* privates declaration */
 static struct aa_node * insert(struct aa_node * subtree, struct svalue * key, struct sexpression * value);
 static struct aa_node * skew(struct aa_node * node);
 static struct aa_node * split(struct aa_node * node);
@@ -11,12 +11,12 @@ static struct aa_node * delete(struct aa_node * subtree, struct svalue * key);
 static struct aa_node * successor(struct aa_node * node);
 static struct aa_node * predecessor(struct aa_node * node);
 static struct aa_node * decrease_level(struct aa_node * node);
-static struct aa_node * left(struct aa_node * node);
-static struct aa_node * right(struct aa_node * node);
-static size_t level(struct aa_node * node);
-static size_t min(size_t a, size_t b);
-static int leaf(struct aa_node * node);
-static int compare(struct svalue * a, struct svalue * b);
+static inline struct aa_node * left(struct aa_node * node);
+static inline struct aa_node * right(struct aa_node * node);
+static inline size_t level(struct aa_node * node);
+static inline size_t min(size_t a, size_t b);
+static inline int leaf(struct aa_node * node);
+#define compare(a,b) svalue_compare(a, b)
 static void visit(struct aa_node * node, void (*callback)(struct svalue * key, struct sexpression * value));
 
 
@@ -114,15 +114,15 @@ static struct aa_node * split(struct aa_node * node) {
     return node;
 }
 
-static struct aa_node * left(struct aa_node * node) {
+static inline struct aa_node * left(struct aa_node * node) {
     return node == NULL ? NULL : node->left;
 }
 
-static struct aa_node * right(struct aa_node * node) {
+static inline struct aa_node * right(struct aa_node * node) {
     return node == NULL ? NULL : node->right;
 }
 
-static size_t level(struct aa_node * node) {
+static inline size_t level(struct aa_node * node) {
     return node == NULL ? 0 : node->level;
 }
 
@@ -237,11 +237,11 @@ static struct aa_node * decrease_level(struct aa_node * node) {
     return node;
 }
 
-static size_t min(size_t a, size_t b) {
+static inline size_t min(size_t a, size_t b) {
     return a < b ? a : b;
 }
 
-static int leaf(struct aa_node * node) {
+static inline int leaf(struct aa_node * node) {
     return (left(node) == NULL && right(node) == NULL);
 }
 
@@ -292,19 +292,6 @@ struct sexpression * aa_search(struct aa_tree * tree, struct svalue * key) {
     }
     
     return NULL;
-}
-
-static int compare(struct svalue * a, struct svalue * b) {
-    if(a == b) {
-        return 0;
-    }
-    if(a == NULL) {
-        return -1;
-    }
-    if(b == NULL) {
-        return 1;
-    }
-    return wcsncmp(a->data, b->data, a->len);
 }
 
 void aa_visit(struct aa_tree * tree, void (*callback)(struct svalue * key, struct sexpression * value)) {

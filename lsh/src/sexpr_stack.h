@@ -4,25 +4,25 @@
 /**
  * Push a S-Expression object into the top of the stack
  */
-void
+extern void
 sexpr_push(struct sexpression ** , struct sexpression * );
 
 /**
  * Fetch the top most element of the stack
  */
-struct sexpression * 
+extern struct sexpression * 
 sexpr_peek(struct sexpression ** );
 
 /**
  * Remove and return the top-most element of the stack
  */
-struct sexpression *
+extern struct sexpression *
 sexpr_pop(struct sexpression ** );
 
 /**
  * Returns TRUE if the stack can pop the top-most element, ie, is not empty.
  */
-int
+extern int
 sexpr_can_pop(struct sexpression * );
 
 

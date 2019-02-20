@@ -25,73 +25,73 @@ struct ostr {
 /**
  * Creates a new ostr from a wchar_t string
  */
-struct ostr * 
+extern struct ostr * 
 ostr_new(wchar_t *);
 
 /**
  * Destroys an existing ostr.
  */
-void 
+extern void 
 ostr_destroy(struct ostr *);
 
 /**
  * Append a wchar to an existing ostr
  */
-struct ostr * 
+extern struct ostr * 
 ostr_append(struct ostr *, wchar_t);
 
 /**
  * Replace last wchar with given wchar. If str length is zero, returns NULL.
  */
-struct ostr * 
+extern struct ostr * 
 ostr_replace_last(struct ostr *, wchar_t);
 
 /**
  * Get the size (length) of an ostr
  */
-size_t 
+extern size_t 
 ostr_length(struct ostr *);
 
 /**
  * Concatenate two ostrs
  */
-struct ostr * 
+extern struct ostr * 
 ostr_concat(struct ostr *, struct ostr *);
 
 /**
  * Convert a ostr into a NULL terminated string
  */
-wchar_t * 
+extern wchar_t * 
 ostr_str(struct ostr *);
 
 /**
  * Compact a multi node ostr into a single node ostr.
  */
-struct ostr * 
+extern struct ostr * 
 ostr_compact(struct ostr *);
 
 /**
  * Duplicates a ostr like compact but returns a new ostr instance
  */
-struct ostr * 
+extern struct ostr * 
 ostr_dup(struct ostr * ostr);
 
 /**
  * Print a ostr to a FILE stream
  */
-int 
+extern int 
 ostr_fputs(struct ostr *, FILE *);
 
 /**
  * Print a ostr to stdout
  */
-int 
+extern int 
 ostr_puts(struct ostr *);
 
 /**
  * Get Nth character
  */
-wint_t
+extern wint_t
 ostr_char_at(struct ostr * str, size_t position);
 
 

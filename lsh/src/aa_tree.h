@@ -17,14 +17,14 @@ struct aa_node {
     struct aa_node * right;
 };
 
-int aa_insert(struct aa_tree * tree, struct svalue * key, struct sexpression * value);
+extern int aa_insert(struct aa_tree * tree, struct svalue * key, struct sexpression * value);
 
-struct sexpression * aa_delete(struct aa_tree * tree, struct svalue * key);
+extern struct sexpression * aa_delete(struct aa_tree * tree, struct svalue * key);
 
-int aa_has_key(struct aa_tree * tree, struct svalue * key );
+extern int aa_has_key(struct aa_tree * tree, struct svalue * key );
 
-struct sexpression * aa_search(struct aa_tree * tree, struct svalue * key );
+extern struct sexpression * aa_search(struct aa_tree * tree, struct svalue * key );
 
-void aa_visit(struct aa_tree * tree, void (*callback)(struct svalue * key, struct sexpression * value));
+extern void aa_visit(struct aa_tree * tree, void (*callback)(struct svalue * key, struct sexpression * value));
 
 #endif

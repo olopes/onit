@@ -27,19 +27,19 @@ struct scallback {
 /**
  * S-Expression visitor
  */
-void 
+extern void 
 svisitor(struct sexpression *, struct scallback *);
 
 /**
  * Dump S-Expression using svisitor
  */
-void 
+extern void 
 dump_sexpr(struct sexpression *, FILE *);
 
 /**
  * Dump S-Expression using recursive method
  */
-void 
+extern void 
 dump_sexpr_r(struct sexpression *, FILE *);
 
 #endif /* __VISITOR__H__ */

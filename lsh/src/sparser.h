@@ -34,20 +34,20 @@ struct sparser_stream {
 /**
  * Creates a new stream from the provided adapter
  */
-struct sparser_stream *
+extern struct sparser_stream *
 create_sparser_stream(const struct sparse_adapter * const adapter, ...);
 
 /**
  * Release stream resources
  */
-void
+extern void
 release_sparser_stream(struct sparser_stream *);
 
 
 /**
  * Read (parse) a S-Expression object from the specified stream 
  */
-int
+extern int
 sparse(struct sparser_stream * stream, struct sexpression ** parsed_object);
 
 #endif /* __SPARSER_H__ */
