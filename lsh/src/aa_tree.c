@@ -3,6 +3,13 @@
 #include <wchar.h>
 #include "aa_tree.h"
 
+/* 
+ * note to self: AA Tree
+ * https://en.wikipedia.org/wiki/AA_tree
+ */
+
+
+
 /* privates declaration */
 static struct aa_node * insert(struct aa_node * subtree, struct svalue * key, struct sexpression * value);
 static struct aa_node * skew(struct aa_node * node);

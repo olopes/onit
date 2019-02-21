@@ -16,8 +16,9 @@ unsigned long svalue_hashcode(struct svalue * key) {
     hash = 5381;
     
     for(i = 0; i < key->len; i++) {
-        /* hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
-        hash = hash * 33 ^ key->data[i];
+        /* hash = ((hash << 5) + hash) + key->data[i]; /* hash * 33 + c */
+        /* hash = hash * 33 ^ key->data[i]; XOR doesn't work very well, the test fails :-/ */
+        hash = hash * 33 + key->data[i];
     }
     return hash;
 }
