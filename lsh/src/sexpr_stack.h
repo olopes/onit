@@ -5,18 +5,18 @@
  * Push a S-Expression object into the top of the stack
  */
 extern void
-sexpr_push(struct sexpression ** , struct sexpression * );
+sexpr_push(struct sexpression ** , void * );
 
 /**
  * Fetch the top most element of the stack
  */
-extern struct sexpression * 
+extern void * 
 sexpr_peek(struct sexpression ** );
 
 /**
  * Remove and return the top-most element of the stack
  */
-extern struct sexpression *
+extern void *
 sexpr_pop(struct sexpression ** );
 
 /**

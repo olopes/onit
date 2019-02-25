@@ -23,7 +23,7 @@ void run_sparse_string_test(struct sparser_test_params * test_params) {
     if(retval == SPARSE_OK) {
         /* FIXME sexpr_hint() and sexpr_cstr() */
         assert_int_equal(0, wcscmp(sobj->data, test_params->expected));
-        assert_int_equal(SC_STRING, sobj->hint);
+        assert_int_equal(SC_STRING, sobj->content);
         
         sexpr_free(sobj);
     }

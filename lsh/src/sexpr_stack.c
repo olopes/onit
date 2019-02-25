@@ -6,10 +6,10 @@
  * Push a S-Expression object into the top of the stack
  */
 void WEAK_FOR_UNIT_TEST
-sexpr_push(struct sexpression ** sexpr, struct sexpression * obj) {
+sexpr_push(struct sexpression ** sexpr, void * obj) {
     struct sexpression * node;
     
-    node = sexpr_cons(obj, *sexpr);
+    node = sexpr_cons((struct sexpression *) obj, *sexpr);
     
     /* TODO handle NULL return */
     
@@ -19,7 +19,7 @@ sexpr_push(struct sexpression ** sexpr, struct sexpression * obj) {
 /**
  * Fetch the top most element of the stack
  */
-struct sexpression * WEAK_FOR_UNIT_TEST
+void * WEAK_FOR_UNIT_TEST
 sexpr_peek(struct sexpression ** sexpr) {
     return sexpr_car(*sexpr);
 }
@@ -27,14 +27,14 @@ sexpr_peek(struct sexpression ** sexpr) {
 /**
  * Remove and return the top-most element of the stack
  */
-struct sexpression * WEAK_FOR_UNIT_TEST
+void * WEAK_FOR_UNIT_TEST
 sexpr_pop(struct sexpression ** sexpr) {
-    struct sexpression * car;
+    void * car;
     struct sexpression * cdr;
 
     car = sexpr_car(*sexpr);
     cdr = sexpr_cdr(*sexpr);
-    sexpr_free_pair(*sexpr);
+    sexpr_free_object(*sexpr);
 
     *sexpr = cdr;
     

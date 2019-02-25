@@ -11,20 +11,25 @@ struct aa_tree {
 
 struct aa_node {
     struct svalue * key;
-    struct sexpression * value;
+    void * value;
     size_t level;
     struct aa_node * left;
     struct aa_node * right;
 };
 
-extern int aa_insert(struct aa_tree * tree, struct svalue * key, struct sexpression * value);
+extern int 
+aa_insert(struct aa_tree * tree, struct svalue * key, void * value);
 
-extern struct sexpression * aa_delete(struct aa_tree * tree, struct svalue * key);
+extern void * 
+aa_delete(struct aa_tree * tree, struct svalue * key);
 
-extern int aa_has_key(struct aa_tree * tree, struct svalue * key );
+extern int 
+aa_has_key(struct aa_tree * tree, struct svalue * key );
 
-extern struct sexpression * aa_search(struct aa_tree * tree, struct svalue * key );
+extern void * 
+aa_search(struct aa_tree * tree, struct svalue * key );
 
-extern void aa_visit(struct aa_tree * tree, void (*callback)(struct svalue * key, struct sexpression * value));
+extern void 
+aa_visit(struct aa_tree * tree, void * param, void (*callback)(void * param, struct svalue * key, void * value));
 
 #endif

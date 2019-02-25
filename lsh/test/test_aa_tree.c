@@ -15,7 +15,9 @@ static int insertion_order [TEST_DATA_SIZE];
 static int deletion_order [TEST_DATA_SIZE];
 
 static int current_level;
-static void assert_visit(struct svalue * key, struct sexpression * value) {
+static void * test_ctx = &current_level;
+
+static void assert_visit(void * test_ctx, struct svalue * key, void * value) {
     assert_ptr_equal(key, test_keys+current_level);
     assert_ptr_equal(value, test_values+current_level);
     current_level++;
@@ -35,7 +37,7 @@ static void test_aa_tree_operations(void ** state) {
     }
     
     current_level = 0;
-    aa_visit(&tree, assert_visit);
+    aa_visit(test_ctx, &tree, assert_visit);
     
     for(i = 0; i < TEST_DATA_SIZE; i++) {
         position = deletion_order[i];

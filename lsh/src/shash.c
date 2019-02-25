@@ -17,11 +17,11 @@
 static int resize_table_if_necessary(struct shash_table * hashtable);
 static inline int should_resize_table(struct shash_table * hashtable);
 static void rehash(struct shash_table * new_table, struct shash_table * old_table);
-static void insert(struct shash_table * hashtable, struct svalue * key, struct sexpression * value);
+static void insert(struct shash_table * hashtable, struct svalue * key, void * value);
 static int get_index(struct shash_table * hashtable, struct svalue * key, size_t * indexptr);
 
 
-int shash_insert(struct shash_table * hashtable, struct svalue * key, struct sexpression * value) {
+int shash_insert(struct shash_table * hashtable, struct svalue * key, void * value) {
     
     if(hashtable == NULL || key == NULL) {
         return 1;
@@ -83,7 +83,7 @@ static void rehash(struct shash_table * new_table, struct shash_table * old_tabl
 }
 
 
-static void insert(struct shash_table * hashtable, struct svalue * key, struct sexpression * value) {
+static void insert(struct shash_table * hashtable, struct svalue * key, void * value) {
     unsigned long hash;
     size_t i;
     size_t j;
@@ -101,7 +101,7 @@ static void insert(struct shash_table * hashtable, struct svalue * key, struct s
     
 }
 
-struct sexpression * shash_delete(struct shash_table * hashtable, struct svalue * key) {
+void * shash_delete(struct shash_table * hashtable, struct svalue * key) {
     size_t index;
     struct sexpression * value;
     
@@ -145,7 +145,7 @@ int shash_has_key(struct shash_table * hashtable, struct svalue * key ) {
 }
 
 
-struct sexpression * shash_search(struct shash_table * hashtable, struct svalue * key ) {
+void * shash_search(struct shash_table * hashtable, struct svalue * key ) {
     size_t index;
     
     if(!get_index(hashtable, key, &index)) {
@@ -155,13 +155,13 @@ struct sexpression * shash_search(struct shash_table * hashtable, struct svalue 
     return hashtable->table[index].value;
 }
 
-void shash_visit(struct shash_table * hashtable, void (*callback)(struct svalue * key, struct sexpression * value)) {
+void shash_visit(struct shash_table * hashtable, void * param, void (*callback)(void * param, struct svalue * key, void * value)) {
     size_t i;
     struct shash_entry * table;
     
     for(i = 0, table = hashtable->table; i < hashtable->size; i++, table++) {
         if(table->key != NULL) {
-            (*callback)(table->key, table->value);
+            (*callback)(param, table->key, table->value);
         }
     }
 }

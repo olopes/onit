@@ -39,12 +39,33 @@ svisitor(struct sexpression * obj, struct scallback * callback) {
     fn_holder cb_enter;
     fn_holder cb_visit;
     fn_holder cb_leave;
-    struct sexpression event_enter = {0 , &cb_enter, ST_VALUE, 0, NULL};
-    struct sexpression event_visit = {0 , &cb_visit, ST_VALUE, 0, NULL};
-    struct sexpression event_leave = {0 , &cb_leave, ST_VALUE, 0, NULL};
     struct sexpression * stack;
     struct sexpression * value;
     struct sexpression * event;
+    struct sexpression event_enter = {
+        .len = 0, 
+        .data = &cb_enter,
+        .cdr = NULL,
+        .visit = 0,
+        .type = ST_VALUE,
+        .content = SC_PRIMITIVE,
+    };
+    struct sexpression event_visit = {
+        .len = 0, 
+        .data = &cb_visit,
+        .cdr = NULL,
+        .visit = 0,
+        .type = ST_VALUE,
+        .content = SC_PRIMITIVE,
+    };
+    struct sexpression event_leave = {
+        .len = 0, 
+        .data = &cb_leave,
+        .cdr = NULL,
+        .visit = 0,
+        .type = ST_VALUE,
+        .content = SC_PRIMITIVE,
+    };
     
     if(obj == NULL || callback == NULL) {
         return;

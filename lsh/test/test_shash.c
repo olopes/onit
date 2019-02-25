@@ -15,7 +15,10 @@ static int insertion_order [TEST_DATA_SIZE];
 static int deletion_order [TEST_DATA_SIZE];
 static int key_visited [TEST_DATA_SIZE];
 
-static void assert_visit(struct svalue * key, struct sexpression * value) {
+static int dummy_thing;
+static void * test_ctx = &dummy_thing;
+
+static void assert_visit(void * param, struct svalue * key, void * value) {
     size_t index;
     
     /* cool! the compiler handles the alignment stuff */
@@ -25,6 +28,7 @@ static void assert_visit(struct svalue * key, struct sexpression * value) {
     
     assert_ptr_equal(key, test_keys+index);
     assert_ptr_equal(value, test_values+index);
+    assert_ptr_equal(param, test_ctx);
 
 }
 
@@ -41,7 +45,7 @@ static void test_shash_operations(void ** state) {
         assert_false(shash_insert(&hashtable, &test_keys[position], &test_values[position]));
     }
     
-    shash_visit(&hashtable, assert_visit);
+    shash_visit(&hashtable, test_ctx, assert_visit);
     
     for(i = 0; i < TEST_DATA_SIZE; i++) {
         assert_true(key_visited[i]);

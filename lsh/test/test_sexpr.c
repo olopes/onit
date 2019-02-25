@@ -57,7 +57,7 @@ void sexpr_free_value_should_release_sexpression_recursively(void ** param)
     /* cmocka will validate allocated/released chunks */
 }
 
-void sexpr_free_pair_value_should_release_only_the_first_pair(void ** param)
+void sexpr_free_object_value_should_release_only_the_first_pair(void ** param)
 {
     (void) param; /* unused */
     struct sexpression * sexpr1;
@@ -71,30 +71,13 @@ void sexpr_free_pair_value_should_release_only_the_first_pair(void ** param)
     );
     
     /* only sexpr_cons pair will be freed */
-    sexpr_free_pair(sexpr1);
+    sexpr_free_object(sexpr1);
 
     /* manually free sexpr2 and sexpr3 */
     free(sexpr2->data);
     free(sexpr2);
     free(sexpr3->data);
     free(sexpr3);
-    
-    /* cmocka will validate allocated/released chunks */
-}
-
-void sexpr_free_pair_value_should_not_release_sexpression_if_not_cons(void ** param)
-{
-    (void) param; /* unused */
-    struct sexpression * sexpr;
-    
-    sexpr = sexpr_create_value(L"CAR", 3);
-    
-    /* only sexpr_cons pair will be freed */
-    sexpr_free_pair(sexpr);
-
-    /* manually free sexpr */
-    free(sexpr->data);
-    free(sexpr);
     
     /* cmocka will validate allocated/released chunks */
 }
@@ -386,6 +369,7 @@ int main (void)
         cmocka_unit_test (sexpr_cons_should_alloc_new_sexpression),
         cmocka_unit_test (sexpr_create_value_should_alloc_new_sexpression_and_alloc_value_string),
         cmocka_unit_test (sexpr_free_value_should_release_sexpression_recursively),
+        cmocka_unit_test (sexpr_free_object_value_should_release_only_the_first_pair),
         
         cmocka_unit_test (sexpr_car_should_return_data_pointer_if_type_is_cons),
         cmocka_unit_test (sexpr_car_should_return_null_if_type_is_not_cons),

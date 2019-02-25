@@ -5,7 +5,7 @@
 
 struct shash_entry {
     struct svalue * key;
-    struct sexpression * value;
+    void * value;
 };
 
 struct shash_table {
@@ -15,19 +15,19 @@ struct shash_table {
 };
 
 extern int 
-shash_insert(struct shash_table * hashtable, struct svalue * key, struct sexpression * value);
+shash_insert(struct shash_table * hashtable, struct svalue * key, void * value);
 
-extern struct sexpression * 
+extern void * 
 shash_delete(struct shash_table * hashtable, struct svalue * key);
 
 extern int 
 shash_has_key(struct shash_table * hashtable, struct svalue * key );
 
-extern struct sexpression * 
+extern void * 
 shash_search(struct shash_table * hashtable, struct svalue * key );
 
 extern void 
-shash_visit(struct shash_table * hashtable, void (*callback)(struct svalue * key, struct sexpression * value));
+shash_visit(struct shash_table * hashtable, void * param, void (*callback)(void * param, struct svalue * key, void * value));
 
 extern void 
 shash_free(struct shash_table * hashtable);

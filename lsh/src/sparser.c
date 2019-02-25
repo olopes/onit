@@ -180,7 +180,7 @@ sparse_string(struct sparse_ctx * ctx, struct sexpression ** obj) {
 
     cstr=ostr_str(str);
     *obj = sexpr_create_value(cstr, ostr_length(str));
-    (*obj)->hint = SC_STRING;
+    (*obj)->content = SC_STRING;
     free(cstr);
 
     ostr_destroy(str);
@@ -293,7 +293,7 @@ SYM_PARSE_END:
         cstr=ostr_str(str);
         *obj = sexpr_create_value(cstr, ostr_length(str));
         free(cstr);
-        (*obj)->hint = SC_SYMBOL;
+        (*obj)->content = SC_SYMBOL;
     } else {
         *obj = NULL;
     }
@@ -312,7 +312,7 @@ sparse_quote(struct sparse_ctx * ctx, struct sexpression ** obj) {
     if(parse_result == SPARSE_OK) {
         /* (quote (parsed_object . NULL)) */
         quote = sexpr_create_value(L"quote", 5);
-        quote->hint = SC_SYMBOL;
+        quote->content = SC_SYMBOL;
         *obj = sexpr_cons(quote, sexpr_cons(parsed_object, NULL));
     }
     

@@ -23,7 +23,7 @@ void run_sparse_symbol_test(struct sparser_test_params * test_params) {
     if(return_value == SPARSE_OK) {
         assert_int_equal(0, wcscmp(sobj->data, test_params->expected));
         /* FIXME define a sexpr_hint() function? */
-        assert_int_equal(SC_SYMBOL, sobj->hint);
+        assert_int_equal(SC_SYMBOL, sobj->content);
         
         sexpr_free(sobj);
     }

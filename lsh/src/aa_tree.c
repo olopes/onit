@@ -11,7 +11,7 @@
 
 
 /* privates declaration */
-static struct aa_node * insert(struct aa_node * subtree, struct svalue * key, struct sexpression * value);
+static struct aa_node * insert(struct aa_node * subtree, struct svalue * key, void * value);
 static struct aa_node * skew(struct aa_node * node);
 static struct aa_node * split(struct aa_node * node);
 static struct aa_node * delete(struct aa_node * subtree, struct svalue * key);
@@ -24,10 +24,10 @@ static inline size_t level(struct aa_node * node);
 static inline size_t min(size_t a, size_t b);
 static inline int leaf(struct aa_node * node);
 #define compare(a,b) svalue_compare(a, b)
-static void visit(struct aa_node * node, void (*callback)(struct svalue * key, struct sexpression * value));
+static void visit(struct aa_node * node, void * param, void (*callback)(void * param, struct svalue * key, void * value));
 
 
-int aa_insert(struct aa_tree * tree, struct svalue * key, struct sexpression * value) {
+int aa_insert(struct aa_tree * tree, struct svalue * key, void * value) {
     struct aa_node * node;
     
     if(tree == NULL || key == NULL) {
@@ -46,7 +46,7 @@ int aa_insert(struct aa_tree * tree, struct svalue * key, struct sexpression * v
 }
 
 
-static struct aa_node * insert(struct aa_node * subtree, struct svalue * key, struct sexpression * value) {
+static struct aa_node * insert(struct aa_node * subtree, struct svalue * key, void * value) {
     struct aa_node * node;
     int cmp;
     
@@ -133,9 +133,9 @@ static inline size_t level(struct aa_node * node) {
     return node == NULL ? 0 : node->level;
 }
 
-struct sexpression * aa_delete(struct aa_tree * tree, struct svalue * key) {
+void * aa_delete(struct aa_tree * tree, struct svalue * key) {
     struct aa_node * node;
-    struct sexpression * value;
+    void * value;
     
     if(tree == NULL || key == NULL) {
         return NULL;
@@ -276,7 +276,7 @@ int aa_has_key(struct aa_tree * tree, struct svalue * key) {
     return 0;
 }
 
-struct sexpression * aa_search(struct aa_tree * tree, struct svalue * key) {
+void * aa_search(struct aa_tree * tree, struct svalue * key) {
     struct aa_node * node;
     int cmp;
     
@@ -301,20 +301,20 @@ struct sexpression * aa_search(struct aa_tree * tree, struct svalue * key) {
     return NULL;
 }
 
-void aa_visit(struct aa_tree * tree, void (*callback)(struct svalue * key, struct sexpression * value)) {
+void aa_visit(struct aa_tree * tree, void * param, void (*callback)(void * param, struct svalue * key, void * value)) {
     if(tree == NULL || callback == NULL) {
         return;
     }
-    visit(tree->root, callback);
+    visit(tree->root, param, callback);
 }
 
-static void visit(struct aa_node * node, void (*callback)(struct svalue * key, struct sexpression * value)) {
+static void visit(struct aa_node * node, void * param, void (*callback)(void * param, struct svalue * key, void * value)) {
     if(node == NULL) {
         return;
     }
     
-    visit(left(node), callback);
-    (*callback)(node->key, node->value);
-    visit(right(node), callback);
+    visit(left(node), param, callback);
+    (*callback)(param, node->key, node->value);
+    visit(right(node), param, callback);
 }
 

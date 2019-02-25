@@ -58,7 +58,7 @@ void sparse_cons_should_return_simplest_list_when_input_is_single_value(void ** 
     assert_sexpr_equal(mock_list, actual_obj);
     assert_int_equal(return_value, SPARSE_OK);
     
-    sexpr_free_pair(mock_list);
+    sexpr_free_object(mock_list);
     sexpr_free(actual_obj);
 }
 
@@ -88,7 +88,7 @@ void sparse_cons_should_return_pair_when_input_has_two_values_separated_by_dot(v
     assert_sexpr_equal(mock_cons, actual_obj);
     assert_int_equal(return_value, SPARSE_OK);
     
-    sexpr_free_pair(mock_cons);
+    sexpr_free_object(mock_cons);
     sexpr_free(actual_obj);
 }
 
@@ -181,9 +181,9 @@ void sparse_cons_should_return_list_when_input_has_multiple_values(void ** param
     assert_int_equal(return_value, SPARSE_OK);
     
     /* the other objects will be freed by sparse_cons */
-    sexpr_free_pair(mock_list1);
-    sexpr_free_pair(mock_list2);
-    sexpr_free_pair(mock_list3);
+    sexpr_free_object(mock_list1);
+    sexpr_free_object(mock_list2);
+    sexpr_free_object(mock_list3);
     sexpr_free(actual_obj);
 }
 

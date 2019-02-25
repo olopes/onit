@@ -62,27 +62,33 @@ sexpr_create_value(wchar_t * cstr, size_t len) {
 
 void WEAK_FOR_UNIT_TEST
 sexpr_free(struct sexpression * sexpr) {
-    if(sexpr) 
-    {
-        if(sexpr_is_cons(sexpr)) 
-        {
-            sexpr_free(sexpr_car(sexpr));
-            sexpr_free(sexpr_cdr(sexpr));
-        }
-        else if(sexpr_is_value(sexpr)) 
-        {
-            free(sexpr->data);
-        }
-            
-        free(sexpr);
+    if(sexpr == NULL) {
+        return;
     }
+    
+    if(sexpr_is_cons(sexpr)) 
+    {
+        sexpr_free(sexpr_car(sexpr));
+        sexpr_free(sexpr_cdr(sexpr));
+    }
+    else if(sexpr_is_value(sexpr)) 
+    {
+        free(sexpr->data);
+    }
+        
+    free(sexpr);
 }
 
 void WEAK_FOR_UNIT_TEST
-sexpr_free_pair(struct sexpression * sexpr) {
-    if(sexpr_is_cons(sexpr)) {
-        free(sexpr);
+sexpr_free_object(struct sexpression * sexpr) {
+    if(sexpr == NULL) {
+        return;
     }
+    
+    if(sexpr_is_value(sexpr)) {
+        free(sexpr->data);
+    }
+    free(sexpr);
 }
 
 /**
@@ -115,9 +121,9 @@ sexpr_value(struct sexpression *sexpr) {
 /**
  * Get the S-Expression type
  */
-enum stype
+unsigned char
 sexpr_type(struct sexpression * sexpr) {
-    return sexpr ? sexpr->type : ST_NIL;
+    return sexpr == NULL ? ST_NIL : sexpr->type ;
 }
 
 /**
