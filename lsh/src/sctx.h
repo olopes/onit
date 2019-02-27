@@ -11,10 +11,13 @@ extern int
 register_primitive_fn(void * sctx, struct svalue * name, primitive_fn * fn);
 
 extern int 
-register_primitive_obj(void * sctx, struct svalue * name, void * obj);
+register_primitive_object(void * sctx, struct svalue * name, void * obj);
 
-extern int 
-register_primitive_value(void * sctx, struct svalue * name, struct sexpression * fn);
+extern struct sexpression * 
+alloc_new_pair(void * sctx, struct sexpression * car, struct sexpression * cdr);
+
+extern struct sexpression * 
+alloc_new_value(void * sctx, wchar_t * wcstr, size_t len);
 
 extern int 
 enter_namespace(void * sctx);

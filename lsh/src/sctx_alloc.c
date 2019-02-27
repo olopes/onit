@@ -1,4 +1,14 @@
-#ifdef _INCLUDE_SCTX_C_
+#include "sctx_privates.h"
+
+static int record_new_object(struct sctx * sctx, struct sexpression * obj);
+static void recycle(struct sctx * sctx);
+static void visit_namespaces(struct sctx * sctx);
+static void free_unvisited_references(struct sctx * sctx);
+static void grow_heap_if_necessary(struct sctx * sctx);
+static inline int heap_should_grow(struct sctx * sctx);
+static void visit_namespace_references(void * ctx, struct svalue * key, void * reference);
+static int sref_comparator(const void * a, const void * b);
+
 
 
 int enter_namespace(void * sctx) {
@@ -37,13 +47,13 @@ struct sexpression * lookup_name(void * sctx, struct svalue * name) {
     namestack = env->namespaces;
     
     while(namestack) {
-        namespace = sexpr_car(namestack);
-        namestack = sexpr_cdr(namestack);
+        namespace = (struct shash_table *) sexpr_car(namestack);
         if(namespace == NULL) continue;
         value = shash_search(namespace, name);
         if(value != NULL) {
             return value;
         }
+        namestack = sexpr_cdr(namestack);
     }
     
     return NULL;
@@ -51,7 +61,6 @@ struct sexpression * lookup_name(void * sctx, struct svalue * name) {
 
 int register_value(void * sctx, struct svalue * name, struct sexpression * value) {
     struct sctx * env = (struct sctx *) sctx;
-    struct sexpression * namestack;
     struct shash_table * namespace;
     
     namespace = (struct shash_table *) sexpr_peek(&env->namespaces);
@@ -63,31 +72,57 @@ int register_value(void * sctx, struct svalue * name, struct sexpression * value
 }
 
 
-struct sexpression * get_reference(void * sctx, struct svalue * name, struct sexpression * obj) {
-    struct sexpression * reference;
+struct sexpression * alloc_new_pair(void * sctx, struct sexpression * car, struct sexpression * cdr) {
+    struct sexpression * object = sexpr_cons(car, cdr);
     
-    reference = lookup_name(sctx, name);
-    if(reference == NULL) {
-        reference = new_reference(sctx, name, obj);
-        register_value(sctx, name, reference);
+    if(object == NULL) {
+        return NULL;
     }
     
-    return reference;
+    if(record_new_object((struct sctx *) sctx, object)) {
+        /* mem full? error? */
+        sexpr_free_object(object);
+        object = NULL;
+    }
+    
+    return object;
+}
+    
+struct sexpression * alloc_new_value(void * sctx, wchar_t * wcstr, size_t len) {
+    /* future improvement: string cache */
+    struct sexpression * object = sexpr_create_value(wcstr, len);
+    
+    if(object == NULL) {
+        return NULL;
+    }
+    
+    if(record_new_object((struct sctx *) sctx, object)) {
+        /* mem full? error? */
+        sexpr_free_object(object);
+        object = NULL;
+    }
+    
+    return object;
 }
 
-static struct sexpression * new_reference(struct sctx * sctx, struct svalue * name, struct sexpression * obj) {
-    struct sexpression * reference;
+
+static int record_new_object(struct sctx * sctx, struct sexpression * obj) {
     
-    if(sctx->heap_load == sctx->heap_load) {
+    if(sctx->heap_load >= sctx->heap_size) {
         recycle(sctx);
+        
+        /* FIXME handle errors ? */
+        if(sctx->heap_load >= sctx->heap_size) {
+            return 1;
+        }
     }
     
     sctx->heap[sctx->heap_load] = obj;
     
-    return obj;
+    return 0;
 }
 
-static void recicle(struct sctx * sctx) {
+static void recycle(struct sctx * sctx) {
     
     /* visit all nodes reachable from the namespaces */
     sctx->visit = !sctx->visit;
@@ -97,7 +132,7 @@ static void recicle(struct sctx * sctx) {
     free_unvisited_references(sctx);
     
     /* defreag heap */
-    qsort(sctx->heap, sctx->heap_size, sizeof(struct sreference), sref_comparator);
+    qsort(sctx->heap, sctx->heap_size, sizeof(struct sexpression *), sref_comparator);
     
     /* grow heap  if load >= 50% of the heap size */
     grow_heap_if_necessary(sctx);
@@ -106,6 +141,7 @@ static void recicle(struct sctx * sctx) {
 
 static void visit_namespaces(struct sctx * sctx) {
     struct sexpression * ns;
+    struct shash_table * namespace;
     ns = sctx->namespaces;
     
     /*
@@ -119,8 +155,9 @@ static void visit_namespaces(struct sctx * sctx) {
      */
     
     while(ns != NULL) {
-        shash_visit(namespace, visit_namespace_references);
-        visit_namespace_elements(sexpr_car(ns), sctx->visit);
+        namespace = (struct shash_table *) sexpr_car(ns);
+        shash_visit(namespace, sctx, visit_namespace_references);
+        /* visit_namespace_elements(sexpr_car(ns), sctx->visit); */
         ns = sexpr_cdr(ns);
     }
 }
@@ -128,54 +165,55 @@ static void visit_namespaces(struct sctx * sctx) {
 static void free_unvisited_references(struct sctx * sctx) {
     struct sexpression * ns;
     struct sexpression * values;
-    struct sreference * heap;
+    struct sexpression ** heap;
     size_t i;
     
     for(i = 0, heap = sctx->heap; i < sctx->heap_size; i++, heap++) {
-        if(heap->name != NULL && heap->visit != sctx->visit) {
-            release_reference(heap);
+        if(*heap != NULL && (*heap)->visit != sctx->visit) {
+            sexpr_free_object(*heap);
+            *heap = NULL;
             sctx->heap_load--;
         }
     }
 }
 
+
 static void grow_heap_if_necessary(struct sctx * sctx) {
     struct sexpression * ns;
     struct sexpression * values;
-    struct sreference * heap;
+    struct sexpression ** heap;
     size_t new_size;
     
-    if(sctx->heap_size < MAX_OBJ && sctx->heap_load*2 > sctx->heap_size) {
+    if(heap_should_grow(sctx)) {
         new_size = sctx->heap_size << 1;
-        heap = (struct sreference *) realloc(sctx->heap, sizeof(struct sreference)*new_size);
+        heap = (struct sexpression **) realloc(sctx->heap, sizeof(struct sexpression *)*new_size);
         if(heap != NULL) {
-            memset(heap, 0, sizeof(struct sreference)*(new_size - sctx->heap_load));
+            memset(heap, 0, sizeof(struct sexpression *) * (new_size - sctx->heap_load));
             sctx->heap_size = new_size;
             sctx->heap = heap;
         }
     }
 }
 
-static void visit_namespace_references(struct svalue * key, struct sreference * reference) {
-    if(namespace == NULL) {
+static inline int heap_should_grow(struct sctx * sctx) {
+    return (sctx->heap_size < HEAP_MIN_SIZE && sctx->heap_load*2 > sctx->heap_size);
+}
+
+static void visit_namespace_references(void * ctx, struct svalue * key, void * reference) {
+    struct sctx * env = (struct sctx *) ctx;
+    
+    if(reference == NULL) {
         return;
     }
     
+    /* utility specific to sexpr to reach all nodes */
+    /* sexpr_mark_reachable((struct sexpression *) reference, env->visit); */
     
 }
 
-static void release_reference(struct sreference ** heap) {
-    if(heap->name == NULL) {
-        return;
-    }
-    sexpr_free_object(*heap);
-    *heap = NULL;
-}
-
-static int sref_comparator(void * a, void * b) {
+static int sref_comparator(const void * a, const void * b) {
     unsigned long aa = (unsigned long)a;
     unsigned long bb = (unsigned long)b;
     return bb-aa;
 }
-    
-#endif
+
