@@ -23,7 +23,7 @@ struct sexpression {
     size_t len;
     void *data;
     struct sexpression * cdr;
-    unsigned char visit;
+    unsigned char visit_mark;
     unsigned char type;
     unsigned short content;
 };
@@ -105,5 +105,17 @@ sexpr_reverse(struct sexpression * sexpr);
  */
 extern int 
 sexpr_equal(struct sexpression * a, struct sexpression * b);
+
+/**
+ * Mark S-Expression and its references as visited
+ */
+extern void
+sexpr_mark_reachable(struct sexpression * sexpr, unsigned char visit_mark);
+
+/**
+ * Return TRUE if S-Expression visit mark is same as the parameter mark
+ */
+extern int
+sexpr_marked(struct sexpression * sexpr, unsigned char visit_mark);
 
 #endif /* __SEXPR__H__ */

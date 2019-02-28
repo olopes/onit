@@ -20,6 +20,7 @@ struct sctx {
     int heap_size;
     int heap_load;
     struct sexpression ** heap;
+    void (*namespace_destructor)(struct sctx * ctx);
 };
 
 #define HEAP_MIN_SIZE 32

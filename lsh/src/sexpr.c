@@ -221,3 +221,22 @@ sexpr_reverse(struct sexpression * sexpr) {
     
     return reversed;
 }
+
+
+
+void
+sexpr_mark_reachable(struct sexpression * object, unsigned char visit_mark) {
+    struct sexpression * sexpr = object;
+    
+    while(sexpr != NULL) {
+        sexpr->visit_mark = visit_mark;
+        sexpr_mark_reachable(sexpr_car(sexpr), visit_mark);
+        sexpr = sexpr_cdr(sexpr);
+    }
+    
+}
+
+int
+sexpr_marked(struct sexpression * sexpr, unsigned char visit_mark) {
+    return sexpr != NULL && sexpr->visit_mark == visit_mark;
+}

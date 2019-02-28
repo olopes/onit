@@ -46,7 +46,7 @@ svisitor(struct sexpression * obj, struct scallback * callback) {
         .len = 0, 
         .data = &cb_enter,
         .cdr = NULL,
-        .visit = 0,
+        .visit_mark = 0,
         .type = ST_VALUE,
         .content = SC_PRIMITIVE,
     };
@@ -54,7 +54,7 @@ svisitor(struct sexpression * obj, struct scallback * callback) {
         .len = 0, 
         .data = &cb_visit,
         .cdr = NULL,
-        .visit = 0,
+        .visit_mark = 0,
         .type = ST_VALUE,
         .content = SC_PRIMITIVE,
     };
@@ -62,7 +62,7 @@ svisitor(struct sexpression * obj, struct scallback * callback) {
         .len = 0, 
         .data = &cb_leave,
         .cdr = NULL,
-        .visit = 0,
+        .visit_mark = 0,
         .type = ST_VALUE,
         .content = SC_PRIMITIVE,
     };

@@ -3,6 +3,7 @@
 static void load_array_to_sexpr(struct sexpression ** list, char ** array);
 static void load_primitives(struct sctx * sctx);
 static wchar_t * convert_to_wcstr(const char * src);
+static void destroy_primitive_references(void * sctx, struct svalue * name, void * primitive_ptr);
 
 /* some static/constant names */
 static struct svalue key_true = {
@@ -24,6 +25,30 @@ static struct svalue key_env = {
     .len = 4,
     .data = L"#env",
 };
+
+static struct primitive TRUE_PRIMITIVE = {
+    .type = PRIMITIVE_VALUE,
+    .value = { .value = &key_true },
+    .destructor = NULL,
+};
+
+static struct primitive FALSE_PRIMITIVE = {
+    .type = PRIMITIVE_VALUE,
+    .value = { NULL },
+    .destructor = NULL,
+};
+
+static struct primitive ARGUMENTS_PRIMITIVE = {
+    .type = PRIMITIVE_SEXPRESSION,
+    .value = { NULL },
+    .destructor = NULL,
+};
+static struct primitive ENVIRONMENT_PRIMITIVE = {
+    .type = PRIMITIVE_SEXPRESSION,
+    .value = { NULL },
+    .destructor = NULL,
+};
+
 
 void * 
 init_environment(char **argv, char **envp) {
@@ -57,6 +82,7 @@ init_environment(char **argv, char **envp) {
         .heap_size = HEAP_MIN_SIZE,
         .heap_load = 0,
         .heap = heap,
+        .namespace_destructor = NULL,
     };
     
     
@@ -68,6 +94,8 @@ init_environment(char **argv, char **envp) {
     load_primitives(sctx);
     
     /* create two references */
+    
+    return 0;
 }
 
 
@@ -111,12 +139,58 @@ static wchar_t * convert_to_wcstr(const char * src) {
 
 static void load_primitives(struct sctx * sctx) {
     
-    register_primitive_object(sctx, &key_true, &key_true);
-    register_primitive_object(sctx, &key_false, NULL);
+    register_primitive(sctx, &key_true, &TRUE_PRIMITIVE);
+    register_primitive(sctx, &key_false, &FALSE_PRIMITIVE);
     
-    register_primitive_object(sctx, &key_args, sctx->arguments);
+    ARGUMENTS_PRIMITIVE.value.sexpression = sctx->arguments;
+    register_primitive(sctx, &key_args, &ARGUMENTS_PRIMITIVE);
     
-    register_primitive_object(sctx, &key_env, sctx->environment);
+    ENVIRONMENT_PRIMITIVE.value.sexpression = sctx->environment;
+    register_primitive(sctx, &key_env, &ENVIRONMENT_PRIMITIVE);
     
+}
+
+int register_primitive(void * sctx_ptr, struct svalue * name, struct primitive * primitive) {
+    struct sctx * sctx = (struct sctx *) sctx_ptr;
+    
+    if(sctx == NULL || name == NULL) {
+        return 1;
+    }
+    
+    if(shash_has_key(&sctx->primitives, name)) {
+        return 2;
+    }
+    
+    return shash_insert(&sctx->primitives, name, primitive);
+}
+
+
+
+void 
+release_environment(void * sctx_ptr) {
+    struct sctx * sctx = (struct sctx *) sctx_ptr;
+    
+    if(sctx == NULL) {
+        return;
+    }
+    
+    sexpr_free(sctx->arguments);
+    sexpr_free(sctx->environment);
+    
+    /* TODO release remaining primitives before releasing the hashtable */
+    shash_visit(&sctx->primitives, sctx, destroy_primitive_references);
+    shash_free(&sctx->primitives);
+
+    if(sctx->namespace_destructor != NULL) {
+        sctx->namespace_destructor(sctx);
+    }
+}
+
+static void destroy_primitive_references(void * sctx, struct svalue * name, void * primitive_ptr) {
+    struct primitive * primitive = (struct primitive *) primitive_ptr;
+    
+    if(primitive != NULL && primitive->destructor != NULL) {
+        primitive->destructor(sctx, primitive);
+    }
 }
 

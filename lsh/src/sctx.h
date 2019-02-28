@@ -1,17 +1,43 @@
 #ifndef __SCTX_H__
 #define __SCTX_H__
 
+#include "sexpr.h"
+#include "svalue.h"
+#include "ostr.h"
 
+struct primitive;
 typedef struct sexpression * (*primitive_fn)(void * sctx, struct sexpression  *);
+typedef void (*destructor_fn)(void * sctx, struct primitive *);
+
+#define PRIMITIVE_FUNCTION 0
+#define PRIMITIVE_SEXPRESSION 1
+#define PRIMITIVE_VALUE 2
+#define PRIMITIVE_STRING 3
+
+struct primitive {
+    unsigned int type;
+    union {
+        primitive_fn function;
+        struct sexpression * sexpression;
+        struct svalue * value;
+        struct ostr * string;
+    } value;
+    destructor_fn destructor;
+};
+
+
 
 extern void * 
 init_environment(char **argv, char **envp);
 
-extern int 
-register_primitive_fn(void * sctx, struct svalue * name, primitive_fn * fn);
+extern void 
+release_environment(void * sctx);
+
+extern void 
+force_gc(void * sctx);
 
 extern int 
-register_primitive_object(void * sctx, struct svalue * name, void * obj);
+register_primitive(void * sctx, struct svalue * name, struct primitive * primitive);
 
 extern struct sexpression * 
 alloc_new_pair(void * sctx, struct sexpression * car, struct sexpression * cdr);
