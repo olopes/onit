@@ -94,6 +94,9 @@ init_environment(char **argv, char **envp) {
     load_primitives(sctx);
     
     /* create two references */
+    enter_namespace(sctx);
+    /* register args and env. forget about primitives*/
+
     
     return 0;
 }
@@ -142,12 +145,13 @@ static void load_primitives(struct sctx * sctx) {
     register_primitive(sctx, &key_true, &TRUE_PRIMITIVE);
     register_primitive(sctx, &key_false, &FALSE_PRIMITIVE);
     
+    /*
     ARGUMENTS_PRIMITIVE.value.sexpression = sctx->arguments;
     register_primitive(sctx, &key_args, &ARGUMENTS_PRIMITIVE);
     
     ENVIRONMENT_PRIMITIVE.value.sexpression = sctx->environment;
     register_primitive(sctx, &key_env, &ENVIRONMENT_PRIMITIVE);
-    
+    */
 }
 
 int register_primitive(void * sctx_ptr, struct svalue * name, struct primitive * primitive) {
@@ -181,6 +185,7 @@ release_environment(void * sctx_ptr) {
     shash_visit(&sctx->primitives, sctx, destroy_primitive_references);
     shash_free(&sctx->primitives);
 
+    leave_namespace(sctx);
     if(sctx->namespace_destructor != NULL) {
         sctx->namespace_destructor(sctx);
     }
