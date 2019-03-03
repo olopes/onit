@@ -143,6 +143,29 @@ void sparse_should_parse_multiple_objects_from_a_stream(void ** param) {
     release_sparser_stream(stream);
 }
 
+void sparse_should_ignore_comments(void ** param) {
+    struct sexpression * actual_object;
+    struct sexpression * expected_object;
+    struct sparser_stream * stream;
+    wchar_t * data = L"; single line comment\n#|multi\nline\ncomment|#\n2";
+    
+    /* wchar_t * data = L"(hey   |y-o-u|    \"check them dubs\" \n 123\n)"; */
+    
+    stream = create_sparser_stream(WCSTR_ADAPTER, data,wcslen(data));
+    expected_object = sexpr_create_cstr(L"2");
+    
+    assert_int_equal(sparse(stream, &actual_object), SPARSE_OK);
+    assert_sexpr_equal(expected_object, actual_object);
+    sexpr_free(actual_object);
+    sexpr_free(expected_object);
+
+    
+    assert_int_equal(sparse(stream, &actual_object), SPARSE_EOF);
+    assert_null(actual_object);
+    
+    release_sparser_stream(stream);
+}
+
 
 /* These functions will be used to initialize
    and clean resources up after each test run */
@@ -169,6 +192,7 @@ int main (void)
         cmocka_unit_test (sparse_should_do_parse_pair_and_return_ok),
         cmocka_unit_test (sparse_should_do_parse_a_list_from_a_file),
         cmocka_unit_test (sparse_should_parse_multiple_objects_from_a_stream),
+        cmocka_unit_test (sparse_should_ignore_comments),
     };
 
     /* If setup and teardown functions are not
