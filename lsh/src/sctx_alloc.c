@@ -216,3 +216,11 @@ static int sref_comparator(const void * a, const void * b) {
     return bb-aa;
 }
 
+void
+sctx_gc(void * sctx_ptr) {
+    struct sctx * sctx = (struct sctx *) sctx_ptr;
+    
+    /* TODO implement */
+    
+}
+

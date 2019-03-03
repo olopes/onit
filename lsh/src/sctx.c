@@ -186,9 +186,7 @@ release_environment(void * sctx_ptr) {
     shash_free(&sctx->primitives);
 
     leave_namespace(sctx);
-    if(sctx->namespace_destructor != NULL) {
-        sctx->namespace_destructor(sctx);
-    }
+    sctx_gc(sctx);
 }
 
 static void destroy_primitive_references(void * sctx, struct svalue * name, void * primitive_ptr) {

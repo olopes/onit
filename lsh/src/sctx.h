@@ -34,7 +34,7 @@ extern void
 release_environment(void * sctx);
 
 extern void 
-force_gc(void * sctx);
+sctx_gc(void * sctx);
 
 extern int 
 register_primitive(void * sctx, struct svalue * name, struct primitive * primitive);
