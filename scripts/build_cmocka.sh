@@ -21,3 +21,4 @@ then
 fi
 popd
 
+# ../../../tcc/bin/tcc -c cmocka.c -o ../../../cmocka/lib/cmocka-linux.o -static -fPIC -g -I. -I../include -DHAVE_SIGNAL_H

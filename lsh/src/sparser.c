@@ -42,7 +42,7 @@ sparse(struct sparser_stream * stream, struct sexpression ** obj) {
 }
 
 
-WEAK_FOR_UNIT_TEST int 
+static int 
 sparse_object(struct sparse_ctx * ctx, struct sexpression ** obj) {
     struct sexpression * sexpr;
     int ret_val;
@@ -90,7 +90,7 @@ sparse_object(struct sparse_ctx * ctx, struct sexpression ** obj) {
 }
 
 
-WEAK_FOR_UNIT_TEST int 
+static int 
 sparse_string(struct sparse_ctx * ctx, struct sexpression ** obj) {
     struct ostr * str;
     wchar_t escaped_chars[5];
@@ -187,7 +187,7 @@ sparse_string(struct sparse_ctx * ctx, struct sexpression ** obj) {
     return SPARSE_OK;
 }
 
-WEAK_FOR_UNIT_TEST int 
+static int 
 sparse_symbol(struct sparse_ctx * ctx, struct sexpression ** obj) {
     struct ostr * str;
     wchar_t * cstr;
@@ -302,7 +302,7 @@ SYM_PARSE_END:
     return return_value;
 }
 
-WEAK_FOR_UNIT_TEST int 
+static int 
 sparse_quote(struct sparse_ctx * ctx, struct sexpression ** obj) {
     int parse_result;
     struct sexpression * parsed_object;
@@ -319,7 +319,7 @@ sparse_quote(struct sparse_ctx * ctx, struct sexpression ** obj) {
     return parse_result;
 }
 
-WEAK_FOR_UNIT_TEST int 
+static int 
 sparse_cons(struct sparse_ctx * ctx, struct sexpression ** obj) {
     struct sexpression * sexpr;
     struct sexpression * list;

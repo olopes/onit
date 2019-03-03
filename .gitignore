@@ -2,6 +2,7 @@ bin/
 build/
 busybox/
 cmocka/
+tcc/
 
 *.gcda
 *.gcno

@@ -279,91 +279,6 @@ void ostr_compact_should_reorganize_string_internals(void ** param)
     
 }
 
-wchar_t * TEST_STR;
-FILE * TEST_STREAM;
-int TEST_CALLS;
-wint_t 
-__wrap_fputwc(wchar_t wc, FILE * stream) {
-    assert_int_equal(*TEST_STR, wc);
-    
-    assert_ptr_equal(TEST_STREAM, stream);
-    
-    TEST_STR++;
-    TEST_CALLS++;
-    return 1;
-}
-
-
-void ostr_puts_should_write_contents_to_stdout(void ** param) 
-{
-    (void) param; /* unused */
-    wchar_t * data = L"HELLO!";
-    struct ostr test_ostr;
-    struct ostr_token test_token1;
-    struct ostr_token test_token2;
-    wchar_t * strang1 = L"HEL";
-    wchar_t * strang2 = L"LO!";
-    size_t written;
-    
-    test_ostr.first = &test_token1;
-    test_ostr.last = test_token1.next = &test_token2;
-    test_token2.next = NULL;
-    test_token1.str = strang1;
-    test_token2.str = strang2;
-    test_ostr.length = 6;
-    test_token1.length = test_token2.length = 3;
-    test_token1.size = test_token2.size = 3;
-    
-    TEST_STR = data;
-    TEST_STREAM = stdout;
-    TEST_CALLS = 0;
-    
-    
-    written = ostr_puts(&test_ostr);
-    
-    
-    assert_int_equal(6, written);
-    assert_int_equal(6, TEST_CALLS);
-    
-    /* other assertions performed by the wrapper function */
-   
-}
-
-void ostr_fputs_should_write_contents_to_stderr(void ** param) 
-{
-    (void) param; /* unused */
-    wchar_t * data = L"COOL!!";
-    struct ostr test_ostr;
-    struct ostr_token test_token1;
-    struct ostr_token test_token2;
-    wchar_t * strang1 = L"COO";
-    wchar_t * strang2 = L"L!!";
-    size_t written;
-    
-    test_ostr.first = &test_token1;
-    test_ostr.last = test_token1.next = &test_token2;
-    test_token2.next = NULL;
-    test_token1.str = strang1;
-    test_token2.str = strang2;
-    test_ostr.length = 6;
-    test_token1.length = test_token2.length = 3;
-    test_token1.size = test_token2.size = 3;
-    
-    TEST_STR = data;
-    TEST_STREAM = stderr;
-    TEST_CALLS = 0;
-    
-    
-    written = ostr_fputs(&test_ostr, stderr);
-    
-    
-    assert_int_equal(6, written);
-    assert_int_equal(6, TEST_CALLS);
-    
-    /* other assertions performed by the wrapper function */
-   
-}
-
 void ostr_char_at_should_return_nth_char(void ** param) 
 {
     (void) param; /* unused */
@@ -448,8 +363,6 @@ int main (void)
         cmocka_unit_test (ostr_dup_should_create_new_string_from_original_string),
         cmocka_unit_test (ostr_concat_should_create_new_string_from_two_strings),
         cmocka_unit_test (ostr_compact_should_reorganize_string_internals),
-        cmocka_unit_test (ostr_puts_should_write_contents_to_stdout),
-        cmocka_unit_test (ostr_fputs_should_write_contents_to_stderr),
         cmocka_unit_test (ostr_char_at_should_return_nth_char),
         cmocka_unit_test (ostr_char_at_should_return_WEOF_when_out_of_bounds),
     };
