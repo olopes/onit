@@ -4,6 +4,10 @@ busybox/
 cmocka/
 tcc/
 
+lsh/.kdev4/
+lsh/lsh.kdev4
+
+
 *.gcda
 *.gcno
 *.bak
