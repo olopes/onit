@@ -14,14 +14,14 @@ PROD_OBJ = $(patsubst %.c,%.o,$(subst src/,build/,$(wildcard src/*.c))) build/ma
 
 TEST_CFLAGS = -g -Wall -pedantic -finput-charset=UTF-8 -fPIC $(DEPFLAGS) -Isrc -I$(CMOCKA_ROOT)/include -include test/test_definitions.h
 # TEST_LDFLAGS = -lcmocka -L$(CMOCKA_ROOT)/lib
-TEST_LDFLAGS = ../cmocka/lib/cmocka-linux.o
+TEST_LDFLAGS = ../cmocka/lib/cmocka-linux-gcc.o
 
 TESTS_PROD_SRC = $(wildcard src/*.c)
 TESTS_PROD_OBJ = $(patsubst %.c,build/%.o,$(subst src/,test/,$(TESTS_PROD_SRC)))
 TESTS_EXECS = $(patsubst %.c,build/%.t,$(wildcard test/test*.c))
 TESTS = $(patsubst %.t,%.pass,$(TESTS_EXECS))
-CC=../tcc/bin/tcc
-# CC=gcc
+#CC=../tcc/bin/tcc
+CC=gcc
 
 all: build/ostr build/sexpr build/sparse build/lsh tests 
 

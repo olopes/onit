@@ -9,15 +9,15 @@ struct sparse_ctx {
     wint_t next;
 };
 
-int 
+static int 
 sparse_object(struct sparse_ctx * ctx, struct sexpression ** obj);
-int 
+static int 
 sparse_string(struct sparse_ctx * ctx, struct sexpression ** obj);
-int 
+static int 
 sparse_symbol(struct sparse_ctx * ctx, struct sexpression ** obj);
-int 
+static int 
 sparse_quote(struct sparse_ctx * ctx, struct sexpression ** obj);
-int 
+static int 
 sparse_cons(struct sparse_ctx * ctx, struct sexpression ** obj);
 
 #endif
