@@ -19,5 +19,7 @@ static int
 sparse_quote(struct sparse_ctx * ctx, struct sexpression ** obj);
 static int 
 sparse_cons(struct sparse_ctx * ctx, struct sexpression ** obj);
+static int 
+sparse_comment(struct sparse_ctx * ctx, struct sexpression * eoc);
 
 #endif

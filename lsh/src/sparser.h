@@ -12,6 +12,7 @@
 #define SPARSE_PAREN 3
 #define SPARSE_BAD_SYM 4
 #define SPARSE_DOT_SYM 5
+#define SPARSE_COMMENT 6
 
 struct sparser_stream;
 

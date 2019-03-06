@@ -1,3 +1,4 @@
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <wctype.h>
@@ -76,9 +77,23 @@ sparse_object(struct sparse_ctx * ctx, struct sexpression ** obj) {
                 translates to (quote xxxx)
                 */
                 ret_val = sparse_quote(ctx, &sexpr);
+            } else if(ctx->next == L';') {
+                /* start single line comment */
+                sexpr = sexpr_create_value(L"\n",1);
+                ret_val = SPARSE_COMMENT;
             } else {
                 /* start or end symbol */
                 ret_val = sparse_symbol(ctx, &sexpr);
+            }
+            
+            /* check if we stumbled into a comment */
+            if(ret_val == SPARSE_COMMENT) {
+                ret_val = sparse_comment(ctx, sexpr);
+                sexpr_free_object(sexpr);
+                sexpr = NULL;
+                if(ret_val == SPARSE_OK) {
+                    continue;
+                }
             }
             break;
         }
@@ -231,6 +246,26 @@ sparse_symbol(struct sparse_ctx * ctx, struct sexpression ** obj) {
             if(ctx->prev == L'#') {
                 if(ctx->prev == L'%') {
                     escape_state = 0;
+                } else if(ctx->prev == L'=') {
+                    /* append to comment body */
+                    ostr_append(str, L'|');
+                } else if(ctx->prev == L'|') {
+                    /* in a comment */
+                    ostr_append(str, L'#');
+                    return_value = SPARSE_COMMENT;
+                    goto SYM_PARSE_END;
+                } else {
+                    return_value = SPARSE_BAD_SYM;
+                    goto SYM_PARSE_END;
+                }
+            } else if(ctx->prev == L'=') {
+                if(ctx->prev == L'=') {
+                    /* append to comment body */
+                } else if(ctx->prev == L'|') {
+                    /* in a comment */
+                    ostr_append(str, L'#');
+                    return_value = SPARSE_COMMENT;
+                    goto SYM_PARSE_END;
                 } else {
                     return_value = SPARSE_BAD_SYM;
                     goto SYM_PARSE_END;
@@ -290,6 +325,11 @@ SYM_PARSE_END:
     }
     
     if(return_value == SPARSE_OK) {
+        cstr=ostr_str(str);
+        *obj = sexpr_create_value(cstr, ostr_length(str));
+        free(cstr);
+        (*obj)->content = SC_SYMBOL;
+    } else if(return_value == SPARSE_COMMENT) {
         cstr=ostr_str(str);
         *obj = sexpr_create_value(cstr, ostr_length(str));
         free(cstr);
@@ -376,3 +416,32 @@ EXIT_WITH_SUCCESS:
     return return_value;
 }
 
+static int 
+sparse_comment(struct sparse_ctx * ctx, struct sexpression * sexpr_eoc) {
+    int return_value;
+    struct svalue * end_of_comment;
+    size_t pos;
+    
+    end_of_comment = sexpr_value(sexpr_eoc);
+    pos = 0;
+    
+    while(1) {
+        if (ctx->next == WEOF) {
+            /* eof found in a normal symbol. */
+            return_value = SPARSE_EOF;
+            break;
+        } else if(ctx->next == end_of_comment->data[pos]) {
+            pos++;
+            if(pos == end_of_comment->len) {
+                return_value = SPARSE_OK;
+                break;
+            }
+        } else {
+            pos = 0;
+        }
+
+        ctx->prev = ctx->next;
+        ctx->next = READ_CHAR(ctx->stream);
+    }
+    return return_value;
+}
