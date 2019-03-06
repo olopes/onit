@@ -1,4 +1,5 @@
 /* prod code includes */
+#include <cmocka.h>
 #include <string.h>
 #include "sparser.h"
 #include "cstr_sparser_adapter.h"

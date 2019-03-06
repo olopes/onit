@@ -1,8 +1,8 @@
 /* prod code includes */
+#include <cmocka.h>
 #include <stdlib.h>
 #include <string.h>
 #include <wchar.h>
-#include <cmocka.h>
 #include "sctx.h"
 #include "sctx_privates.h"
 

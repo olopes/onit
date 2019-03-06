@@ -1,4 +1,5 @@
 /* prod code includes */
+#include <cmocka.h>
 #include <stdlib.h>
 #include <string.h>
 #include <wchar.h>

@@ -1,5 +1,6 @@
 #ifndef ASSERT_SEXPR
 #define ASSERT_SEXPR
+#include <cmocka.h>
 #include "sexpr.h"
 
 

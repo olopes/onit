@@ -1,3 +1,4 @@
+#include <cmocka.h>
 /* TODO implement */
 
 void null_test_failure(void ** param) {

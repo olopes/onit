@@ -1,4 +1,5 @@
 /* prod code includes */
+#include <cmocka.h>
 #include <wctype.h>
 #include <wchar.h>
 #include "ostr.h"
