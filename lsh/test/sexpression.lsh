@@ -1,2 +1,5 @@
 ; Test file for sparser test cases
+#==| Big comment to be ignored.
+It can take multiple lines
+Like this |==#
 (abc |d.e-f| "ghi" 1/3+4i)
