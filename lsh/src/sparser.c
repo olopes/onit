@@ -206,6 +206,7 @@ static int
 sparse_symbol(struct sparse_ctx * ctx, struct sexpression ** obj) {
     struct ostr * str;
     wchar_t * cstr;
+    wchar_t aux;
     int escape_state;
     int return_value;
     
@@ -244,14 +245,13 @@ sparse_symbol(struct sparse_ctx * ctx, struct sexpression ** obj) {
         } else if(escape_state == 3) {
             /* I'm not totally sure about this one.... */
             if(ctx->prev == L'#') {
-                if(ctx->prev == L'%') {
+                if(ctx->next == L'%') {
                     escape_state = 0;
-                } else if(ctx->prev == L'=') {
+                } else if(ctx->next == L'=') {
                     /* append to comment body */
-                    ostr_append(str, L'|');
-                } else if(ctx->prev == L'|') {
+                } else if(ctx->next == L'|') {
                     /* in a comment */
-                    ostr_append(str, L'#');
+                    ostr_append(str, L'|');
                     return_value = SPARSE_COMMENT;
                     goto SYM_PARSE_END;
                 } else {
@@ -259,11 +259,11 @@ sparse_symbol(struct sparse_ctx * ctx, struct sexpression ** obj) {
                     goto SYM_PARSE_END;
                 }
             } else if(ctx->prev == L'=') {
-                if(ctx->prev == L'=') {
+                if(ctx->next == L'=') {
                     /* append to comment body */
-                } else if(ctx->prev == L'|') {
+                } else if(ctx->next == L'|') {
                     /* in a comment */
-                    ostr_append(str, L'#');
+                    ostr_append(str, L'|');
                     return_value = SPARSE_COMMENT;
                     goto SYM_PARSE_END;
                 } else {
@@ -331,6 +331,8 @@ SYM_PARSE_END:
         (*obj)->content = SC_SYMBOL;
     } else if(return_value == SPARSE_COMMENT) {
         cstr=ostr_str(str);
+        cstr[0]=L'|';
+        cstr[ostr_length(str)-1] = L'#';
         *obj = sexpr_create_value(cstr, ostr_length(str));
         free(cstr);
         (*obj)->content = SC_SYMBOL;
