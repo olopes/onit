@@ -12,6 +12,18 @@ void sctx_do_nothing(void ** param)
     assert_true(1);
 }
 
+void sctx_register_new_symbol(void ** param)
+{
+    (void) param; /* unused */
+    assert_true(1);
+}
+
+void sctx_enter_namespace_register_new_symbol_leave_namespace_and_gc(void ** param)
+{
+    (void) param; /* unused */
+    assert_true(1);
+}
+
 /* These functions will be used to initialize
    and clean resources up after each test run */
 int setup (void ** state)
@@ -46,6 +58,8 @@ int main (void)
     const struct CMUnitTest tests [] =
     {
         cmocka_unit_test_setup_teardown (sctx_do_nothing, setup, teardown),
+        cmocka_unit_test_setup_teardown (sctx_register_new_symbol, setup, teardown),
+        cmocka_unit_test_setup_teardown (sctx_enter_namespace_register_new_symbol_leave_namespace_and_gc, setup, teardown),
     };
 
     /* If setup and teardown functions are not

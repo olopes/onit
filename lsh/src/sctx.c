@@ -98,7 +98,7 @@ init_environment(char **argv, char **envp) {
     /* register args and env. forget about primitives*/
 
     
-    return 0;
+    return sctx;
 }
 
 
@@ -111,6 +111,7 @@ static void load_array_to_sexpr(struct sexpression ** list_ptr, char ** array) {
     while(*array) {
         wcstr = convert_to_wcstr(*array);        
         list = sexpr_cons(sexpr_create_value(wcstr, wcslen(wcstr)), list);
+        free(wcstr);
         array++;
     }
     
@@ -187,6 +188,9 @@ release_environment(void * sctx_ptr) {
 
     leave_namespace(sctx);
     sctx_gc(sctx);
+    
+    free(sctx->heap);
+    free(sctx);
 }
 
 static void destroy_primitive_references(void * sctx, struct svalue * name, void * primitive_ptr) {

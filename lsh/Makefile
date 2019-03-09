@@ -18,12 +18,12 @@ TEST_LDFLAGS = ../cmocka/lib/cmocka-linux-gcc.o
 
 TESTS_PROD_SRC = $(wildcard src/*.c)
 TESTS_PROD_OBJ = $(patsubst %.c,build/%.o,$(subst src/,test/,$(TESTS_PROD_SRC)))
-TESTS_EXECS = $(patsubst %.c,build/%.t,$(wildcard test/test*.c))
-TESTS = $(patsubst %.t,%.pass,$(TESTS_EXECS))
+TESTS = $(patsubst %.c,build/%.t,$(wildcard test/test*.c))
+TESTS_PASS = $(patsubst %.t,%.pass,$(TESTS))
 #CC=../tcc/bin/tcc
 CC=gcc
 
-all: build/ostr build/sexpr build/sparse build/lsh tests 
+all: build/ostr build/sexpr build/sparse build/lsh check 
 
 build/main.c:
 	echo 'int MAIN(int a, char ** b); int main(int a, char**b) { return MAIN(a,b); }' > build/main.c
@@ -62,9 +62,11 @@ build/test/%.pass: build/test/%.t
 
 tests: $(TESTS)
 
-coverage: tests
+check: tests $(TESTS_PASS)
 
-.PHONY: all tests coverage clean
+coverage: check
+
+.PHONY: all tests check coverage clean
 
 .PRECIOUS: build/test/%.t
 

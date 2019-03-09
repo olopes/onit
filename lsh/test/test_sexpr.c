@@ -3,6 +3,7 @@
 #include <wctype.h>
 #include <wchar.h>
 #include <string.h>
+#include <stdlib.h>
 #include "sexpr.h"
 
 #include "assert_sexpr.c"
