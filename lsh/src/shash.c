@@ -1,3 +1,4 @@
+#include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
 #include <wchar.h>
@@ -47,7 +48,7 @@ static int resize_table_if_necessary(struct shash_table * hashtable) {
     if(hashtable->size == 0) {
         new_table.size = DEFAULT_HASHTABLE_SIZE;
     } else {
-        new_table.size = hashtable->size << 1;
+        new_table.size = hashtable->size * 2;
     }
     
     new_table.load = 0;
@@ -58,12 +59,13 @@ static int resize_table_if_necessary(struct shash_table * hashtable) {
     }
     memset(new_table.table, 0, sizeof(struct shash_entry) * new_table.size);
     
-    if(hashtable->table) {
+    if(hashtable->table != NULL) {
         rehash(&new_table, hashtable);
         free(hashtable->table);
     }
     
-    memcpy(hashtable, &new_table, sizeof(struct shash_table));
+    *hashtable = new_table;
+
     return 0;
 }
 

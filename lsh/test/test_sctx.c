@@ -14,13 +14,33 @@ void sctx_do_nothing(void ** param)
 
 void sctx_register_new_symbol(void ** param)
 {
-    (void) param; /* unused */
-    assert_true(1);
+    void * sctx = *param;
+    struct svalue name1;
+    struct svalue name2;
+    struct sexpression * value;
+    
+    /* add the new symbol */
+    name1 = (struct svalue){
+        .len = 8,
+        .data = L"VAR_NAME",
+    };
+    value = alloc_new_value(sctx, L"THE VALUE", 9);
+    register_value(sctx, &name1, value);
+    
+    /* fetch the value using a different name */
+    name2 = (struct svalue){
+        .len = 8,
+        .data = L"VAR_NAME",
+    };
+    
+    assert_ptr_equal(value, lookup_name(sctx, &name2));
+    
 }
 
 void sctx_enter_namespace_register_new_symbol_leave_namespace_and_gc(void ** param)
 {
     (void) param; /* unused */
+    /* void * sctx = *param; */
     assert_true(1);
 }
 

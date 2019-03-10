@@ -1,6 +1,7 @@
 #ifndef __SCTX_H__
 #define __SCTX_H__
 
+#include <stddef.h>
 #include "sexpr.h"
 #include "svalue.h"
 #include "ostr.h"

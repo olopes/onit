@@ -69,6 +69,8 @@ init_environment(char **argv, char **envp) {
         return NULL;
     }
     
+    memset(heap, 0, sizeof(struct sexpression *) * HEAP_MIN_SIZE);
+    
     *sctx = (struct sctx) {
         .primitives = {
             .size=0,

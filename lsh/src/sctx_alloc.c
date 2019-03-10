@@ -1,3 +1,4 @@
+#include <stddef.h>
 #include "sctx_privates.h"
 
 static int record_new_object(struct sctx * sctx, struct sexpression * obj);
@@ -220,7 +221,11 @@ void
 sctx_gc(void * sctx_ptr) {
     struct sctx * sctx = (struct sctx *) sctx_ptr;
     
-    /* TODO implement */
+    if(sctx == NULL) {
+        return;
+    }
+    
+    recycle(sctx);
     
 }
 
