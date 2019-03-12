@@ -14,7 +14,7 @@ PROD_OBJ = $(patsubst %.c,%.o,$(subst src/,build/,$(wildcard src/*.c))) build/ma
 
 TEST_CFLAGS = -g -Wall -pedantic -finput-charset=UTF-8 -fPIC $(DEPFLAGS) -Isrc -I$(CMOCKA_ROOT)/include -include test/test_definitions.h
 # TEST_LDFLAGS = -lcmocka -L$(CMOCKA_ROOT)/lib
-TEST_LDFLAGS = ../cmocka/lib/cmocka-linux-gcc.o
+TEST_LDFLAGS = ../cmocka/lib/cmocka.o
 
 TESTS_PROD_SRC = $(wildcard src/*.c)
 TESTS_PROD_OBJ = $(patsubst %.c,build/%.o,$(subst src/,test/,$(TESTS_PROD_SRC)))
