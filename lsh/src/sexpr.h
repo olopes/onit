@@ -2,12 +2,12 @@
 #define __SEXPR__H__
 
 #include <wchar.h>
-#include "svalue.h"
 
 /* object types */
 #define ST_NIL   0
 #define ST_CONS  1
 #define ST_VALUE 2
+#define ST_PTR 3
 
 /* referenced content type */
 #define SC_PAIR 0
@@ -21,8 +21,15 @@
 
 struct sexpression { 
     size_t len;
-    void *data;
-    struct sexpression * cdr;
+    union sexpression_data {
+        struct sexpression * sexpr;
+        wchar_t * value;
+        void * ptr;
+    } data;
+    union sexpression_cdr {
+        struct sexpression * sexpr;
+        unsigned long hashcode;
+    } cdr;
     unsigned char visit_mark;
     unsigned char type;
     unsigned short content;
@@ -53,6 +60,12 @@ extern void
 sexpr_free_object(struct sexpression * sexpr);
 
 /**
+ * Return the S-Expression length
+ */
+extern size_t 
+sexpr_length(struct sexpression * sexpr);
+
+/**
  * Get the CAR part
  */
 extern struct sexpression * 
@@ -67,8 +80,20 @@ sexpr_cdr(struct sexpression * sexpr);
 /**
  * Fetch the S-Expression object value as a string
  */
-extern struct svalue * 
+extern wchar_t * 
 sexpr_value(struct sexpression * sexpr);
+
+/**
+ * Fetch the S-Expression object value as a string
+ */
+extern unsigned long 
+sexpr_hashcode(struct sexpression * sexpr);
+
+/**
+ * Fetch the S-Expression object value as a pointer
+ */
+extern void * 
+sexpr_ptr(struct sexpression * sexpr);
 
 /**
  * Get the object sobj_get_type
@@ -95,6 +120,12 @@ extern int
 sexpr_is_value(struct sexpression *);
 
 /**
+ * Return TRUE if the given object is a pointer
+ */
+extern int
+sexpr_is_ptr(struct sexpression *);
+
+/**
  * Reverse a S-Expression list
  */
 extern struct sexpression * 
@@ -117,5 +148,11 @@ sexpr_mark_reachable(struct sexpression * sexpr, unsigned char visit_mark);
  */
 extern int
 sexpr_marked(struct sexpression * sexpr, unsigned char visit_mark);
+
+/**
+ * Compares two VALUE S-Expressions, returning value < 0 if a < b, value = 0 if a = b, value > 0 if a > b
+ */
+extern int
+sexpr_compare(struct sexpression * a, struct sexpression * b);
 
 #endif /* __SEXPR__H__ */

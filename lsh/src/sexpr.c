@@ -4,6 +4,9 @@
 #include "sexpr.h"
 #include "sexpr_stack.h"
 
+static inline size_t stmin(size_t a, size_t b); 
+static unsigned long compute_hashcode(wchar_t * value, size_t len);
+
 /**
  * Constructs a pair (A . B)
  */
@@ -18,8 +21,8 @@ sexpr_cons(struct sexpression * car, struct sexpression * cdr) {
     
     memset(sexpr, 0, sizeof(struct sexpression));
     sexpr->type = ST_CONS;
-    sexpr->data = car;
-    sexpr->cdr = cdr;
+    sexpr->data.sexpr = car;
+    sexpr->cdr.sexpr = cdr;
     
     if(sexpr_is_cons(cdr)) {
         sexpr->len = cdr->len + 1;
@@ -48,13 +51,14 @@ sexpr_create_value(wchar_t * cstr, size_t len) {
     
     sexpr->type = ST_VALUE;
     sexpr->len = len;
-    sexpr->data = malloc(sizeof(wchar_t)*(len+1));
-    if(sexpr->data == NULL) {
+    sexpr->data.value = malloc(sizeof(wchar_t)*(len+1));
+    if(sexpr->data.value == NULL) {
         sexpr_free(sexpr);
         return NULL;
     }
-    memcpy(sexpr->data, cstr, sizeof(wchar_t)*len);
-    ((wchar_t *) sexpr->data)[len] = L'\0';
+    memcpy(sexpr->data.value, cstr, sizeof(wchar_t)*len);
+    sexpr->data.value[len] = L'\0';
+    sexpr->cdr.hashcode = compute_hashcode(sexpr->data.value, len);
     
     return sexpr;
 }
@@ -73,7 +77,7 @@ sexpr_free(struct sexpression * sexpr) {
     }
     else if(sexpr_is_value(sexpr)) 
     {
-        free(sexpr->data);
+        free(sexpr->data.value);
     }
         
     free(sexpr);
@@ -86,36 +90,55 @@ sexpr_free_object(struct sexpression * sexpr) {
     }
     
     if(sexpr_is_value(sexpr)) {
-        free(sexpr->data);
+        free(sexpr->data.value);
     }
     free(sexpr);
 }
 
+size_t WEAK_FOR_UNIT_TEST
+sexpr_length(struct sexpression * sexpr) {
+    return sexpr == NULL ? 0 : sexpr->len;
+}
 /**
  * Get the CAR part
  */
 struct sexpression * WEAK_FOR_UNIT_TEST
-sexpr_car(struct sexpression *sexpr) {
+sexpr_car(struct sexpression * sexpr) {
     /* how to raise error? */
-    return sexpr_type(sexpr) == ST_CONS ? (struct sexpression *) sexpr->data : NULL;
+    return sexpr_type(sexpr) == ST_CONS ? sexpr->data.sexpr : NULL;
 }
 
 /**
  * Get the CDR part
  */
 struct sexpression * WEAK_FOR_UNIT_TEST
-sexpr_cdr(struct sexpression *sexpr) {
+sexpr_cdr(struct sexpression * sexpr) {
     /* how to raise error? */
-    return sexpr_type(sexpr) == ST_CONS ? (struct sexpression *) sexpr->cdr : NULL;
+    return sexpr_type(sexpr) == ST_CONS ? sexpr->cdr.sexpr : NULL;
 }
 
 /**
  * Get S-Expression value 
  */
-struct svalue * WEAK_FOR_UNIT_TEST
+wchar_t * WEAK_FOR_UNIT_TEST
 sexpr_value(struct sexpression *sexpr) {
-    /* FIXME I'm assuming things here... */
-    return sexpr_type(sexpr) == ST_VALUE ? (struct svalue *) sexpr : NULL;
+    return sexpr_type(sexpr) == ST_VALUE ? sexpr->data.value : NULL;
+}
+
+/**
+ * Get S-Expression hash code
+ */
+unsigned long WEAK_FOR_UNIT_TEST
+sexpr_hashcode(struct sexpression *sexpr) {
+    return sexpr_type(sexpr) == ST_VALUE ? sexpr->cdr.hashcode : 0;
+}
+
+/**
+ * Get S-Expression pointer
+ */
+void * WEAK_FOR_UNIT_TEST
+sexpr_ptr(struct sexpression *sexpr) {
+    return sexpr_type(sexpr) == ST_PTR ? sexpr->data.ptr : NULL;
 }
 
 /**
@@ -150,6 +173,13 @@ sexpr_is_value(struct sexpression * sexpr) {
     return sexpr_type(sexpr) == ST_VALUE;
 }
 
+/**
+ * Return TRUE if the given object is a pointer
+ */
+int
+sexpr_is_ptr(struct sexpression * sexpr) {
+    return sexpr_type(sexpr) == ST_PTR;
+}
 
 /**
  * Return TRUE if both S-Expressions are equal
@@ -166,8 +196,10 @@ int sexpr_equal(struct sexpression * a, struct sexpression * b) {
         are_equal = 0;
     } else if (sexpr_is_cons(a)) {
         are_equal = (sexpr_equal(sexpr_car(a), sexpr_car(b)) && sexpr_equal(sexpr_cdr(a), sexpr_cdr(b)));
+    } else if (sexpr_is_ptr(a)) {
+        are_equal = (a->data.ptr == b->data.ptr);
     } else {
-        are_equal = wcsncmp((wchar_t *) a->data, (wchar_t *) b->data, a->len) == 0;
+        are_equal = a->len == b->len && wcsncmp((wchar_t *) a->data.value, (wchar_t *) b->data.value, a->len) == 0;
     }
     return are_equal;
 }
@@ -198,8 +230,8 @@ sexpr_reverse(struct sexpression * sexpr) {
     
     /* handle a pair */
     if(!sexpr_is_cons(cdr)) {
-        sexpr->data = cdr;
-        sexpr->cdr = car;
+        sexpr->data.sexpr = cdr;
+        sexpr->cdr.sexpr = car;
         return sexpr;
     }
     
@@ -214,7 +246,7 @@ sexpr_reverse(struct sexpression * sexpr) {
         cdr = sexpr_cdr(iter);
         
         /* manipulate pointers */
-        iter->cdr = reversed;
+        iter->cdr.sexpr = reversed;
         reversed = iter;
         iter = cdr;
     }
@@ -240,3 +272,44 @@ int
 sexpr_marked(struct sexpression * sexpr, unsigned char visit_mark) {
     return sexpr != NULL && sexpr->visit_mark == visit_mark;
 }
+
+
+/* djb2 implementation */
+static unsigned long compute_hashcode(wchar_t * value, size_t len) {
+    unsigned long hash;
+    size_t i;
+    
+    hash = 5381;
+    
+    for(i = 0; i < len; i++) {
+        /* hash = ((hash << 5) + hash) + value[i]; /* hash * 33 + c */
+        /* hash = hash * 33 ^ value[i]; XOR doesn't work very well, the test fails :-/ */
+        hash = hash * 33 + value[i];
+    }
+    return hash;
+}
+
+int sexpr_compare(struct sexpression * a, struct sexpression * b) {
+    size_t len;
+    int cmp;
+    if(a == b) {
+        cmp = 0;
+    } else if(a == NULL) {
+        cmp = -1;
+    } else if(b == NULL) {
+        cmp = 1;
+    } else {
+        len = stmin(a->len, b->len);
+        cmp = wmemcmp(a->data.value, b->data.value, len);
+        if(cmp == 0) {
+            cmp = a->len - b->len;
+        }
+    }
+    
+    return cmp;
+}
+
+static inline size_t stmin(size_t a, size_t b) {
+    return a > b ? b : a;
+}
+

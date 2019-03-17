@@ -42,28 +42,28 @@ svisitor(struct sexpression * obj, struct scallback * callback) {
     struct sexpression * stack;
     struct sexpression * value;
     struct sexpression * event;
-    struct sexpression event_enter = {
+    struct sexpression event_enter = (struct sexpression){
         .len = 0, 
-        .data = &cb_enter,
-        .cdr = NULL,
+        .data = {.ptr = &cb_enter},
+        .cdr = {.sexpr = NULL},
         .visit_mark = 0,
-        .type = ST_VALUE,
+        .type = ST_PTR,
         .content = SC_PRIMITIVE,
     };
     struct sexpression event_visit = {
         .len = 0, 
-        .data = &cb_visit,
-        .cdr = NULL,
+        .data = {.ptr = &cb_visit},
+        .cdr = {.sexpr = NULL},
         .visit_mark = 0,
-        .type = ST_VALUE,
+        .type = ST_PTR,
         .content = SC_PRIMITIVE,
     };
     struct sexpression event_leave = {
         .len = 0, 
-        .data = &cb_leave,
-        .cdr = NULL,
+        .data = {.ptr = &cb_leave},
+        .cdr = {.sexpr = NULL},
         .visit_mark = 0,
-        .type = ST_VALUE,
+        .type = ST_PTR,
         .content = SC_PRIMITIVE,
     };
     
@@ -86,7 +86,7 @@ svisitor(struct sexpression * obj, struct scallback * callback) {
             /* handle event */
             event = value;
             value = sexpr_pop(&stack);
-            ((fn_holder *) event->data)->fn(value, callback);
+            ((fn_holder *) sexpr_ptr(event))->fn(value, callback);
         } else {
             
             /* insert leave event and add cdr */
@@ -132,16 +132,16 @@ static void cb_visit(struct sexpression *obj, struct scallback *cb) {
     
     switch(sexpr_type(obj)) {
     case ST_NIL:
-        fputws(L"NIL", out);
+        fputws(L"()", out);
         break;
     case ST_VALUE:
-/*        fwprintf(out, L"\"%*ls\"", obj->len, (wchar_t *) obj->data);
-        break;
-    case T_SYMBOL:*/
-        fwprintf(out, L"%*ls", obj->len, (wchar_t *) obj->data);
+        fwprintf(out, L"%*ls", obj->len, obj->data.value);
         break;
     case ST_CONS:
         fputws(L" . ", out);
+        break;
+    case ST_PTR:
+        fwprintf(out, L"(ptr 0x%p)", obj->data.ptr);
         break;
     default:
         break;
@@ -182,7 +182,6 @@ dump_sexpr(struct sexpression * sobj, FILE * out) {
  */
 void WEAK_FOR_UNIT_TEST
 dump_sexpr_r(struct sexpression * obj, FILE * out) {    
-    struct svalue * value;
     if(obj == NULL) {
         return;
     }
@@ -191,12 +190,11 @@ dump_sexpr_r(struct sexpression * obj, FILE * out) {
     case ST_NIL:
         fputws(L"NIL", out);
         break;
-/*    case ST_STRING:
-        fwprintf(out, L"\"%*ls\"", value->len, (wchar_t *) value->data);
-        break;*/
     case ST_VALUE:
-        value = sexpr_value(obj);
-        fwprintf(out, L"%*ls", value->len, value->data);
+        fwprintf(out, L"%*ls", obj->len, obj->data.value);
+        break;
+    case ST_PTR:
+        fwprintf(out, L"(ptr 0x%p)", obj->data.ptr);
         break;
     case ST_CONS:
         fputwc(L'(', out);

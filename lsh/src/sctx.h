@@ -3,7 +3,6 @@
 
 #include <stddef.h>
 #include "sexpr.h"
-#include "svalue.h"
 #include "ostr.h"
 
 struct primitive;

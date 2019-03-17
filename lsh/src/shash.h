@@ -4,7 +4,7 @@
 #include "sexpr.h"
 
 struct shash_entry {
-    struct svalue * key;
+    struct sexpression * key;
     void * value;
 };
 
@@ -15,19 +15,19 @@ struct shash_table {
 };
 
 extern int 
-shash_insert(struct shash_table * hashtable, struct svalue * key, void * value);
+shash_insert(struct shash_table * hashtable, struct sexpression * key, void * value);
 
 extern void * 
-shash_delete(struct shash_table * hashtable, struct svalue * key);
+shash_delete(struct shash_table * hashtable, struct sexpression * key);
 
 extern int 
-shash_has_key(struct shash_table * hashtable, struct svalue * key );
+shash_has_key(struct shash_table * hashtable, struct sexpression * key );
 
 extern void * 
-shash_search(struct shash_table * hashtable, struct svalue * key );
+shash_search(struct shash_table * hashtable, struct sexpression * key );
 
 extern void 
-shash_visit(struct shash_table * hashtable, void * param, void (*callback)(void * param, struct svalue * key, void * value));
+shash_visit(struct shash_table * hashtable, void * param, void (*callback)(void * param, struct sexpression * key, void * value));
 
 extern void 
 shash_free(struct shash_table * hashtable);

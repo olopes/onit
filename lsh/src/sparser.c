@@ -206,7 +206,6 @@ static int
 sparse_symbol(struct sparse_ctx * ctx, struct sexpression ** obj) {
     struct ostr * str;
     wchar_t * cstr;
-    wchar_t aux;
     int escape_state;
     int return_value;
     
@@ -394,10 +393,10 @@ sparse_cons(struct sparse_ctx * ctx, struct sexpression ** obj) {
         } else if(sparse_object_result == SPARSE_DOT_SYM) {
             state = 1;
         } else if(state == 1 && sparse_object_result == SPARSE_OK) {
-            if(list->cdr) {
+            if(list->cdr.sexpr != NULL) {
                 goto EXIT_WITH_ERROR;
             } else {
-                list->cdr = sexpr;
+                list->cdr.sexpr = sexpr;
             }
         } else if(sparse_object_result == SPARSE_OK) {
             list = sexpr_cons(sexpr, list);
@@ -421,9 +420,11 @@ EXIT_WITH_SUCCESS:
 static int 
 sparse_comment(struct sparse_ctx * ctx, struct sexpression * sexpr_eoc) {
     int return_value;
-    struct svalue * end_of_comment;
+    wchar_t * end_of_comment;
+    size_t comment_len;
     size_t pos;
     
+    comment_len = sexpr_length(sexpr_eoc);
     end_of_comment = sexpr_value(sexpr_eoc);
     pos = 0;
     
@@ -432,9 +433,9 @@ sparse_comment(struct sparse_ctx * ctx, struct sexpression * sexpr_eoc) {
             /* eof found in a normal symbol. */
             return_value = SPARSE_EOF;
             break;
-        } else if(ctx->next == end_of_comment->data[pos]) {
+        } else if(ctx->next == end_of_comment[pos]) {
             pos++;
-            if(pos == end_of_comment->len) {
+            if(pos == comment_len) {
                 return_value = SPARSE_OK;
                 break;
             }

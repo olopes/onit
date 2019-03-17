@@ -12,19 +12,23 @@
  */
 
 
-#define hashcode(a) svalue_hashcode(a); 
-#define compare(a, b) svalue_compare(a, b)
+#define hashcode(a) sexpr_hashcode(a); 
+#define compare(a, b) sexpr_compare(a, b)
 #define DEFAULT_HASHTABLE_SIZE 16
 static int resize_table_if_necessary(struct shash_table * hashtable);
 static inline int should_resize_table(struct shash_table * hashtable);
 static void rehash(struct shash_table * new_table, struct shash_table * old_table);
-static void insert(struct shash_table * hashtable, struct svalue * key, void * value);
-static int get_index(struct shash_table * hashtable, struct svalue * key, size_t * indexptr);
+static void insert(struct shash_table * hashtable, struct sexpression * key, void * value);
+static int get_index(struct shash_table * hashtable, struct sexpression * key, size_t * indexptr);
 
 
-int shash_insert(struct shash_table * hashtable, struct svalue * key, void * value) {
+int shash_insert(struct shash_table * hashtable, struct sexpression * key, void * value) {
     
     if(hashtable == NULL || key == NULL) {
+        return 1;
+    }
+    
+    if(!sexpr_is_value(key)) {
         return 1;
     }
     
@@ -85,7 +89,7 @@ static void rehash(struct shash_table * new_table, struct shash_table * old_tabl
 }
 
 
-static void insert(struct shash_table * hashtable, struct svalue * key, void * value) {
+static void insert(struct shash_table * hashtable, struct sexpression * key, void * value) {
     unsigned long hash;
     size_t i;
     size_t j;
@@ -103,7 +107,7 @@ static void insert(struct shash_table * hashtable, struct svalue * key, void * v
     
 }
 
-void * shash_delete(struct shash_table * hashtable, struct svalue * key) {
+void * shash_delete(struct shash_table * hashtable, struct sexpression * key) {
     size_t index;
     struct sexpression * value;
     
@@ -119,12 +123,16 @@ void * shash_delete(struct shash_table * hashtable, struct svalue * key) {
     return value;
 }
 
-static int get_index(struct shash_table * hashtable, struct svalue * key, size_t * index) {
+static int get_index(struct shash_table * hashtable, struct sexpression * key, size_t * index) {
     unsigned long hash;
     size_t j;
     size_t i;
     
     if(hashtable == NULL || hashtable->load == 0 || key == NULL) {
+        return 0;
+    }
+    
+    if(!sexpr_is_value(key)) {
         return 0;
     }
     
@@ -141,13 +149,13 @@ static int get_index(struct shash_table * hashtable, struct svalue * key, size_t
     return 0;
 }
 
-int shash_has_key(struct shash_table * hashtable, struct svalue * key ) {
+int shash_has_key(struct shash_table * hashtable, struct sexpression * key ) {
     size_t index;
     return get_index(hashtable, key, &index);
 }
 
 
-void * shash_search(struct shash_table * hashtable, struct svalue * key ) {
+void * shash_search(struct shash_table * hashtable, struct sexpression * key ) {
     size_t index;
     
     if(!get_index(hashtable, key, &index)) {
@@ -157,7 +165,7 @@ void * shash_search(struct shash_table * hashtable, struct svalue * key ) {
     return hashtable->table[index].value;
 }
 
-void shash_visit(struct shash_table * hashtable, void * param, void (*callback)(void * param, struct svalue * key, void * value)) {
+void shash_visit(struct shash_table * hashtable, void * param, void (*callback)(void * param, struct sexpression * key, void * value)) {
     size_t i;
     struct shash_entry * table;
     
