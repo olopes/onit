@@ -14,8 +14,6 @@
 struct sctx {
     struct shash_table primitives;
     struct sexpression * namespaces;
-    struct sexpression * environment;
-    struct sexpression * arguments;
     int visit;
     int heap_size;
     int heap_load;

@@ -11,15 +11,13 @@ typedef void (*destructor_fn)(void * sctx, struct primitive *);
 
 #define PRIMITIVE_FUNCTION 0
 #define PRIMITIVE_SEXPRESSION 1
-#define PRIMITIVE_VALUE 2
-#define PRIMITIVE_STRING 3
+#define PRIMITIVE_STRING 2
 
 struct primitive {
     unsigned int type;
     union {
         primitive_fn function;
         struct sexpression * sexpression;
-        struct svalue * value;
         struct ostr * string;
     } value;
     destructor_fn destructor;
@@ -37,7 +35,7 @@ extern void
 sctx_gc(void * sctx);
 
 extern int 
-register_primitive(void * sctx, struct svalue * name, struct primitive * primitive);
+register_primitive(void * sctx, struct sexpression * name, struct primitive * primitive);
 
 extern struct sexpression * 
 alloc_new_pair(void * sctx, struct sexpression * car, struct sexpression * cdr);
@@ -52,9 +50,9 @@ extern int
 leave_namespace(void * sctx);
 
 extern struct sexpression * 
-lookup_name(void * sctx, struct svalue * name);
+lookup_name(void * sctx, struct sexpression * name);
 
 extern int 
-register_value(void * sctx, struct svalue * name, struct sexpression * value);
+register_value(void * sctx, struct sexpression * name, struct sexpression * value);
 
 #endif

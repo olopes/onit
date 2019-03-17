@@ -7,7 +7,7 @@ static void visit_namespaces(struct sctx * sctx);
 static void free_unvisited_references(struct sctx * sctx);
 static void grow_heap_if_necessary(struct sctx * sctx);
 static inline int heap_should_grow(struct sctx * sctx);
-static void mark_reachable_references(void * ctx, struct svalue * key, void * reference);
+static void mark_reachable_references(void * ctx, struct sexpression * key, void * reference);
 static int sref_comparator(const void * a, const void * b);
 
 
@@ -33,7 +33,7 @@ int leave_namespace(void * sctx_ptr) {
     return 0;
 }
 
-struct sexpression * lookup_name(void * sctx_ptr, struct svalue * name) {
+struct sexpression * lookup_name(void * sctx_ptr, struct sexpression * name) {
     struct sctx * sctx = (struct sctx *) sctx_ptr;
     struct sexpression * namestack;
     struct shash_table * namespace;
@@ -60,7 +60,7 @@ struct sexpression * lookup_name(void * sctx_ptr, struct svalue * name) {
     return NULL;
 }
 
-int register_value(void * sctx_ptr, struct svalue * name, struct sexpression * value) {
+int register_value(void * sctx_ptr, struct sexpression * name, struct sexpression * value) {
     struct sctx * sctx = (struct sctx *) sctx_ptr;
     struct shash_table * namespace;
     
@@ -199,7 +199,7 @@ static inline int heap_should_grow(struct sctx * sctx) {
     return (sctx->heap_size < HEAP_MIN_SIZE && sctx->heap_load*2 > sctx->heap_size);
 }
 
-static void mark_reachable_references(void * sctx_ptr, struct svalue * key, void * reference) {
+static void mark_reachable_references(void * sctx_ptr, struct sexpression * key, void * reference) {
     struct sctx * sctx = (struct sctx *) sctx_ptr;
     
     if(reference == NULL) {
