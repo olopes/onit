@@ -37,18 +37,6 @@ static struct primitive FALSE_PRIMITIVE = {
     .destructor = NULL,
 };
 
-static struct primitive ARGUMENTS_PRIMITIVE = {
-    .type = PRIMITIVE_SEXPRESSION,
-    .value = { NULL },
-    .destructor = NULL,
-};
-static struct primitive ENVIRONMENT_PRIMITIVE = {
-    .type = PRIMITIVE_SEXPRESSION,
-    .value = { NULL },
-    .destructor = NULL,
-};
-
-
 void * 
 init_environment(char **argv, char **envp) {
     struct sctx * sctx;

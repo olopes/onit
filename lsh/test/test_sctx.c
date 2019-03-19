@@ -1,8 +1,5 @@
 /* prod code includes */
-#include <cmocka.h>
-#include <stdlib.h>
-#include <string.h>
-#include <wchar.h>
+#include "test_definitions.h"
 #include "sctx.h"
 #include "sctx_privates.h"
 
@@ -15,26 +12,22 @@ void sctx_do_nothing(void ** param)
 void sctx_register_new_symbol(void ** param)
 {
     void * sctx = *param;
-    struct svalue name1;
-    struct svalue name2;
+    struct sexpression * name1;
+    struct sexpression * name2;
     struct sexpression * value;
     
     /* add the new symbol */
-    name1 = (struct svalue){
-        .len = 8,
-        .data = L"VAR_NAME",
-    };
+    name1 = sexpr_create_value(L"VAR_NAME", 8);
     value = alloc_new_value(sctx, L"THE VALUE", 9);
-    register_value(sctx, &name1, value);
+    register_value(sctx, name1, value);
     
     /* fetch the value using a different name */
-    name2 = (struct svalue){
-        .len = 8,
-        .data = L"VAR_NAME",
-    };
+    name2 = sexpr_create_value(L"VAR_NAME", 8);
     
-    assert_ptr_equal(value, lookup_name(sctx, &name2));
+    assert_ptr_equal(value, lookup_name(sctx, name2));
     
+    sexpr_free(name1);
+    sexpr_free(name2);
 }
 
 void sctx_enter_namespace_register_new_symbol_leave_namespace_and_gc(void ** param)

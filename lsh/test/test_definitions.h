@@ -3,7 +3,9 @@
 
 #define WEAK_FOR_UNIT_TEST __attribute__((weak))
 
+#include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
 #include <stdarg.h>
 #include <stddef.h>
 #include <setjmp.h>

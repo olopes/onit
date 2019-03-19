@@ -10,7 +10,7 @@ struct aa_tree {
 };
 
 struct aa_node {
-    struct svalue * key;
+    struct sexpression * key;
     void * value;
     size_t level;
     struct aa_node * left;
@@ -18,18 +18,18 @@ struct aa_node {
 };
 
 extern int 
-aa_insert(struct aa_tree * tree, struct svalue * key, void * value);
+aa_insert(struct aa_tree * tree, struct sexpression * key, void * value);
 
 extern void * 
-aa_delete(struct aa_tree * tree, struct svalue * key);
+aa_delete(struct aa_tree * tree, struct sexpression * key);
 
 extern int 
-aa_has_key(struct aa_tree * tree, struct svalue * key );
+aa_has_key(struct aa_tree * tree, struct sexpression * key );
 
 extern void * 
-aa_search(struct aa_tree * tree, struct svalue * key );
+aa_search(struct aa_tree * tree, struct sexpression * key );
 
 extern void 
-aa_visit(struct aa_tree * tree, void * param, void (*callback)(void * param, struct svalue * key, void * value));
+aa_visit(struct aa_tree * tree, void * param, void (*callback)(void * param, struct sexpression * key, void * value));
 
 #endif

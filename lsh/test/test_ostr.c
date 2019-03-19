@@ -1,7 +1,5 @@
 /* prod code includes */
-#include <cmocka.h>
-#include <wctype.h>
-#include <wchar.h>
+#include "test_definitions.h"
 #include "ostr.h"
 
 void create_and_destroy_null_string(void ** param) 

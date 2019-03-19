@@ -1,6 +1,5 @@
 /* prod code includes */
-#include <cmocka.h>
-#include <string.h>
+#include "test_definitions.h"
 #include "sparser.h"
 #include "cstr_sparser_adapter.h"
 #include "wcstr_sparser_adapter.h"

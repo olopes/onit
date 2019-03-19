@@ -1,15 +1,12 @@
 /* prod code includes */
-#include <cmocka.h>
-#include <stdlib.h>
-#include <string.h>
-#include <wchar.h>
+#include "test_definitions.h"
 #include "sexpr.h"
 #include "aa_tree.h"
 
 #define TEST_DATA_SIZE 26
 
 static wchar_t test_strings[TEST_DATA_SIZE*2];
-static struct svalue test_keys [TEST_DATA_SIZE];
+static struct sexpression test_keys [TEST_DATA_SIZE];
 static struct sexpression test_values [TEST_DATA_SIZE];
 
 static int insertion_order [TEST_DATA_SIZE];
@@ -18,7 +15,7 @@ static int deletion_order [TEST_DATA_SIZE];
 static int current_level;
 static void * test_ctx = &current_level;
 
-static void assert_visit(void * test_ctx, struct svalue * key, void * value) {
+static void assert_visit(void * test_ctx, struct sexpression * key, void * value) {
     assert_ptr_equal(key, test_keys+current_level);
     assert_ptr_equal(value, test_values+current_level);
     current_level++;
@@ -127,7 +124,7 @@ int setup (void ** state)
     for(i = 0; i < TEST_DATA_SIZE; i++) {
         test_strings[i*2] = L'A'+i;
         test_keys[i].len = test_values[i].len = 1;
-        test_keys[i].data = test_values[i].data = test_strings+i*2;
+        test_keys[i].data.value = test_values[i].data.value = test_strings+i*2;
         insertion_order[i] = i;
         deletion_order[i] = i;
     }

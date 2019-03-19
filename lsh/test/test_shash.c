@@ -1,15 +1,12 @@
 /* prod code includes */
-#include <cmocka.h>
-#include <stdlib.h>
-#include <string.h>
-#include <wchar.h>
+#include "test_definitions.h"
 #include "sexpr.h"
 #include "shash.h"
 
 #define TEST_DATA_SIZE 26
 
 static wchar_t test_strings[TEST_DATA_SIZE*2];
-static struct svalue test_keys [TEST_DATA_SIZE];
+static struct sexpression test_keys [TEST_DATA_SIZE];
 static struct sexpression test_values [TEST_DATA_SIZE];
 
 static int insertion_order [TEST_DATA_SIZE];
@@ -19,7 +16,7 @@ static int key_visited [TEST_DATA_SIZE];
 static int dummy_thing;
 static void * test_ctx = &dummy_thing;
 
-static void assert_visit(void * param, struct svalue * key, void * value) {
+static void assert_visit(void * param, struct sexpression * key, void * value) {
     size_t index;
     
     /* cool! the compiler handles the alignment stuff */
@@ -171,7 +168,7 @@ int setup (void ** state)
     for(i = 0; i < TEST_DATA_SIZE; i++) {
         test_strings[i*2] = L'A'+i;
         test_keys[i].len = test_values[i].len = 1;
-        test_keys[i].data = test_values[i].data = test_strings+i*2;
+        test_keys[i].data.value = test_values[i].data.value = test_strings+i*2;
         insertion_order[i] = i;
         deletion_order[i] = i;
         key_visited[i] = 0;

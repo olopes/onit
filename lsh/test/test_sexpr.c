@@ -1,9 +1,5 @@
 /* prod code includes */
-#include <cmocka.h>
-#include <wctype.h>
-#include <wchar.h>
-#include <string.h>
-#include <stdlib.h>
+#include "test_definitions.h"
 #include "sexpr.h"
 
 #include "assert_sexpr.c"
@@ -18,8 +14,8 @@ void sexpr_cons_should_alloc_new_sexpression(void ** param)
     sexpr = sexpr_cons(&dummy_car, &dummy_cdr);
     
     assert_non_null(sexpr);
-    assert_ptr_equal(sexpr->data, &dummy_car);
-    assert_ptr_equal(sexpr->cdr, &dummy_cdr);
+    assert_ptr_equal(sexpr->data.sexpr, &dummy_car);
+    assert_ptr_equal(sexpr->cdr.sexpr, &dummy_cdr);
     assert_int_equal(sexpr->type, ST_CONS);
     
     free(sexpr);
@@ -35,9 +31,9 @@ void sexpr_create_value_should_alloc_new_sexpression_and_alloc_value_string(void
     assert_non_null(sexpr);
     assert_int_equal(sexpr->type, ST_VALUE);
     assert_int_equal(sexpr->len, 4);
-    assert_true(wcsncmp(L"TEST", (wchar_t *)sexpr->data, 4) == 0);
+    assert_true(wcsncmp(L"TEST", sexpr->data.value, 4) == 0);
     
-    free(sexpr->data);
+    free(sexpr->data.value);
     free(sexpr);
 }
 
@@ -76,9 +72,9 @@ void sexpr_free_object_value_should_release_only_the_first_pair(void ** param)
     sexpr_free_object(sexpr1);
 
     /* manually free sexpr2 and sexpr3 */
-    free(sexpr2->data);
+    free(sexpr2->data.value);
     free(sexpr2);
-    free(sexpr3->data);
+    free(sexpr3->data.value);
     free(sexpr3);
     
     /* cmocka will validate allocated/released chunks */
@@ -91,9 +87,9 @@ void sexpr_car_should_return_data_pointer_if_type_is_cons(void ** param)
 
     memset(&dummy, 0, sizeof(dummy));
     dummy.type=ST_CONS;
-    dummy.data = (void *)12345;
+    dummy.data.sexpr = (struct sexpression *)12345;
     
-    assert_ptr_equal(sexpr_car(&dummy), 12345);
+    assert_ptr_equal(sexpr_car(&dummy), (struct sexpression *) 12345);
 }
     
 void sexpr_car_should_return_null_if_type_is_not_cons(void ** param)
@@ -103,7 +99,7 @@ void sexpr_car_should_return_null_if_type_is_not_cons(void ** param)
 
     memset(&dummy, 0, sizeof(dummy));
     dummy.type=ST_VALUE;
-    dummy.data = (void *)12345;
+    dummy.data.sexpr = (struct sexpression *)12345;
     
     assert_null(sexpr_car(&dummy));
 }
@@ -115,9 +111,9 @@ void sexpr_cdr_should_return_cdr_pointer_if_type_is_cons(void ** param)
 
     memset(&dummy, 0, sizeof(dummy));
     dummy.type=ST_CONS;
-    dummy.cdr =  (struct sexpression *) 12345;
+    dummy.cdr.sexpr =  (struct sexpression *) 12345;
     
-    assert_ptr_equal(sexpr_cdr(&dummy), 12345);
+    assert_ptr_equal(sexpr_cdr(&dummy), (struct sexpression *) 12345);
 }
     
 void sexpr_cdr_should_return_null_if_type_is_not_cons(void ** param)
@@ -127,20 +123,20 @@ void sexpr_cdr_should_return_null_if_type_is_not_cons(void ** param)
 
     memset(&dummy, 0, sizeof(dummy));
     dummy.type=ST_VALUE;
-    dummy.cdr = (struct sexpression *) 12345;
+    dummy.cdr.sexpr = (struct sexpression *) 12345;
     
     assert_null(sexpr_cdr(&dummy));
 }
 
 
-void sexpr_value_should_return_data_pointer_if_type_is_value(void ** param)
+void sexpr_value_should_return_value_pointer_if_type_is_value(void ** param)
 {
     (void) param; /* unused */
     struct sexpression dummy;
 
     memset(&dummy, 0, sizeof(dummy));
     dummy.type=ST_VALUE;
-    dummy.data = (void *)12345;
+    dummy.data.value = L"12345";
     
     assert_ptr_equal(sexpr_value(&dummy), &dummy);
 }
@@ -152,7 +148,7 @@ void sexpr_value_should_return_null_if_type_is_not_value(void ** param)
 
     memset(&dummy, 0, sizeof(dummy));
     dummy.type=ST_CONS;
-    dummy.data = (void *)12345;
+    dummy.data.value = L"12345";
     
     assert_null(sexpr_value(&dummy));
 }
@@ -190,6 +186,9 @@ void sexpr_is_nil_should_return_true_if_type_is_nil_or_sexpression_is_null(void 
     
     dummy.type = ST_VALUE;
     assert_false(sexpr_is_nil(&dummy));
+    
+    dummy.type = ST_PTR;
+    assert_false(sexpr_is_nil(&dummy));
 }
 
 void sexpr_is_cons_should_return_true_if_type_is_cons(void ** param)
@@ -206,6 +205,9 @@ void sexpr_is_cons_should_return_true_if_type_is_cons(void ** param)
     assert_true(sexpr_is_cons(&dummy));
     
     dummy.type = ST_VALUE;
+    assert_false(sexpr_is_cons(&dummy));
+    
+    dummy.type = ST_PTR;
     assert_false(sexpr_is_cons(&dummy));
 }
 
@@ -224,6 +226,29 @@ void sexpr_is_value_should_return_true_if_type_is_value(void ** param)
     
     dummy.type = ST_VALUE;
     assert_true(sexpr_is_value(&dummy));
+    
+    dummy.type = ST_PTR;
+    assert_false(sexpr_is_value(&dummy));
+}
+
+void sexpr_is_ptr_should_return_true_if_type_is_ptr(void ** param)
+{
+    (void) param; /* unused */
+    struct sexpression dummy;
+    
+    assert_false(sexpr_is_ptr(NULL));
+    
+    dummy.type = ST_NIL;
+    assert_false(sexpr_is_ptr(&dummy));
+    
+    dummy.type = ST_CONS;
+    assert_false(sexpr_is_ptr(&dummy));
+    
+    dummy.type = ST_VALUE;
+    assert_false(sexpr_is_ptr(&dummy));
+    
+    dummy.type = ST_PTR;
+    assert_true(sexpr_is_ptr(&dummy));
 }
 
 /* couple of tests for sexpr_equal */
@@ -379,7 +404,7 @@ int main (void)
         cmocka_unit_test (sexpr_cdr_should_return_cdr_pointer_if_type_is_cons),
         cmocka_unit_test (sexpr_cdr_should_return_null_if_type_is_not_cons),
         
-        cmocka_unit_test (sexpr_value_should_return_data_pointer_if_type_is_value),
+        cmocka_unit_test (sexpr_value_should_return_value_pointer_if_type_is_value),
         cmocka_unit_test (sexpr_value_should_return_null_if_type_is_not_value),
         
         cmocka_unit_test (sexpr_type_should_return_sexpression_type),
@@ -387,6 +412,7 @@ int main (void)
         cmocka_unit_test (sexpr_is_nil_should_return_true_if_type_is_nil_or_sexpression_is_null),
         cmocka_unit_test (sexpr_is_cons_should_return_true_if_type_is_cons),
         cmocka_unit_test (sexpr_is_value_should_return_true_if_type_is_value),
+        cmocka_unit_test (sexpr_is_ptr_should_return_true_if_type_is_ptr),
         
         cmocka_unit_test (sexpr_equal_should_return_true_if_both_sexpressions_are_equal),
         cmocka_unit_test (sexpr_equal_should_return_false_if_both_sexpressions_are_not_equal),

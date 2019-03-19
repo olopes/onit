@@ -1,5 +1,5 @@
 /* prod code includes */
-#include <cmocka.h>
+#include "test_definitions.h"
 #include "svisitor.h"
 
 /* mock implementations */
