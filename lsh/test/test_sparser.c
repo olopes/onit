@@ -30,7 +30,7 @@ void sparse_should_do_parse_symbol_and_return_ok(void ** param) {
     struct sexpression * expected_object;
     struct sexpression * actual_object;
     struct sparser_stream * stream;
-    wchar_t * data = L" HEY!  ";
+    wchar_t * data = L" HEY!\n ";
     
     stream = create_sparser_stream(WCSTR_ADAPTER, data,wcslen(data));
     expected_object = sexpr_create_cstr(L"HEY!");

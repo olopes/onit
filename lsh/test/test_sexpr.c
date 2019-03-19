@@ -373,7 +373,18 @@ void sexpr_reverse_should_should_return_a_reversed_list_if_param_is_a_list(void 
     
 }
 
-
+void create_cons_should_create_list_and_set_correct_length(void ** param) {
+    struct sexpression * sexpr;
+    
+    sexpr = sexpr_cons(sexpr_create_cstr(L"hey"), 
+                sexpr_cons(sexpr_create_cstr(L"y-o-u"),
+                    sexpr_cons(sexpr_create_cstr(L"check them dubs"),
+                        sexpr_cons(sexpr_create_cstr(L"123"),NULL))));
+    
+    assert_int_equal(sexpr_length(sexpr), 4);
+    
+    sexpr_free(sexpr);
+}
 
 
 /* These functions will be used to initialize
@@ -421,6 +432,8 @@ int main (void)
         cmocka_unit_test (sexpr_reverse_should_should_swap_car_with_cdr_if_param_is_a_pair),
         cmocka_unit_test (sexpr_reverse_should_should_return_same_param_if_param_is_len_1),
         cmocka_unit_test (sexpr_reverse_should_should_return_a_reversed_list_if_param_is_a_list),
+        
+        cmocka_unit_test (create_cons_should_create_list_and_set_correct_length),
     };
 
     /* If setup and teardown functions are not
