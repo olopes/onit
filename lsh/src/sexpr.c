@@ -10,7 +10,7 @@ static unsigned long compute_hashcode(wchar_t * value, size_t len);
 /**
  * Constructs a pair (A . B)
  */
-struct sexpression * WEAK_FOR_UNIT_TEST
+struct sexpression * 
 sexpr_cons(struct sexpression * car, struct sexpression * cdr) {
     struct sexpression * sexpr;
     
@@ -26,6 +26,8 @@ sexpr_cons(struct sexpression * car, struct sexpression * cdr) {
     
     if(sexpr_is_cons(cdr)) {
         sexpr->len = cdr->len + 1;
+    } else if(sexpr_is_nil(cdr)) {
+        sexpr->len = 1;
     } else {
         sexpr->len = 0;
     }
@@ -36,7 +38,7 @@ sexpr_cons(struct sexpression * car, struct sexpression * cdr) {
 /**
  * Create a S-Expression value
  */
-struct sexpression * WEAK_FOR_UNIT_TEST
+struct sexpression *
 sexpr_create_value(wchar_t * cstr, size_t len) {
     struct sexpression * sexpr;
     
@@ -64,7 +66,7 @@ sexpr_create_value(wchar_t * cstr, size_t len) {
 }
 
 
-void WEAK_FOR_UNIT_TEST
+void
 sexpr_free(struct sexpression * sexpr) {
     if(sexpr == NULL) {
         return;
@@ -83,7 +85,7 @@ sexpr_free(struct sexpression * sexpr) {
     free(sexpr);
 }
 
-void WEAK_FOR_UNIT_TEST
+void
 sexpr_free_object(struct sexpression * sexpr) {
     if(sexpr == NULL) {
         return;
@@ -95,14 +97,14 @@ sexpr_free_object(struct sexpression * sexpr) {
     free(sexpr);
 }
 
-size_t WEAK_FOR_UNIT_TEST
+size_t
 sexpr_length(struct sexpression * sexpr) {
     return sexpr == NULL ? 0 : sexpr->len;
 }
 /**
  * Get the CAR part
  */
-struct sexpression * WEAK_FOR_UNIT_TEST
+struct sexpression *
 sexpr_car(struct sexpression * sexpr) {
     /* how to raise error? */
     return sexpr_type(sexpr) == ST_CONS ? sexpr->data.sexpr : NULL;
@@ -111,7 +113,7 @@ sexpr_car(struct sexpression * sexpr) {
 /**
  * Get the CDR part
  */
-struct sexpression * WEAK_FOR_UNIT_TEST
+struct sexpression *
 sexpr_cdr(struct sexpression * sexpr) {
     /* how to raise error? */
     return sexpr_type(sexpr) == ST_CONS ? sexpr->cdr.sexpr : NULL;
@@ -120,7 +122,7 @@ sexpr_cdr(struct sexpression * sexpr) {
 /**
  * Get S-Expression value 
  */
-wchar_t * WEAK_FOR_UNIT_TEST
+wchar_t *
 sexpr_value(struct sexpression *sexpr) {
     return sexpr_type(sexpr) == ST_VALUE ? sexpr->data.value : NULL;
 }
@@ -128,7 +130,7 @@ sexpr_value(struct sexpression *sexpr) {
 /**
  * Get S-Expression hash code
  */
-unsigned long WEAK_FOR_UNIT_TEST
+unsigned long
 sexpr_hashcode(struct sexpression *sexpr) {
     return sexpr_type(sexpr) == ST_VALUE ? sexpr->cdr.hashcode : 0;
 }
@@ -136,7 +138,7 @@ sexpr_hashcode(struct sexpression *sexpr) {
 /**
  * Get S-Expression pointer
  */
-void * WEAK_FOR_UNIT_TEST
+void *
 sexpr_ptr(struct sexpression *sexpr) {
     return sexpr_type(sexpr) == ST_PTR ? sexpr->data.ptr : NULL;
 }

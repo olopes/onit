@@ -136,9 +136,9 @@ void sexpr_value_should_return_value_pointer_if_type_is_value(void ** param)
 
     memset(&dummy, 0, sizeof(dummy));
     dummy.type=ST_VALUE;
-    dummy.data.value = L"12345";
+    dummy.data.value = (wchar_t *) 12345;
     
-    assert_ptr_equal(sexpr_value(&dummy), &dummy);
+    assert_ptr_equal(sexpr_value(&dummy), (wchar_t *) 12345);
 }
     
 void sexpr_value_should_return_null_if_type_is_not_value(void ** param)

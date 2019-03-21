@@ -25,7 +25,7 @@ static void assert_visit(void * param, struct sexpression * key, void * value) {
     }
     
     if(index == TEST_DATA_SIZE) {
-        fail_msg("Test data position not found for key %ls\n", key->data.value);
+        fail_msg("Test data position not found for key %ls\n", sexpr_value(key));
         return;
     }
     
