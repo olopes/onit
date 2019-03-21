@@ -6,8 +6,8 @@
 #define TEST_DATA_SIZE 26
 
 static wchar_t test_strings[TEST_DATA_SIZE*2];
-static struct sexpression test_keys [TEST_DATA_SIZE];
-static struct sexpression test_values [TEST_DATA_SIZE];
+static struct sexpression * test_keys [TEST_DATA_SIZE];
+static struct sexpression * test_values [TEST_DATA_SIZE];
 
 static int insertion_order [TEST_DATA_SIZE];
 static int deletion_order [TEST_DATA_SIZE];
@@ -19,13 +19,20 @@ static void * test_ctx = &dummy_thing;
 static void assert_visit(void * param, struct sexpression * key, void * value) {
     size_t index;
     
-    /* cool! the compiler handles the alignment stuff */
-    index = (size_t) (key-test_keys);
+    for(index = 0; index < TEST_DATA_SIZE; index++) {
+        if(test_keys[index] == key)
+            break;
+    }
+    
+    if(index == TEST_DATA_SIZE) {
+        fail_msg("Test data position not found for key %ls\n", key->data.value);
+        return;
+    }
     
     key_visited[index] = 1;
     
-    assert_ptr_equal(key, test_keys+index);
-    assert_ptr_equal(value, test_values+index);
+    assert_ptr_equal(key, test_keys[index]);
+    assert_ptr_equal(value, test_values[index]);
     assert_ptr_equal(param, test_ctx);
 
 }
@@ -40,7 +47,7 @@ static void test_shash_operations(void ** state) {
     /* insert everything! */
     for(i = 0; i < TEST_DATA_SIZE; i++) {
         position = insertion_order[i];
-        assert_false(shash_insert(&hashtable, &test_keys[position], &test_values[position]));
+        assert_false(shash_insert(&hashtable, test_keys[position], test_values[position]));
     }
     
     shash_visit(&hashtable, test_ctx, assert_visit);
@@ -53,10 +60,10 @@ static void test_shash_operations(void ** state) {
     
     for(i = 0; i < TEST_DATA_SIZE; i++) {
         position = deletion_order[i];
-        assert_ptr_equal(shash_delete(&hashtable, &test_keys[position]), &test_values[position]);
+        assert_ptr_equal(shash_delete(&hashtable, test_keys[position]), test_values[position]);
     }
     
-    /* mandatort cleanup */
+    /* mandatory cleanup */
     shash_free(&hashtable);
 
 }
@@ -70,7 +77,7 @@ static void test_shash_internals(void ** state) {
     
     /* insert everything! */
     for(i = 0; i < TEST_DATA_SIZE; i++) {
-        shash_insert(&hashtable, &test_keys[i], &test_values[i]);
+        shash_insert(&hashtable, test_keys[i], test_values[i]);
     }
     
     /* the hash table will grow twice:
@@ -83,7 +90,7 @@ static void test_shash_internals(void ** state) {
     
     
     for(i = 0; i < TEST_DATA_SIZE; i++) {
-        shash_delete(&hashtable, &test_keys[i]);
+        shash_delete(&hashtable, test_keys[i]);
     }
     
     assert_int_equal(hashtable.size, 64);
@@ -108,25 +115,25 @@ static void test_shash_has_key(void ** state) {
     
     memset(&hashtable, 0, sizeof(struct shash_table));
     
-    shash_insert(&hashtable, &test_keys[0], &test_values[0]);
-    shash_insert(&hashtable, &test_keys[1], &test_values[1]);
-    shash_insert(&hashtable, &test_keys[2], &test_values[2]);
-    shash_insert(&hashtable, &test_keys[3], &test_values[3]);
-    shash_insert(&hashtable, &test_keys[4], &test_values[4]);
+    shash_insert(&hashtable, test_keys[0], test_values[0]);
+    shash_insert(&hashtable, test_keys[1], test_values[1]);
+    shash_insert(&hashtable, test_keys[2], test_values[2]);
+    shash_insert(&hashtable, test_keys[3], test_values[3]);
+    shash_insert(&hashtable, test_keys[4], test_values[4]);
 
-    assert_true(shash_has_key(&hashtable, &test_keys[2]));
+    assert_true(shash_has_key(&hashtable, test_keys[2]));
     
-    assert_false(shash_has_key(&hashtable, &test_keys[10]));
+    assert_false(shash_has_key(&hashtable, test_keys[10]));
     
-    found = shash_search(&hashtable, &test_keys[0]);
+    found = shash_search(&hashtable, test_keys[0]);
     
-    assert_ptr_equal(found, &test_values[0]);
+    assert_ptr_equal(found, test_values[0]);
     
-    shash_delete(&hashtable, &test_keys[0]);
-    shash_delete(&hashtable, &test_keys[1]);
-    shash_delete(&hashtable, &test_keys[2]);
-    shash_delete(&hashtable, &test_keys[3]);
-    shash_delete(&hashtable, &test_keys[4]);
+    shash_delete(&hashtable, test_keys[0]);
+    shash_delete(&hashtable, test_keys[1]);
+    shash_delete(&hashtable, test_keys[2]);
+    shash_delete(&hashtable, test_keys[3]);
+    shash_delete(&hashtable, test_keys[4]);
 
     /* mandatort cleanup */
     shash_free(&hashtable);
@@ -167,8 +174,8 @@ int setup (void ** state)
     
     for(i = 0; i < TEST_DATA_SIZE; i++) {
         test_strings[i*2] = L'A'+i;
-        test_keys[i].len = test_values[i].len = 1;
-        test_keys[i].data.value = test_values[i].data.value = test_strings+i*2;
+        test_keys[i] = sexpr_create_value(test_strings+i*2, 1);
+        test_values[i] = sexpr_create_value(test_strings+i*2, 1);
         insertion_order[i] = i;
         deletion_order[i] = i;
         key_visited[i] = 0;
@@ -181,6 +188,12 @@ int setup (void ** state)
 
 int teardown (void ** state)
 {
+    int i;
+    
+    for(i = 0; i < TEST_DATA_SIZE; i++) {
+        sexpr_free(test_keys[i]);
+        sexpr_free(test_values[i]);
+    }
     
     
     return 0;
@@ -191,11 +204,11 @@ int main (void)
 {
     const struct CMUnitTest tests [] =
     {
-        cmocka_unit_test_setup (test_shash_operations, setup),
-        cmocka_unit_test_setup (test_shash_operations, setup),
-        cmocka_unit_test_setup (test_shash_operations, setup),
-        cmocka_unit_test_setup (test_shash_has_key, setup),
-        cmocka_unit_test_setup (test_shash_internals, setup),
+        cmocka_unit_test_setup_teardown (test_shash_operations, setup, teardown),
+        cmocka_unit_test_setup_teardown (test_shash_operations, setup, teardown),
+        cmocka_unit_test_setup_teardown (test_shash_operations, setup, teardown),
+        cmocka_unit_test_setup_teardown (test_shash_has_key, setup, teardown),
+        cmocka_unit_test_setup_teardown (test_shash_internals, setup, teardown),
     };
 
     srand(131071);
