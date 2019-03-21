@@ -277,6 +277,13 @@ sparse_symbol(struct sparse_ctx * ctx, struct sexpression ** obj) {
                 return_value = SPARSE_OK;
                 goto SYM_PARSE_END;
             }
+            if(iswspace(ctx->next)) {
+                /* handle special chars. Put the special char back and finish */
+                UNREAD_CHAR(ctx->stream, ctx->next);
+                return_value = SPARSE_OK;
+                goto SYM_PARSE_END;
+            }
+
             /* handle "regular" symbol escape */
             switch(ctx->next) {
             case L'|':
@@ -289,7 +296,6 @@ sparse_symbol(struct sparse_ctx * ctx, struct sexpression ** obj) {
                 escape_state = 2;
                 break;
             
-            case L' ':
             case L'(':
             case L')':
             case L'[': 

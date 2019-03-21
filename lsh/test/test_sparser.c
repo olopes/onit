@@ -49,8 +49,7 @@ void sparse_should_do_parse_list_and_return_ok(void ** param) {
     struct sexpression * expected_object;
     struct sexpression * actual_object;
     struct sparser_stream * stream;
-    /* wchar_t * data = L"(hey |y-o-u| \"check \\u34them\\\" dubs\" 123)"; */
-    wchar_t * data = L"(hey   |y-o-u|    \"check them dubs\" \n 123\n)";
+    wchar_t * data = L"(hey   |y-o-u|    \"check them dubs\" \n 123\n)\n";
     
     stream = create_sparser_stream(WCSTR_ADAPTER, data,wcslen(data));
     expected_object = sexpr_cons(sexpr_create_cstr(L"hey"), 
