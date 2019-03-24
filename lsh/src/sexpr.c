@@ -279,14 +279,19 @@ sexpr_marked(struct sexpression * sexpr, unsigned char visit_mark) {
 /* djb2 implementation */
 static unsigned long compute_hashcode(wchar_t * value, size_t len) {
     unsigned long hash;
+    char * ptr = (char*) value;
+    const size_t num_bytes = len * sizeof(wchar_t);
     size_t i;
+    
     
     hash = 5381;
     
-    for(i = 0; i < len; i++) {
+    for(i = 0; i < num_bytes; i++, ptr++) {
         /* hash = ((hash << 5) + hash) + value[i]; / * hash * 33 + c */
         /* hash = hash * 33 ^ value[i]; XOR doesn't work very well, the test fails :-/ */
-        hash = hash * 33 + value[i];
+        /* hash = hash * 33 + value[i]; */
+        /* hash = hash * 33 + *ptr; */
+        hash = ((hash << 5) + hash) + *ptr;
     }
     return hash;
 }

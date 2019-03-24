@@ -182,8 +182,8 @@ int setup (void ** state)
         *ptest_strings = L'\0';
         ptest_strings++;
         
-        test_keys[i] = sexpr_create_value(ptest_strings, i+1);
-        test_values[i] = sexpr_create_value(ptest_strings, i+1);
+        test_keys[i] = sexpr_create_value(str_ptr, i+1);
+        test_values[i] = sexpr_create_value(str_ptr, i+1);
         insertion_order[i] = i;
         deletion_order[i] = i;
         key_visited[i] = 0;

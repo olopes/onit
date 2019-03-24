@@ -16,14 +16,12 @@ static int current_level;
 static void * test_ctx = &current_level;
 
 static void assert_visit(void * test_ctx, struct sexpression * key, void * value) {
-    (void*)test_ctx; /* unused */
     assert_ptr_equal(key, test_keys+current_level);
     assert_ptr_equal(value, test_values+current_level);
     current_level++;
 }
 
 static void test_aa_tree_operations(void ** state) {
-    (void*)state; /* unused */
     struct aa_tree tree;
     int i;
     int position;
@@ -48,7 +46,6 @@ static void test_aa_tree_operations(void ** state) {
 
 
 static void test_aa_tree_find_with_single_node(void ** state) {
-    (void*)state; /* unused */
     struct aa_tree tree;
     
     memset(&tree, 0, sizeof(struct aa_tree));
@@ -64,7 +61,6 @@ static void test_aa_tree_find_with_single_node(void ** state) {
 }
 
 static void test_aa_tree_has_key(void ** state) {
-    (void*)state; /* unused */
     struct aa_tree tree;
     struct sexpression * found;
     
@@ -118,7 +114,6 @@ static void shuffle(int *array, size_t n)
    and clean resources up after each test run */
 int setup (void ** state)
 {
-    (void*)state; /* unused */
     int i;
     int j;
     wchar_t * str_ptr;
@@ -149,7 +144,6 @@ int setup (void ** state)
 
 int teardown (void ** state)
 {
-    (void*)state; /* unused */
     int i;
     for(i = 0; i < TEST_DATA_SIZE; i++) {
         sexpr_free(test_keys[i]);
