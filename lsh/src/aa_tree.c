@@ -31,7 +31,7 @@ static void visit(struct aa_node * node, void * param, void (*callback)(void * p
 int aa_insert(struct aa_tree * tree, struct sexpression * key, void * value) {
     struct aa_node * node;
     
-    if(tree == NULL || key == NULL) {
+    if(tree == NULL || !sexpr_is_value(key)) {
         return 1;
     }
     
@@ -138,7 +138,7 @@ void * aa_delete(struct aa_tree * tree, struct sexpression * key) {
     struct aa_node * node;
     void * value;
     
-    if(tree == NULL || key == NULL) {
+    if(tree == NULL || !sexpr_is_value(key)) {
         return NULL;
     }
     
@@ -257,7 +257,7 @@ int aa_has_key(struct aa_tree * tree, struct sexpression * key) {
     struct aa_node * node;
     int cmp;
     
-    if(tree == NULL || key == NULL) {
+    if(tree == NULL || !sexpr_is_value(key)) {
         return 0;
     }
     
@@ -281,7 +281,7 @@ void * aa_search(struct aa_tree * tree, struct sexpression * key) {
     struct aa_node * node;
     int cmp;
     
-    if(tree == NULL || key == NULL) {
+    if(tree == NULL || !sexpr_is_value(key)) {
         /* err = ENOENT; ?? */
         return NULL;
     }

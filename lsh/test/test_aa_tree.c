@@ -88,6 +88,42 @@ static void test_aa_tree_has_key(void ** state) {
 
 }
 
+static void test_aa_tree_should_only_accept_value_sexpressions(void ** state) {
+    struct aa_tree tree;
+    struct sexpression * pair;
+    struct sexpression * nil;
+    struct sexpression ptr;
+    
+    pair = sexpr_cons(NULL, NULL);
+    nil = NULL;
+    ptr.type = ST_PTR;
+    
+    memset(&tree, 0, sizeof(struct aa_tree));
+    
+    assert_false(aa_insert(&tree, test_keys[0], test_values[0]));
+    assert_true(aa_insert(&tree, pair, test_values[1]));
+    assert_true(aa_insert(&tree, nil, test_values[2]));
+    assert_true(aa_insert(&tree, &ptr, test_values[3]));
+
+    assert_false(aa_has_key(&tree, pair));
+    assert_false(aa_has_key(&tree, nil));
+    assert_false(aa_has_key(&tree, &ptr));
+    assert_true(aa_has_key(&tree, test_keys[0]));
+    
+    assert_null(aa_search(&tree, pair));
+    assert_null(aa_search(&tree, nil));
+    assert_null(aa_search(&tree, &ptr));
+    assert_ptr_equal(aa_search(&tree, test_keys[0]), test_values[0]);
+    
+    assert_null(aa_delete(&tree, pair));
+    assert_null(aa_delete(&tree, nil));
+    assert_null(aa_delete(&tree, &ptr));
+    assert_ptr_equal(aa_delete(&tree, test_keys[0]), test_values[0]);
+    
+    sexpr_free_object(pair);
+
+}
+
 
 
 
@@ -158,11 +194,12 @@ int main (void)
 {
     const struct CMUnitTest tests [] =
     {
-        cmocka_unit_test_setup (test_aa_tree_operations, setup),
-        cmocka_unit_test_setup (test_aa_tree_operations, setup),
-        cmocka_unit_test_setup (test_aa_tree_operations, setup),
-        cmocka_unit_test (test_aa_tree_find_with_single_node),
-        cmocka_unit_test (test_aa_tree_has_key),
+        cmocka_unit_test_setup_teardown (test_aa_tree_operations, setup, teardown),
+        cmocka_unit_test_setup_teardown (test_aa_tree_operations, setup, teardown),
+        cmocka_unit_test_setup_teardown (test_aa_tree_operations, setup, teardown),
+        cmocka_unit_test_setup_teardown (test_aa_tree_find_with_single_node, setup, teardown),
+        cmocka_unit_test_setup_teardown (test_aa_tree_has_key, setup, teardown),
+        cmocka_unit_test_setup_teardown (test_aa_tree_should_only_accept_value_sexpressions, setup, teardown),
     };
 
     srand(131071);

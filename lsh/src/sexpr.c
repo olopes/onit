@@ -287,11 +287,7 @@ static unsigned long compute_hashcode(wchar_t * value, size_t len) {
     hash = 5381;
     
     for(i = 0; i < num_bytes; i++, ptr++) {
-        /* hash = ((hash << 5) + hash) + value[i]; / * hash * 33 + c */
-        /* hash = hash * 33 ^ value[i]; XOR doesn't work very well, the test fails :-/ */
-        /* hash = hash * 33 + value[i]; */
-        /* hash = hash * 33 + *ptr; */
-        hash = ((hash << 5) + hash) + *ptr;
+        hash = ((hash << 5) + hash) + *ptr; /* hash * 33 + c */
     }
     return hash;
 }

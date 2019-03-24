@@ -135,10 +135,48 @@ static void test_shash_has_key(void ** state) {
     shash_delete(&hashtable, test_keys[3]);
     shash_delete(&hashtable, test_keys[4]);
 
-    /* mandatort cleanup */
+    /* mandatory cleanup */
     shash_free(&hashtable);
 }
 
+
+static void test_shash_should_only_accept_value_sexpressions(void ** state) {
+    struct shash_table hashtable;
+    struct sexpression * pair;
+    struct sexpression * nil;
+    struct sexpression ptr;
+    
+    pair = sexpr_cons(NULL, NULL);
+    nil = NULL;
+    ptr.type = ST_PTR;
+    
+    memset(&hashtable, 0, sizeof(struct shash_table));
+    
+    assert_false(shash_insert(&hashtable, test_keys[0], test_values[0]));
+    assert_true(shash_insert(&hashtable, pair, test_values[1]));
+    assert_true(shash_insert(&hashtable, nil, test_values[2]));
+    assert_true(shash_insert(&hashtable, &ptr, test_values[3]));
+
+    assert_false(shash_has_key(&hashtable, pair));
+    assert_false(shash_has_key(&hashtable, nil));
+    assert_false(shash_has_key(&hashtable, &ptr));
+    assert_true(shash_has_key(&hashtable, test_keys[0]));
+    
+    assert_null(shash_search(&hashtable, pair));
+    assert_null(shash_search(&hashtable, nil));
+    assert_null(shash_search(&hashtable, &ptr));
+    assert_ptr_equal(shash_search(&hashtable, test_keys[0]), test_values[0]);
+    
+    assert_null(shash_delete(&hashtable, pair));
+    assert_null(shash_delete(&hashtable, nil));
+    assert_null(shash_delete(&hashtable, &ptr));
+    assert_ptr_equal(shash_delete(&hashtable, test_keys[0]), test_values[0]);
+    
+    /* mandatory cleanup */
+    shash_free(&hashtable);
+    sexpr_free_object(pair);
+
+}
 
 
 
@@ -217,6 +255,7 @@ int main (void)
         cmocka_unit_test_setup_teardown (test_shash_operations, setup, teardown),
         cmocka_unit_test_setup_teardown (test_shash_has_key, setup, teardown),
         cmocka_unit_test_setup_teardown (test_shash_internals, setup, teardown),
+        cmocka_unit_test_setup_teardown (test_shash_should_only_accept_value_sexpressions, setup, teardown),
     };
 
     srand(131071);

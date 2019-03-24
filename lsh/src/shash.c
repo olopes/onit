@@ -24,11 +24,7 @@ static int get_index(struct shash_table * hashtable, struct sexpression * key, s
 
 int shash_insert(struct shash_table * hashtable, struct sexpression * key, void * value) {
     
-    if(hashtable == NULL || key == NULL) {
-        return 1;
-    }
-    
-    if(!sexpr_is_value(key)) {
+    if(hashtable == NULL || !sexpr_is_value(key)) {
         return 1;
     }
     
@@ -128,11 +124,7 @@ static int get_index(struct shash_table * hashtable, struct sexpression * key, s
     size_t j;
     size_t i;
     
-    if(hashtable == NULL || hashtable->load == 0 || key == NULL) {
-        return 0;
-    }
-    
-    if(!sexpr_is_value(key)) {
+    if(hashtable == NULL || hashtable->load == 0 || !sexpr_is_value(key)) {
         return 0;
     }
     
