@@ -5,9 +5,9 @@
 
 #define TEST_DATA_SIZE 26
 
-static wchar_t test_strings[TEST_DATA_SIZE*2];
-static struct sexpression test_keys [TEST_DATA_SIZE];
-static struct sexpression test_values [TEST_DATA_SIZE];
+static wchar_t test_strings[TEST_DATA_SIZE*(TEST_DATA_SIZE+1)];
+static struct sexpression * test_keys [TEST_DATA_SIZE];
+static struct sexpression * test_values [TEST_DATA_SIZE];
 
 static int insertion_order [TEST_DATA_SIZE];
 static int deletion_order [TEST_DATA_SIZE];
@@ -16,12 +16,14 @@ static int current_level;
 static void * test_ctx = &current_level;
 
 static void assert_visit(void * test_ctx, struct sexpression * key, void * value) {
+    (void*)test_ctx; /* unused */
     assert_ptr_equal(key, test_keys+current_level);
     assert_ptr_equal(value, test_values+current_level);
     current_level++;
 }
 
 static void test_aa_tree_operations(void ** state) {
+    (void*)state; /* unused */
     struct aa_tree tree;
     int i;
     int position;
@@ -31,7 +33,7 @@ static void test_aa_tree_operations(void ** state) {
     /* insert everything! */
     for(i = 0; i < TEST_DATA_SIZE; i++) {
         position = insertion_order[i];
-        assert_false(aa_insert(&tree, &test_keys[position], &test_values[position]));
+        assert_false(aa_insert(&tree, test_keys[position], test_values[position]));
     }
     
     current_level = 0;
@@ -39,52 +41,54 @@ static void test_aa_tree_operations(void ** state) {
     
     for(i = 0; i < TEST_DATA_SIZE; i++) {
         position = deletion_order[i];
-        assert_ptr_equal(aa_delete(&tree, &test_keys[position]), &test_values[position]);
+        assert_ptr_equal(aa_delete(&tree, test_keys[position]), test_values[position]);
     }
     
 }
 
 
 static void test_aa_tree_find_with_single_node(void ** state) {
+    (void*)state; /* unused */
     struct aa_tree tree;
     
     memset(&tree, 0, sizeof(struct aa_tree));
     
-    aa_insert(&tree, &test_keys[0], &test_values[0]);
+    aa_insert(&tree, test_keys[0], test_values[0]);
 
-    assert_ptr_equal(aa_search(&tree, &test_keys[0]), &test_values[0]);
+    assert_ptr_equal(aa_search(&tree, test_keys[0]), test_values[0]);
     
-    assert_null(aa_search(&tree, &test_keys[10]));
+    assert_null(aa_search(&tree, test_keys[10]));
     
-    aa_delete(&tree, &test_keys[0]);
+    aa_delete(&tree, test_keys[0]);
 
 }
 
 static void test_aa_tree_has_key(void ** state) {
+    (void*)state; /* unused */
     struct aa_tree tree;
     struct sexpression * found;
     
     memset(&tree, 0, sizeof(struct aa_tree));
     
-    aa_insert(&tree, &test_keys[0], &test_values[0]);
-    aa_insert(&tree, &test_keys[1], &test_values[1]);
-    aa_insert(&tree, &test_keys[2], &test_values[2]);
-    aa_insert(&tree, &test_keys[3], &test_values[3]);
-    aa_insert(&tree, &test_keys[4], &test_values[4]);
+    aa_insert(&tree, test_keys[0], test_values[0]);
+    aa_insert(&tree, test_keys[1], test_values[1]);
+    aa_insert(&tree, test_keys[2], test_values[2]);
+    aa_insert(&tree, test_keys[3], test_values[3]);
+    aa_insert(&tree, test_keys[4], test_values[4]);
 
-    assert_true(aa_has_key(&tree, &test_keys[2]));
+    assert_true(aa_has_key(&tree, test_keys[2]));
     
-    assert_false(aa_has_key(&tree, &test_keys[10]));
+    assert_false(aa_has_key(&tree, test_keys[10]));
     
-    found = aa_search(&tree, &test_keys[0]);
+    found = aa_search(&tree, test_keys[0]);
     
-    assert_ptr_equal(found, &test_values[0]);
+    assert_ptr_equal(found, test_values[0]);
     
-    aa_delete(&tree, &test_keys[0]);
-    aa_delete(&tree, &test_keys[1]);
-    aa_delete(&tree, &test_keys[2]);
-    aa_delete(&tree, &test_keys[3]);
-    aa_delete(&tree, &test_keys[4]);
+    aa_delete(&tree, test_keys[0]);
+    aa_delete(&tree, test_keys[1]);
+    aa_delete(&tree, test_keys[2]);
+    aa_delete(&tree, test_keys[3]);
+    aa_delete(&tree, test_keys[4]);
 
 }
 
@@ -114,7 +118,11 @@ static void shuffle(int *array, size_t n)
    and clean resources up after each test run */
 int setup (void ** state)
 {
+    (void*)state; /* unused */
     int i;
+    int j;
+    wchar_t * str_ptr;
+    wchar_t * ptest_strings = test_strings;
     
     /* init data */
     memset(test_strings, 0, sizeof(test_strings));
@@ -122,9 +130,14 @@ int setup (void ** state)
     memset(test_values, 0, sizeof(test_values));
     
     for(i = 0; i < TEST_DATA_SIZE; i++) {
-        test_strings[i*2] = L'A'+i;
-        test_keys[i].len = test_values[i].len = 1;
-        test_keys[i].data.value = test_values[i].data.value = test_strings+i*2;
+        str_ptr = ptest_strings;
+        for(j = 0; j < i+1; j++, ptest_strings++)
+            *ptest_strings = (rand()%2 ? L'A' : L'a')+j;
+        *ptest_strings = L'\0';
+        ptest_strings++;
+        
+        test_keys[i] = sexpr_create_value(str_ptr, i+1);
+        test_values[i] = sexpr_create_value(str_ptr, i+1);
         insertion_order[i] = i;
         deletion_order[i] = i;
     }
@@ -136,7 +149,12 @@ int setup (void ** state)
 
 int teardown (void ** state)
 {
-    
+    (void*)state; /* unused */
+    int i;
+    for(i = 0; i < TEST_DATA_SIZE; i++) {
+        sexpr_free(test_keys[i]);
+        sexpr_free(test_values[i]);
+    }
     
     return 0;
 }

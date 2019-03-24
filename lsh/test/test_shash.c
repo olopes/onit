@@ -5,7 +5,7 @@
 
 #define TEST_DATA_SIZE 26
 
-static wchar_t test_strings[TEST_DATA_SIZE*2];
+static wchar_t test_strings[TEST_DATA_SIZE*(TEST_DATA_SIZE+1)];
 static struct sexpression * test_keys [TEST_DATA_SIZE];
 static struct sexpression * test_values [TEST_DATA_SIZE];
 
@@ -166,6 +166,9 @@ static void shuffle(int *array, size_t n)
 int setup (void ** state)
 {
     int i;
+    int j;
+    wchar_t * str_ptr;
+    wchar_t * ptest_strings = test_strings;
     
     /* init data */
     memset(test_strings, 0, sizeof(test_strings));
@@ -173,9 +176,14 @@ int setup (void ** state)
     memset(test_values, 0, sizeof(test_values));
     
     for(i = 0; i < TEST_DATA_SIZE; i++) {
-        test_strings[i*2] = L'A'+i;
-        test_keys[i] = sexpr_create_value(test_strings+i*2, 1);
-        test_values[i] = sexpr_create_value(test_strings+i*2, 1);
+        str_ptr = ptest_strings;
+        for(j = 0; j < i+1; j++, ptest_strings++)
+            *ptest_strings = (rand()%2 ? L'A' : L'a')+j;
+        *ptest_strings = L'\0';
+        ptest_strings++;
+        
+        test_keys[i] = sexpr_create_value(ptest_strings, i+1);
+        test_values[i] = sexpr_create_value(ptest_strings, i+1);
         insertion_order[i] = i;
         deletion_order[i] = i;
         key_visited[i] = 0;
