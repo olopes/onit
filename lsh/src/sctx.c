@@ -7,35 +7,9 @@ static wchar_t * convert_to_wcstr(const char * src);
 static void destroy_primitive_references(void * sctx, struct sexpression * name, void * primitive_ptr);
 
 /* some static/constant names */
-static struct sexpression key_true = {
-    .len = 2,
-    .data = {.value = L"#t"},
-    .cdr = {.hashcode = 0},
-    .visit_mark = 0,
-    .type = ST_PTR,
-    .content = SC_PRIMITIVE,
-};
+static struct sexpression * key_true;
 
-static struct sexpression key_false = {
-    .len = 2,
-    .data = {.value = L"#f"},
-    .cdr = {.hashcode = 0},
-    .visit_mark = 0,
-    .type = ST_PTR,
-    .content = SC_PRIMITIVE,
-};
-
-static struct primitive TRUE_PRIMITIVE = {
-    .type = PRIMITIVE_SEXPRESSION,
-    .value = { .sexpression = &key_true },
-    .destructor = NULL,
-};
-
-static struct primitive FALSE_PRIMITIVE = {
-    .type = PRIMITIVE_SEXPRESSION,
-    .value = { NULL },
-    .destructor = NULL,
-};
+static struct sexpression * key_false;
 
 void * 
 init_environment(char **argv, char **envp) {
@@ -70,7 +44,7 @@ init_environment(char **argv, char **envp) {
         .namespaces = NULL,
         .visit = 0,
         .heap_size = HEAP_MIN_SIZE,
-        .heap_load = 0,
+        .heap_load = 4,
         .heap = heap,
         .namespace_destructor = NULL,
     };
@@ -84,15 +58,22 @@ init_environment(char **argv, char **envp) {
     enter_namespace(sctx);
     /* register args and env. forget about primitives*/
 
-    /* TODO extract function */
+    /* TODO extract function  ? */
     
     arg_key = sexpr_create_value(L"#args", 5);
     load_array_to_sexpr(&arg_list, argv);
     env_key = sexpr_create_value(L"#env", 4);
     load_array_to_sexpr(&env_list, envp);
+    
     register_value(sctx, arg_key, arg_list);
     register_value(sctx, env_key, env_list);
     
+    /* store in the heap */
+    heap[0] = arg_key;
+    heap[1] = arg_list;
+    heap[2] = env_key;
+    heap[3] = env_list;
+
     
     return sctx;
 }
@@ -136,11 +117,29 @@ static wchar_t * convert_to_wcstr(const char * src) {
     return wcstr;
 }
 
-
 static void load_primitives(struct sctx * sctx) {
+    struct primitive * TRUE_PRIMITIVE;
+    struct primitive * FALSE_PRIMITIVE;
+    key_true = sexpr_create_value(L"#t",2);
+    key_false = sexpr_create_value(L"#f",2);
     
-    register_primitive(sctx, &key_true, &TRUE_PRIMITIVE);
-    register_primitive(sctx, &key_false, &FALSE_PRIMITIVE);
+    TRUE_PRIMITIVE = malloc(sizeof(struct primitive));
+    *TRUE_PRIMITIVE = (struct primitive) {
+        .type = PRIMITIVE_SEXPRESSION,
+        .value = {.sexpression = key_true},
+        .destructor = NULL,
+    };
+    
+    FALSE_PRIMITIVE = malloc(sizeof(struct primitive));
+    *FALSE_PRIMITIVE = (struct primitive) {
+        .type = PRIMITIVE_SEXPRESSION,
+        .value = {.sexpression = NULL},
+        .destructor = NULL,
+    };
+    
+    
+    register_primitive(sctx, key_true, TRUE_PRIMITIVE);
+    register_primitive(sctx, key_false, FALSE_PRIMITIVE);
     
     /*
     ARGUMENTS_PRIMITIVE.value.sexpression = sctx->arguments;
@@ -188,10 +187,7 @@ release_environment(void * sctx_ptr) {
 }
 
 static void destroy_primitive_references(void * sctx, struct sexpression * name, void * primitive_ptr) {
-    struct primitive * primitive = (struct primitive *) primitive_ptr;
-    
-    if(primitive != NULL && primitive->destructor != NULL) {
-        primitive->destructor(sctx, primitive);
-    }
+    sexpr_free(name);
+    free(primitive_ptr);
 }
 

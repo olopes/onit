@@ -119,6 +119,7 @@ static int record_new_object(struct sctx * sctx, struct sexpression * obj) {
     }
     
     sctx->heap[sctx->heap_load] = obj;
+    sctx->heap_load++;
     
     return 0;
 }
