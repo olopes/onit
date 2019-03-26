@@ -4,6 +4,7 @@
 #include <stddef.h>
 #include "sexpr.h"
 #include "ostr.h"
+#include "shash.h"
 
 struct primitive;
 typedef struct sexpression * (*primitive_fn)(void * sctx, struct sexpression  *);
@@ -24,35 +25,48 @@ struct primitive {
 };
 
 
+struct sctx {
+    struct shash_table primitives;
+    struct sexpression * namespaces;
+    int visit;
+    int heap_size;
+    int heap_load;
+    struct sexpression ** heap;
+    void (*namespace_destructor)(struct sctx * ctx);
+};
 
-extern void * 
+#define HEAP_MIN_SIZE 32
+#define HEAP_MAX_SIZE 131072
+
+
+extern struct sctx * 
 init_environment(char **argv, char **envp);
 
 extern void 
-release_environment(void * sctx);
+release_environment(struct sctx * sctx);
 
 extern void 
-sctx_gc(void * sctx);
+sctx_gc(struct sctx * sctx);
 
 extern int 
-register_primitive(void * sctx, struct sexpression * name, struct primitive * primitive);
+register_primitive(struct sctx * sctx, struct sexpression * name, struct primitive * primitive);
 
 extern struct sexpression * 
-alloc_new_pair(void * sctx, struct sexpression * car, struct sexpression * cdr);
+alloc_new_pair(struct sctx * sctx, struct sexpression * car, struct sexpression * cdr);
 
 extern struct sexpression * 
-alloc_new_value(void * sctx, wchar_t * wcstr, size_t len);
+alloc_new_value(struct sctx * sctx, wchar_t * wcstr, size_t len);
 
 extern int 
-enter_namespace(void * sctx);
+enter_namespace(struct sctx * sctx);
 
 extern int 
-leave_namespace(void * sctx);
+leave_namespace(struct sctx * sctx);
 
 extern struct sexpression * 
-lookup_name(void * sctx, struct sexpression * name);
+lookup_name(struct sctx * sctx, struct sexpression * name);
 
 extern int 
-register_value(void * sctx, struct sexpression * name, struct sexpression * value);
+register_value(struct sctx * sctx, struct sexpression * name, struct sexpression * value);
 
 #endif

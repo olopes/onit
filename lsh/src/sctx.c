@@ -9,31 +9,18 @@
 #include "sctx.h"
 
 
-struct sctx {
-    struct shash_table primitives;
-    struct sexpression * namespaces;
-    int visit;
-    int heap_size;
-    int heap_load;
-    struct sexpression ** heap;
-    void (*namespace_destructor)(struct sctx * ctx);
-};
-
-#define HEAP_MIN_SIZE 32
-#define HEAP_MAX_SIZE 131072
-
-
 static void load_array_to_sexpr(struct sexpression ** list, char ** array);
 static void load_primitives(struct sctx * sctx);
 static wchar_t * convert_to_wcstr(const char * src);
-static void destroy_primitive_references(void * sctx, struct sexpression * name, void * primitive_ptr);
+static void destroy_primitive_references_cb (void * sctx, struct sexpression * name, void * primitive_ptr);
+static void free_heap_contents (struct sctx * sctx);
 static int record_new_object(struct sctx * sctx, struct sexpression * obj);
 static void recycle(struct sctx * sctx);
 static void visit_namespaces(struct sctx * sctx);
 static void free_unvisited_references(struct sctx * sctx);
 static void grow_heap_if_necessary(struct sctx * sctx);
 static inline int heap_should_grow(struct sctx * sctx);
-static void mark_reachable_references(void * ctx, struct sexpression * key, void * reference);
+static void mark_reachable_references_cb (void * sctx, struct sexpression * key, void * reference);
 static int sref_comparator(const void * a, const void * b);
 
 /* some static/constant names */
@@ -41,7 +28,7 @@ static struct sexpression * key_true;
 
 static struct sexpression * key_false;
 
-void * 
+struct sctx * 
 init_environment(char **argv, char **envp) {
     struct sctx * sctx;
     struct sexpression ** heap;
@@ -74,7 +61,7 @@ init_environment(char **argv, char **envp) {
         .namespaces = NULL,
         .visit = 0,
         .heap_size = HEAP_MIN_SIZE,
-        .heap_load = 4,
+        .heap_load = 0,
         .heap = heap,
         .namespace_destructor = NULL,
     };
@@ -90,6 +77,7 @@ init_environment(char **argv, char **envp) {
 
     /* TODO extract function  ? */
     
+    /*
     arg_key = sexpr_create_value(L"#args", 5);
     load_array_to_sexpr(&arg_list, argv);
     env_key = sexpr_create_value(L"#env", 4);
@@ -98,12 +86,12 @@ init_environment(char **argv, char **envp) {
     register_value(sctx, arg_key, arg_list);
     register_value(sctx, env_key, env_list);
     
-    /* store in the heap */
+    / * store in the heap * /
     heap[0] = arg_key;
     heap[1] = arg_list;
     heap[2] = env_key;
     heap[3] = env_list;
-
+    */
     
     return sctx;
 }
@@ -180,8 +168,7 @@ static void load_primitives(struct sctx * sctx) {
     */
 }
 
-int register_primitive(void * sctx_ptr, struct sexpression * name, struct primitive * primitive) {
-    struct sctx * sctx = (struct sctx *) sctx_ptr;
+int register_primitive(struct sctx * sctx, struct sexpression * name, struct primitive * primitive) {
     
     if(sctx == NULL || name == NULL) {
         return 1;
@@ -197,8 +184,7 @@ int register_primitive(void * sctx_ptr, struct sexpression * name, struct primit
 
 
 void 
-release_environment(void * sctx_ptr) {
-    struct sctx * sctx = (struct sctx *) sctx_ptr;
+release_environment(struct sctx * sctx) {
     
     if(sctx == NULL) {
         return;
@@ -206,24 +192,25 @@ release_environment(void * sctx_ptr) {
     
     
     /* TODO release remaining primitives before releasing the hashtable */
-    shash_visit(&sctx->primitives, sctx, destroy_primitive_references);
+    shash_visit(&sctx->primitives, sctx, destroy_primitive_references_cb );
     shash_free(&sctx->primitives);
 
     leave_namespace(sctx);
-    sctx_gc(sctx);
+    /* sctx_gc(sctx); */
+    
+    free_heap_contents(sctx);
     
     free(sctx->heap);
     free(sctx);
 }
 
-static void destroy_primitive_references(void * sctx, struct sexpression * name, void * primitive_ptr) {
+static void destroy_primitive_references_cb (void * sctx, struct sexpression * name, void * primitive_ptr) {
     sexpr_free(name);
     free(primitive_ptr);
 }
 
 
-int enter_namespace(void * sctx_ptr) {
-    struct sctx * sctx = (struct sctx *) sctx_ptr;
+int enter_namespace(struct sctx * sctx) {
     struct shash_table * new_namespace;
     new_namespace = (struct shash_table *) malloc(sizeof(struct shash_table));
     if(new_namespace == NULL) {
@@ -234,8 +221,7 @@ int enter_namespace(void * sctx_ptr) {
     return 0;
 }
 
-int leave_namespace(void * sctx_ptr) {
-    struct sctx * sctx = (struct sctx *) sctx_ptr;
+int leave_namespace(struct sctx * sctx) {
     struct shash_table * old_namespace;
     old_namespace = (struct shash_table *) sexpr_pop(&sctx->namespaces);
     shash_free(old_namespace);
@@ -243,8 +229,7 @@ int leave_namespace(void * sctx_ptr) {
     return 0;
 }
 
-struct sexpression * lookup_name(void * sctx_ptr, struct sexpression * name) {
-    struct sctx * sctx = (struct sctx *) sctx_ptr;
+struct sexpression * lookup_name(struct sctx * sctx, struct sexpression * name) {
     struct sexpression * namestack;
     struct shash_table * namespace;
     struct sexpression * value;
@@ -270,8 +255,7 @@ struct sexpression * lookup_name(void * sctx_ptr, struct sexpression * name) {
     return NULL;
 }
 
-int register_value(void * sctx_ptr, struct sexpression * name, struct sexpression * value) {
-    struct sctx * sctx = (struct sctx *) sctx_ptr;
+int register_value(struct sctx * sctx, struct sexpression * name, struct sexpression * value) {
     struct shash_table * namespace;
     
     namespace = (struct shash_table *) sexpr_peek(&sctx->namespaces);
@@ -283,14 +267,14 @@ int register_value(void * sctx_ptr, struct sexpression * name, struct sexpressio
 }
 
 
-struct sexpression * alloc_new_pair(void * sctx, struct sexpression * car, struct sexpression * cdr) {
+struct sexpression * alloc_new_pair(struct sctx * sctx, struct sexpression * car, struct sexpression * cdr) {
     struct sexpression * object = sexpr_cons(car, cdr);
     
     if(object == NULL) {
         return NULL;
     }
     
-    if(record_new_object((struct sctx *) sctx, object)) {
+    if(record_new_object(sctx, object)) {
         /* mem full? error? */
         sexpr_free_object(object);
         object = NULL;
@@ -299,7 +283,7 @@ struct sexpression * alloc_new_pair(void * sctx, struct sexpression * car, struc
     return object;
 }
     
-struct sexpression * alloc_new_value(void * sctx, wchar_t * wcstr, size_t len) {
+struct sexpression * alloc_new_value(struct sctx * sctx, wchar_t * wcstr, size_t len) {
     /* future improvement: string cache */
     struct sexpression * object = sexpr_create_value(wcstr, len);
     
@@ -307,7 +291,7 @@ struct sexpression * alloc_new_value(void * sctx, wchar_t * wcstr, size_t len) {
         return NULL;
     }
     
-    if(record_new_object((struct sctx *) sctx, object)) {
+    if(record_new_object(sctx, object)) {
         /* mem full? error? */
         sexpr_free_object(object);
         object = NULL;
@@ -368,7 +352,7 @@ static void visit_namespaces(struct sctx * sctx) {
     
     while(ns != NULL) {
         namespace = (struct shash_table *) sexpr_car(ns);
-        shash_visit(namespace, sctx, mark_reachable_references);
+        shash_visit(namespace, sctx, mark_reachable_references_cb );
         ns = sexpr_cdr(ns);
     }
 }
@@ -410,7 +394,7 @@ static inline int heap_should_grow(struct sctx * sctx) {
     return (sctx->heap_size < HEAP_MIN_SIZE && sctx->heap_load*2 > sctx->heap_size);
 }
 
-static void mark_reachable_references(void * sctx_ptr, struct sexpression * key, void * reference) {
+static void mark_reachable_references_cb (void * sctx_ptr, struct sexpression * key, void * reference) {
     struct sctx * sctx = (struct sctx *) sctx_ptr;
     
     if(reference == NULL) {
@@ -429,9 +413,7 @@ static int sref_comparator(const void * a, const void * b) {
 }
 
 void
-sctx_gc(void * sctx_ptr) {
-    struct sctx * sctx = (struct sctx *) sctx_ptr;
-    
+sctx_gc(struct sctx * sctx) {
     if(sctx == NULL) {
         return;
     }
@@ -440,3 +422,10 @@ sctx_gc(void * sctx_ptr) {
     
 }
 
+static void
+free_heap_contents (struct sctx * sctx) {
+    size_t i;
+    for(i = 0; i < sctx->heap_load; i++) {
+        sexpr_free_object(sctx->heap[i]);
+    }
+}
