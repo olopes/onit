@@ -68,5 +68,5 @@ coverage: check
 
 .PHONY: all tests check coverage clean
 
-.PRECIOUS: build/test/%.t
+.PRECIOUS: build/test/%.t build/test/%.o build/%.o
 

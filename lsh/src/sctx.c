@@ -23,6 +23,7 @@ static inline int heap_should_grow(struct sctx * sctx);
 static void mark_reachable_references_cb (void * sctx, struct sexpression * key, void * reference);
 static int sref_comparator(const void * a, const void * b);
 
+
 /* some static/constant names */
 static struct sexpression * key_true;
 
