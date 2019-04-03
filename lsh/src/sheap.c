@@ -16,7 +16,7 @@ https://medium.com/100-days-of-algorithms/day-86-binary-heap-8af7c1abc8d0
 */
 
 #define INITIAL_CAPACITY 1024
-static void percolate_up(struct sheap * heap, size_t position);
+static void percolate_up(struct sexpression ** heap, size_t position);
 static int contains_value(struct sheap * heap, uintptr_t value, size_t pos);
 
 
@@ -114,11 +114,11 @@ sheap_insert(struct sheap * heap, struct sexpression * sexpr) {
         return SHEAP_EXISTS;
     }
     
-    heap->size++;
     
     heap->data[heap->size] = sexpr;
+    heap->size++;
     
-    percolate_up(heap, heap->size);
+    percolate_up(heap->data-1, heap->size);
     
     
     return SHEAP_OK;
@@ -145,15 +145,15 @@ static int contains_value(struct sheap * heap, uintptr_t value, size_t pos) {
     return contains_value(heap, value, sub_pos) || contains_value(heap, value, sub_pos+1);
 }
 
-static void percolate_up(struct sheap * heap, size_t position) {
+static void percolate_up(struct sexpression ** data, size_t position) {
     struct sexpression * tmp;
     size_t i = position;
     size_t parent = position >> 1;
     
-    while (i > 1 && ((uintptr_t)heap->data[i]) > ((uintptr_t)heap->data[parent])) {
-        tmp = heap->data[parent];
-        heap->data[parent] = heap->data[i];
-        heap->data[i] = tmp;
+    while (i > 1 && ((uintptr_t)data[i]) > ((uintptr_t)data[parent])) {
+        tmp = data[parent];
+        data[parent] = data[i];
+        data[i] = tmp;
 
         i = parent;
         parent = i >> 1;

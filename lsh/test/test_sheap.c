@@ -114,7 +114,7 @@ static void test_sheap_insert_should_put_sexpr_at_first_position_if_heap_is_empt
     
     assert_int_equal(sheap_insert(&heap, &sexpr), SHEAP_OK);
     
-    assert_ptr_equal(data[1], &sexpr);
+    assert_ptr_equal(data[0], &sexpr);
 }
     
 static void test_sheap_insert_should_preserve_heap_property(void ** state) {
@@ -122,22 +122,20 @@ static void test_sheap_insert_should_preserve_heap_property(void ** state) {
     struct sexpression * data [100];
     struct sexpression * expected [8];
     
-    expected[0] = NULL;
-    expected[1] = (struct sexpression *) 20;
-    expected[2] = (struct sexpression *) 15;
-    expected[3] = (struct sexpression *) 17;
-    expected[4] = (struct sexpression *) 6;
-    expected[5] = (struct sexpression *) 9;
-    expected[6] = (struct sexpression *) 7;
-    expected[7] = (struct sexpression *) 10;
+    expected[0] = (struct sexpression *) 20;
+    expected[1] = (struct sexpression *) 15;
+    expected[2] = (struct sexpression *) 17;
+    expected[3] = (struct sexpression *) 6;
+    expected[4] = (struct sexpression *) 9;
+    expected[5] = (struct sexpression *) 7;
+    expected[6] = (struct sexpression *) 10;
     
-    data[0] = NULL;
-    data[1] = (struct sexpression *) 17;
-    data[2] = (struct sexpression *) 15;
-    data[3] = (struct sexpression *) 10;
-    data[4] = (struct sexpression *) 6;
-    data[5] = (struct sexpression *) 9;
-    data[6] = (struct sexpression *) 7;
+    data[0] = (struct sexpression *) 17;
+    data[1] = (struct sexpression *) 15;
+    data[2] = (struct sexpression *) 10;
+    data[3] = (struct sexpression *) 6;
+    data[4] = (struct sexpression *) 9;
+    data[5] = (struct sexpression *) 7;
     
     heap = (struct sheap){
         .capacity = 100,
@@ -147,20 +145,19 @@ static void test_sheap_insert_should_preserve_heap_property(void ** state) {
     
     assert_int_equal(sheap_insert(&heap, (struct sexpression *) 20), SHEAP_OK);
     
-    assert_int_equal(memcmp(expected, data, sizeof(struct sexpression*)*8), 0);
+    assert_int_equal(memcmp(expected, data, sizeof(struct sexpression*)*7), 0);
 }
     
 static void test_sheap_insert_should_return_SHEAP_EXISTS_if_element_already_exists(void ** state) {
     struct sheap heap;
     struct sexpression * data [100];
     
-    data[0] = NULL;
-    data[1] = (struct sexpression *) 17;
-    data[2] = (struct sexpression *) 15;
-    data[3] = (struct sexpression *) 10;
-    data[4] = (struct sexpression *) 6;
-    data[5] = (struct sexpression *) 9;
-    data[6] = (struct sexpression *) 7;
+    data[0] = (struct sexpression *) 17;
+    data[1] = (struct sexpression *) 15;
+    data[2] = (struct sexpression *) 10;
+    data[3] = (struct sexpression *) 6;
+    data[4] = (struct sexpression *) 9;
+    data[5] = (struct sexpression *) 7;
     
     heap = (struct sheap){
         .capacity = 100,
