@@ -1,5 +1,6 @@
 $(shell mkdir -p build/test > /dev/null)
-$(shell mkdir -p build/.d/build/test   > /dev/null)
+$(shell mkdir -p build/.d/build/test > /dev/null)
+$(shell mkdir -p build/coverage > /dev/null)
 
 DEPDIR = build/.d
 # DEPFLAGS = -MT $@ -MMD -MP -MF $(DEPDIR)/$*.Td
@@ -12,18 +13,18 @@ CFLAGS=-O2 -Wall -pedantic -finput-charset=UTF-8 -fPIC $(DEPFLAGS) -DWEAK_FOR_UN
 LDFLAGS =  
 PROD_OBJ = $(patsubst %.c,%.o,$(subst src/,build/,$(wildcard src/*.c))) build/main.c
 
-TEST_CFLAGS = -g -Wall -pedantic -finput-charset=UTF-8 -fPIC $(DEPFLAGS) -Isrc -I$(CMOCKA_ROOT)/include -include test/test_definitions.h
+TEST_CFLAGS = -g -Wall -pedantic -finput-charset=UTF-8 -fPIC $(DEPFLAGS) -Isrc -I$(CMOCKA_ROOT)/include -include test/test_definitions.h --coverage 
 # TEST_LDFLAGS = -lcmocka -L$(CMOCKA_ROOT)/lib
-TEST_LDFLAGS = ../cmocka/lib/cmocka.o
+TEST_LDFLAGS = ../cmocka/lib/cmocka.o --coverage
 
 TESTS_PROD_SRC = $(wildcard src/*.c)
 TESTS_PROD_OBJ = $(patsubst %.c,build/%.o,$(subst src/,test/,$(TESTS_PROD_SRC)))
 TESTS = $(patsubst %.c,build/%.t,$(wildcard test/test*.c))
-TESTS_PASS = $(patsubst %.t,%.pass,$(TESTS))
+TESTS_PASS = $(patsubst %.t,%.info,$(TESTS))
 #CC=../tcc/bin/tcc
 CC=gcc
 
-all: build/ostr build/sexpr build/sparse build/lsh check 
+all: build/ostr build/sexpr build/sparse build/lsh coverage
 
 build/main.c:
 	echo 'int MAIN(int a, char ** b); int main(int a, char**b) { return MAIN(a,b); }' > build/main.c
@@ -45,26 +46,33 @@ build/%.o: src/%.c
 	@mv -f $(DEPDIR)/$*.Td $(DEPDIR)/$*.d && touch $@
 
 clean:
-	rm -r -f -- build *.gcda *.gcno
+	rm -r -f -- build
 
 # Unit tests
 
 build/test/%.o: src/%.c
-	mkdir -p build/test
 	$(CC) $(TEST_CFLAGS) -c -o $@ $<
 
-build/test/%.t: test/%.c $(TESTS_PROD_OBJ)
+build/test/unit_%.o: test/%.c
+	$(CC) $(TEST_CFLAGS) -c -o $@ $<
+
+build/test/%.t: build/test/unit_%.o $(TESTS_PROD_OBJ)
 	$(CC) $(TEST_LDFLAGS) $(TEST_CFLAGS) -o $@ $^
 
-build/test/%.pass: build/test/%.t
+build/test/%.info: build/test/%.t
+	rm -r -f build/test/*.gcda
 	$<
-	touch $@
+	lcov -q -c -d build/test -o $@ -t $(basename $(notdir $<))
 
 tests: $(TESTS)
 
 check: tests $(TESTS_PASS)
 
 coverage: check
+	lcov $(addprefix -a ,$(TESTS_PASS)) -o build/coverage.info
+	echo -e '<script>\nsetTimeout("location.reload(true)", 60000);\n</script>' > build/coverage/epilog.html
+	genhtml -q -f -s -k --legend --highlight --output-directory build/coverage --html-epilog build/coverage/epilog.html build/coverage.info
+
 
 .PHONY: all tests check coverage clean
 
