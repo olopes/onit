@@ -61,7 +61,7 @@ sheap_insert(struct sheap * heap, struct sexpression * sexpr);
 /**
  * Visit elements in the Heap
  */
-extern int
+extern void
 sheap_visit(struct sheap * heap, void * param, void (*callback)(void * param, struct sexpression * value));
 
 /**

@@ -110,11 +110,6 @@ sheap_insert(struct sheap * heap, struct sexpression * sexpr) {
         return SHEAP_FULL;
     }
     
-    if(contains_value(heap, (uintptr_t)sexpr, 1)) {
-        return SHEAP_EXISTS;
-    }
-    
-    
     heap->data[heap->size] = sexpr;
     heap->size++;
     
@@ -122,27 +117,6 @@ sheap_insert(struct sheap * heap, struct sexpression * sexpr) {
     
     
     return SHEAP_OK;
-}
-
-static int contains_value(struct sheap * heap, uintptr_t value, size_t pos) {
-    uintptr_t node_value;
-    
-    if(pos > heap->size) {
-        return 0;
-    }
-    
-    node_value = (uintptr_t) heap->data[pos];
-    if(node_value == value) {
-        return 1;
-    }
-    
-    /* max heap property */
-    if(node_value < value) {
-        return 0;
-    }
-    
-    int sub_pos = pos << 1;
-    return contains_value(heap, value, sub_pos) || contains_value(heap, value, sub_pos+1);
 }
 
 static void percolate_up(struct sexpression ** data, size_t position) {
@@ -163,8 +137,20 @@ static void percolate_up(struct sexpression ** data, size_t position) {
 /**
  * Visit elements in the Heap
  */
-extern int
-sheap_visit(struct sheap * heap, void * param, void (*callback)(void * param, struct sexpression * value));
+void
+sheap_visit(struct sheap * heap, void * param, void (*callback)(void * param, struct sexpression * value)) {
+    size_t i;
+    struct sexpression ** data;
+    
+    if(heap == NULL || callback == NULL) {
+        return;
+    }
+    
+    for(i = 0, data = heap->data; i < heap->size; i++, data++) {
+        callback(param, *data);
+    }
+}
+    
 
 /**
  * Heap sort :-)

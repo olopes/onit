@@ -147,28 +147,40 @@ static void test_sheap_insert_should_preserve_heap_property(void ** state) {
     
     assert_int_equal(memcmp(expected, data, sizeof(struct sexpression*)*7), 0);
 }
-    
-static void test_sheap_insert_should_return_SHEAP_EXISTS_if_element_already_exists(void ** state) {
+
+static void test_callback(void * param, struct sexpression * value);
+static void sheap_visit_should_call_the_callback_function_for_all_elements(void ** param) {
+    int visited [] = {0,0,0,0};
     struct sheap heap;
-    struct sexpression * data [100];
-    
-    data[0] = (struct sexpression *) 17;
-    data[1] = (struct sexpression *) 15;
-    data[2] = (struct sexpression *) 10;
-    data[3] = (struct sexpression *) 6;
-    data[4] = (struct sexpression *) 9;
-    data[5] = (struct sexpression *) 7;
-    
-    heap = (struct sheap){
-        .capacity = 100,
-        .size = 6,
-        .data = data,
+    struct sexpression * data [] = {
+        (struct sexpression *)0,
+        (struct sexpression *)1,
+        (struct sexpression *)2,
+        (struct sexpression *)3,
+        (struct sexpression *)4,
+        (struct sexpression *)5,
+        NULL
     };
+    int i;
     
-    assert_int_equal(sheap_insert(&heap, (struct sexpression *) 9), SHEAP_EXISTS);
+    heap.data = data;
+    heap.size = 4;
+    heap.capacity = 7;
     
+    sheap_visit(&heap, visited, test_callback);
+    
+    for(i = 0; i < 4; i++) {
+        assert_true(visited[i]);
+    }
 }
+
+static void test_callback(void * param, struct sexpression * value) {
+    int * visited = (int *) param;
+    size_t visited_position = (size_t) value;
     
+    assert_in_range(visited_position, 0, 3);
+    visited[visited_position] = 1;
+}
 
 /*
 extern int
@@ -207,7 +219,7 @@ int main (void)
         cmocka_unit_test (test_sheap_insert_should_return_SHEAP_FULL_if_sexpr_is_full),
         cmocka_unit_test (test_sheap_insert_should_put_sexpr_at_first_position_if_heap_is_empty),
         cmocka_unit_test (test_sheap_insert_should_preserve_heap_property),
-        cmocka_unit_test (test_sheap_insert_should_return_SHEAP_EXISTS_if_element_already_exists),
+        cmocka_unit_test (sheap_visit_should_call_the_callback_function_for_all_elements),
         
     };
 
