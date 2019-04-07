@@ -204,7 +204,7 @@ int teardown (void ** state)
 
 int main (void)
 {
-    const struct CMUnitTest tests [] =
+    const struct CMUnitTest sheap_test [] =
     {
         cmocka_unit_test (test_create_release_sheap),
         cmocka_unit_test (test_sheap_is_full_should_return_false_if_heap_is_null),
@@ -227,7 +227,7 @@ int main (void)
        needed, then NULL may be passed instead */
 
     int count_fail_tests =
-        cmocka_run_group_tests (tests, NULL, NULL);
+        cmocka_run_group_tests_name (__FILE__, sheap_test, NULL, NULL);
 
     return count_fail_tests;
 }

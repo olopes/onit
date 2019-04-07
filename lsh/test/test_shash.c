@@ -264,7 +264,7 @@ int main (void)
        needed, then NULL may be passed instead */
 
     int count_fail_tests =
-        cmocka_run_group_tests (tests, NULL, NULL);
+        cmocka_run_group_tests_name (__FILE__, tests, NULL, NULL);
 
     return count_fail_tests;
 }

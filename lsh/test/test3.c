@@ -20,7 +20,7 @@ int teardown (void ** state)
 
 int main (void)
 {
-    const struct CMUnitTest tests [] =
+    const struct CMUnitTest test3 [] =
     {
         cmocka_unit_test (null_test_failure),
     };
@@ -29,7 +29,7 @@ int main (void)
        needed, then NULL may be passed instead */
 
     int count_fail_tests =
-        cmocka_run_group_tests (tests, setup, teardown);
+        cmocka_run_group_tests_name (__FILE__, test3, setup, teardown);
 
     return count_fail_tests;
 }

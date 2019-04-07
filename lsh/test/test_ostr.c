@@ -370,7 +370,7 @@ int main (void)
        needed, then NULL may be passed instead */
 
     int count_fail_tests =
-        cmocka_run_group_tests (tests, setup, teardown);
+        cmocka_run_group_tests_name (__FILE__, tests, setup, teardown);
 
     return count_fail_tests;
 }

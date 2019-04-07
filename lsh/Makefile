@@ -1,6 +1,7 @@
 $(shell mkdir -p build/test > /dev/null)
 $(shell mkdir -p build/.d/build/test > /dev/null)
 $(shell mkdir -p build/coverage > /dev/null)
+$(shell mkdir -p build/report > /dev/null)
 
 DEPDIR = build/.d
 # DEPFLAGS = -MT $@ -MMD -MP -MF $(DEPDIR)/$*.Td
@@ -20,7 +21,8 @@ TEST_LDFLAGS = ../cmocka/lib/cmocka.o --coverage
 TESTS_PROD_SRC = $(wildcard src/*.c)
 TESTS_PROD_OBJ = $(patsubst %.c,build/%.o,$(subst src/,test/,$(TESTS_PROD_SRC)))
 TESTS = $(patsubst %.c,build/%.t,$(wildcard test/test*.c))
-TESTS_PASS = $(patsubst %.t,%.info,$(TESTS))
+TESTS_PASS = $(patsubst %.t,%.gcda,$(TESTS))
+TESTS_COV = $(patsubst %.t,%.info,$(TESTS))
 #CC=../tcc/bin/tcc
 CC=gcc
 
@@ -59,19 +61,26 @@ build/test/unit_%.o: test/%.c
 build/test/%.t: build/test/unit_%.o $(TESTS_PROD_OBJ)
 	$(CC) $(TEST_LDFLAGS) $(TEST_CFLAGS) -o $@ $^
 
-build/test/%.info: build/test/%.t
-	rm -r -f build/test/*.gcda
-	$<
-	lcov -q -c -d build/test -o $@ -t $(basename $(notdir $<))
+build/test/%.gcda: build/test/%.t
+	@CMOCKA_MESSAGE_OUTPUT=stdout $<
 
 tests: $(TESTS)
 
 check: tests $(TESTS_PASS)
 
-coverage: check
-	lcov $(addprefix -a ,$(TESTS_PASS)) -o build/coverage.info
-	echo -e '<script>\nsetTimeout("location.reload(true)", 60000);\n</script>' > build/coverage/epilog.html
-	genhtml -q -f -s -k --legend --highlight --output-directory build/coverage --html-epilog build/coverage/epilog.html build/coverage.info
+# Coverage
+
+build/test/%.info: build/test/%.t
+	@lcov -q -z -d build/test 
+	-rm build/report/$(basename $(notdir $<)).xml
+	-CMOCKA_XML_FILE=build/report/$(basename $(notdir $<)).xml CMOCKA_MESSAGE_OUTPUT=xml $< 
+	@lcov -q -c -d build/test -o $@ -t $(basename $(notdir $<))
+
+coverage: tests $(TESTS_COV)
+	@lcov -t coverage $(addprefix -a ,$(TESTS_COV)) -o build/coverage.info
+	@genhtml -q -f -s -k --legend --highlight --output-directory build/coverage build/coverage.info
+	@ls -1 build/report/test*.xml | gawk 'BEGIN {print "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<?xml-stylesheet type=\"text/xsl\" href=\"report.xsl\"?>\n<files created=\"" strftime("%Y-%m-%dT%H:%M:%SZ", systime(), 1) "\">"} {n=split($$0,a,/\//); print "<file>" a[n] "</file>" } END {print "</files>\n"}' > build/report/report.xml
+	@cp src/report.xsl build/report/report.xsl
 
 
 .PHONY: all tests check coverage clean
