@@ -115,6 +115,7 @@
         <xsl:choose>
             <xsl:when test="error">error</xsl:when>
             <xsl:when test="failure">failure</xsl:when>
+            <xsl:when test="skipped">skipped</xsl:when>
             <xsl:otherwise>pass</xsl:otherwise>
         </xsl:choose>
         </xsl:attribute>
@@ -125,6 +126,7 @@
             <xsl:choose>
                 <xsl:when test="failure">Failure</xsl:when>
                 <xsl:when test="error">Error</xsl:when>
+                <xsl:when test="skipped">Skipped</xsl:when>
                 <xsl:otherwise>Success</xsl:otherwise>
             </xsl:choose>
         </td>

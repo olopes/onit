@@ -1,8 +1,17 @@
 #include <cmocka.h>
 /* TODO implement */
 
-void null_test_failure(void ** param) {
+void null_test_pass(void ** param) {
     assert_true(1);
+}
+
+void null_test_skip(void ** param) {
+	skip();
+	fail_msg("should have been skipped");
+}
+
+void null_test_failure(void ** param) {
+	fail();
 }
 
 /* These functions will be used to initialize
@@ -22,6 +31,8 @@ int main (void)
 {
     const struct CMUnitTest test3 [] =
     {
+        cmocka_unit_test (null_test_pass),
+        cmocka_unit_test (null_test_skip),
         cmocka_unit_test (null_test_failure),
     };
 
