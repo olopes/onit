@@ -4,8 +4,7 @@
     xmlns:xs="http://www.w3.org/2001/XMLSchema"
     xmlns:str="http://exslt.org/strings"
     xmlns:regex="http://exslt.org/regular-expressions"
-    xmlns:date="http://exslt.org/dates-and-times"
-    extension-element-prefixes="date regex str xs">
+    extension-element-prefixes="regex str xs">
 
 <xsl:output method="html" encoding="utf-8" doctype-system="about:legacy-compat" /> 
 
