@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xsl:stylesheet version="2.0" 
-xmlns:xsl="http://www.w3.org/1999/XSL/Transform" 
-xmlns:xs="http://www.w3.org/2001/XMLSchema"
-xmlns:str="http://exslt.org/strings"
-xmlns:regex="http://exslt.org/regular-expressions"
->
+    xmlns:xsl="http://www.w3.org/1999/XSL/Transform" 
+    xmlns:xs="http://www.w3.org/2001/XMLSchema"
+    xmlns:str="http://exslt.org/strings"
+    xmlns:regex="http://exslt.org/regular-expressions">
 
 <xsl:output method="html" encoding="utf-8" doctype-system="about:legacy-compat" /> 
 
@@ -30,54 +29,15 @@ xmlns:regex="http://exslt.org/regular-expressions"
     .skipped td.teststatus {background-color: #FFEA20;}
     .pass td.teststatus {background-color: #A7FC9D;}
     hr {background-color: #6688D4;height: 2px;border: none;}
-
-    /* #1bea59 */
-    label {
-        cursor: pointer;
-    }
-    label span {
-        margin-right: 5px;
-    }
-    
-    label span.testfile {
-        width: 60ex;
-        display: inline-block;
-        text-decoration: underline;
-    }    
-    
-    label span.count {
-        width: 10ex;
-        display: inline-block;
-        background: #dddddd;
-        text-align:right
-    }    
-    
-    div.duration {
-        font-size:smaller;
-        border-bottom: 1px dotted #ccc;
-        color: #555;
-    }
-    
-    span.square {
-        border: 1px solid #000000;
-        height: 1ex;
-        width: 1ex;
-        display:inline-block;
-        color: white;
-    }
-    
-    .pass span.square {
-        background: #1bea59;
-    }
-    
-    .error span.square {
-        background: #ff352f;
-    }
-    
-    .failure span.square {
-        background: #5477a7;
-    }
-    
+    label {cursor: pointer;}
+    label span {margin-right: 5px;}
+    label span.testfile {width: 60ex;display: inline-block;text-decoration: underline;}
+    label span.count {width: 10ex;display: inline-block;background: #dddddd;text-align:right}
+    div.duration {font-size:smaller;border-bottom: 1px dotted #ccc;color: #555;}
+    span.square {border: 1px solid #000000;height: 1ex;width: 1ex;display:inline-block;color: white;}
+    .pass span.square {background: #1bea59;}
+    .error span.square {background: #ff352f;}
+    .failure span.square {background: #5477a7;}
     .testsuite .coverage {float:right;}
     .testsuite input[type=checkbox] {display: none;}
     .testsuite div.testset {display:none;}
@@ -85,7 +45,7 @@ xmlns:regex="http://exslt.org/regular-expressions"
 </style>
 </head>
 <body>
-<xsl:apply-templates />
+    <xsl:apply-templates />
 </body>
 </html>
 </xsl:template>
@@ -93,15 +53,12 @@ xmlns:regex="http://exslt.org/regular-expressions"
 <xsl:template match="files">
     <h1>Test Execution Result</h1>
     <hr />
+    
     <xsl:for-each select="file">
-        <xsl:apply-templates select="document(.)/testsuites" />
+        <xsl:apply-templates select="document(.)/testsuites/testsuite" />
     </xsl:for-each>
     
     <div>Report generated at <xsl:call-template name="timestamp"><xsl:with-param name="ts" select = "@created" /></xsl:call-template></div>
-</xsl:template>
-
-<xsl:template match="testsuites">
-    <xsl:apply-templates select="testsuite" />
 </xsl:template>
 
 <xsl:template match="testsuite">
