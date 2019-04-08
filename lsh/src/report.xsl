@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<xsl:stylesheet version="2.0" 
+<xsl:stylesheet version="1.0" 
     xmlns:xsl="http://www.w3.org/1999/XSL/Transform" 
     xmlns:xs="http://www.w3.org/2001/XMLSchema"
     xmlns:str="http://exslt.org/strings"
-    xmlns:regex="http://exslt.org/regular-expressions">
+    xmlns:regex="http://exslt.org/regular-expressions"
+    xmlns:date="http://exslt.org/dates-and-times"
+    extension-element-prefixes="date regex str xs">
 
 <xsl:output method="html" encoding="utf-8" doctype-system="about:legacy-compat" /> 
 
@@ -58,7 +60,10 @@
         <xsl:apply-templates select="document(.)/testsuites/testsuite" />
     </xsl:for-each>
     
-    <div>Report generated at <xsl:call-template name="timestamp"><xsl:with-param name="ts" select = "@created" /></xsl:call-template></div>
+    <div>Report generated at <span id="thetime"><xsl:value-of select="@created" /></span></div>
+    <script type="text/javascript">
+    document.getElementById('thetime').innerText = new Date('<xsl:value-of select="@created" />').toString();
+    </script>
 </xsl:template>
 
 <xsl:template match="testsuite">
@@ -150,11 +155,6 @@
     </xsl:for-each>
   
     </div>
-</xsl:template>
-
-<xsl:template name="timestamp">
-    <xsl:param name = "ts" />
-    <xsl:value-of select="translate($ts, 'TZ','  ')" />
 </xsl:template>
 
 </xsl:stylesheet>
