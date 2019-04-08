@@ -11,6 +11,7 @@ void null_test_skip(void ** param) {
 }
 
 void null_test_failure(void ** param) {
+	skip();
 	fail();
 }
 
