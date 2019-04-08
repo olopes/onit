@@ -2,6 +2,7 @@ $(shell mkdir -p build/test > /dev/null)
 $(shell mkdir -p build/.d/build/test > /dev/null)
 $(shell mkdir -p build/coverage > /dev/null)
 $(shell mkdir -p build/report > /dev/null)
+SYSINFO = $(shell uname -mors)
 
 DEPDIR = build/.d
 # DEPFLAGS = -MT $@ -MMD -MP -MF $(DEPDIR)/$*.Td
@@ -80,8 +81,8 @@ coverage: tests $(TESTS_COV)
 	-@lcov -t coverage $(addprefix -a ,$(TESTS_COV)) -o build/coverage.info
 	-@genhtml -q -s -k --legend --highlight --output-directory build/coverage build/coverage.info
 	#-@genhtml -q -f -s -k --legend --highlight --output-directory build/coverage build/coverage.info
-	@ls -1 build/report/test*.xml | gawk 'BEGIN {print "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<?xml-stylesheet type=\"text/xsl\" href=\"report.xsl\"?>\n<files created=\"" strftime("%Y-%m-%dT%H:%M:%SZ", systime(), 1) "\">"} {n=split($$0,a,/\//); print "<file>" a[n] "</file>" } END {print "</files>\n"}' > build/report/report.xml
-	@cp src/report.xsl build/report/report.xsl
+	@ls -1 build/report/test*.xml | gawk 'BEGIN {print "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<?xml-stylesheet type=\"text/xsl\" href=\"report.xsl\"?>\n<files sysinfo=\"$(SYSINFO)\" created=\"" strftime("%Y-%m-%dT%H:%M:%S") "\">"} {n=split($$0,a,/\//); print "<file>" a[n] "</file>" } END {print "</files>\n"}' > build/report/report.xml
+	@xsltproc --nonet -o build/report/index.html src/report.xsl build/report/report.xml
 
 
 .PHONY: all tests check coverage clean

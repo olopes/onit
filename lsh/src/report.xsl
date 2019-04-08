@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xsl:stylesheet version="1.0" 
     xmlns:xsl="http://www.w3.org/1999/XSL/Transform" 
-    xmlns:xs="http://www.w3.org/2001/XMLSchema"
     xmlns:str="http://exslt.org/strings"
-    xmlns:regex="http://exslt.org/regular-expressions"
-    extension-element-prefixes="regex str xs">
+    xmlns:date="http://exslt.org/dates-and-times"
+    extension-element-prefixes="date str">
 
 <xsl:output method="html" encoding="utf-8" doctype-system="about:legacy-compat" /> 
 
@@ -23,6 +22,7 @@
     td {text-align: left;padding-left: 10px;padding-right: 20px;background-color: #DAE7FE;}
     td.faildetail {font-family: monospace;margin-left: 2em;background-color: #36454f;color:#30FF00;}
     td.faildetail div {margin: 1em;white-space: pre;}
+    td.faildetail div a {color: #00CB40;text-decoration: underline;}
     td.teststatus {font-weight: bold;text-align:center;}
     td.testtime {text-align: right;}
     .error td.teststatus {background-color: #FF0000; color: #eee;}
@@ -43,6 +43,7 @@
     .testsuite input[type=checkbox] {display: none;}
     .testsuite div.testset {display:none;}
     .testsuite input[type=checkbox]:checked ~ div.testset {display:block;}
+    .timestamp {font-size:small;text-align:right;font-style:italic;}
 </style>
 </head>
 <body>
@@ -59,10 +60,8 @@
         <xsl:apply-templates select="document(.)/testsuites/testsuite" />
     </xsl:for-each>
     
-    <div>Report generated at <span id="thetime"><xsl:value-of select="@created" /></span></div>
-    <script type="text/javascript">
-    document.getElementById('thetime').innerText = new Date('<xsl:value-of select="@created" />').toString();
-    </script>
+    <div class="timestamp">Build run at <span id="thetime"><xsl:value-of select="concat(date:date(@created), ' ', date:time(@created))" /></span><br />
+    <span id="thetime"><xsl:value-of select="@sysinfo" /></span></div>
 </xsl:template>
 
 <xsl:template match="testsuite">
@@ -148,14 +147,34 @@
 <xsl:template name="errormsg">
     <xsl:param name = "error" />
     <div>
-    <!--<div><xsl:value-of select="regex:replace($error,'((.+)\:(\d+))\:','g','&lt;a href=&quot;../coverage/$2.gcov.html#$3&quot;&gt;$1&lt;/a&gt;:')" disable-output-escaping="yes" />-->
-    
-    
     <xsl:for-each select="str:tokenize($error, '&#10;')">
-        <xsl:value-of select="." /><br />
+        <xsl:call-template name="formaterrorline">
+            <xsl:with-param name="line" select="." />
+        </xsl:call-template>
     </xsl:for-each>
   
     </div>
+</xsl:template>
+
+<xsl:template name="formaterrorline">
+    <xsl:param name = "line" />
+    <xsl:variable name="file" select="substring-before($line, ':')" />
+    <xsl:variable name="linenum" select="substring-before(substring-after($line, ':'), ':')" />
+
+    <xsl:choose>
+        <xsl:when test="$file and $linenum">
+            <a>
+                <xsl:attribute name="href">
+                    ../coverage/<xsl:value-of select="$file" />.gcov.html#<xsl:value-of select="$linenum" />
+                </xsl:attribute>
+                <xsl:value-of select="$file" />:<xsl:value-of select="$linenum" />
+            </a>:<xsl:value-of select="substring-after(substring-after($line, ':'), ':')" />
+        </xsl:when>
+        <xsl:otherwise>
+            <xsl:value-of select="$line" />
+        </xsl:otherwise>
+    </xsl:choose>
+    <br />
 </xsl:template>
 
 </xsl:stylesheet>
