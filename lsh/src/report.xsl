@@ -32,7 +32,7 @@
     hr {background-color: #6688D4;height: 2px;border: none;}
     label {cursor: pointer;}
     label span {margin-right: 5px;}
-    label span.testfile {width: 60ex;display: inline-block;text-decoration: underline;}
+    label span.testfile {width: 40ex;display: inline-block;text-decoration: underline;}
     label span.count {width: 10ex;display: inline-block;background: #dddddd;text-align:right}
     div.duration {font-size:smaller;border-bottom: 1px dotted #ccc;color: #555;}
     span.square {border: 1px solid #000000;height: 1ex;width: 1ex;display:inline-block;color: white;}
@@ -67,7 +67,7 @@
 
 <xsl:template match="testsuite">
 <xsl:variable name="srcurl">
-    <xsl:value-of select="concat('../coverage/', @name, '.gcov.frameset.html')"/>
+    <xsl:value-of select="concat('../coverage/', @name, '.gcov.html')"/>
 </xsl:variable>
 <div class="testsuite">
     <input id="{@name}" type="checkbox">

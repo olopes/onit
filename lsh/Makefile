@@ -71,14 +71,15 @@ check: tests $(TESTS_PASS)
 # Coverage
 
 build/test/%.info: build/test/%.t
-	@lcov -q -z -d build/test 
+	-@lcov -q -z -d build/test 
 	-rm build/report/$(basename $(notdir $<)).xml
 	-CMOCKA_XML_FILE=build/report/$(basename $(notdir $<)).xml CMOCKA_MESSAGE_OUTPUT=xml $< 
-	@lcov -q -c -d build/test -o $@ -t $(basename $(notdir $<))
+	-@lcov -q -c -d build/test -o $@ -t $(basename $(notdir $<))
 
 coverage: tests $(TESTS_COV)
-	@lcov -t coverage $(addprefix -a ,$(TESTS_COV)) -o build/coverage.info
-	@genhtml -q -f -s -k --legend --highlight --output-directory build/coverage build/coverage.info
+	-@lcov -t coverage $(addprefix -a ,$(TESTS_COV)) -o build/coverage.info
+	-@genhtml -q -s -k --legend --highlight --output-directory build/coverage build/coverage.info
+	#-@genhtml -q -f -s -k --legend --highlight --output-directory build/coverage build/coverage.info
 	@ls -1 build/report/test*.xml | gawk 'BEGIN {print "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<?xml-stylesheet type=\"text/xsl\" href=\"report.xsl\"?>\n<files created=\"" strftime("%Y-%m-%dT%H:%M:%SZ", systime(), 1) "\">"} {n=split($$0,a,/\//); print "<file>" a[n] "</file>" } END {print "</files>\n"}' > build/report/report.xml
 	@cp src/report.xsl build/report/report.xsl
 
