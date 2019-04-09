@@ -19,13 +19,13 @@ static void test_create_release_sheap(void ** state) {
     
 }
 
-static void test_sheap_is_full_should_return_false_if_heap_is_null(void ** state) {
+static void sheap_is_full_should_return_false_if_heap_is_null(void ** state) {
 
     assert_false(sheap_is_full(NULL));
     
 }
 
-static void test_sheap_is_full_should_return_false_if_size_lt_capacity(void ** state) {
+static void sheap_is_full_should_return_false_if_size_lt_capacity(void ** state) {
     struct sheap heap;
     
     heap.capacity = 100;
@@ -34,7 +34,7 @@ static void test_sheap_is_full_should_return_false_if_size_lt_capacity(void ** s
     
 }
 
-static void test_sheap_is_full_should_return_true_if_size_ge_capacity(void ** state) {
+static void sheap_is_full_should_return_true_if_size_ge_capacity(void ** state) {
     struct sheap heap;
     
     heap.capacity = 100;
@@ -47,7 +47,7 @@ static void test_sheap_is_full_should_return_true_if_size_ge_capacity(void ** st
     
 }
 
-static void test_sheap_capacity_should_return_the_heap_capacity(void ** state) {
+static void sheap_capacity_should_return_the_heap_capacity(void ** state) {
     struct sheap heap;
     
     heap.capacity = 100;
@@ -55,13 +55,13 @@ static void test_sheap_capacity_should_return_the_heap_capacity(void ** state) {
     
 }
 
-static void test_sheap_capacity_should_return_0_if_heap_is_null(void ** state) {
+static void sheap_capacity_should_return_0_if_heap_is_null(void ** state) {
 
     assert_int_equal(sheap_capacity(NULL), 0);
     
 }
     
-static void test_sheap_size_should_return_the_heap_size(void ** state) {
+static void sheap_size_should_return_the_heap_size(void ** state) {
     struct sheap heap;
     
     heap.size = 123;
@@ -69,27 +69,27 @@ static void test_sheap_size_should_return_the_heap_size(void ** state) {
     
 }
 
-static void test_sheap_size_should_return_0_if_heap_is_null(void ** state) {
+static void sheap_size_should_return_0_if_heap_is_null(void ** state) {
 
     assert_int_equal(sheap_size(NULL), 0);
     
 }
 
-static void test_sheap_insert_should_return_SHEAP_ERROR_if_heap_is_null(void ** state) {
+static void sheap_insert_should_return_SHEAP_ERROR_if_heap_is_null(void ** state) {
     struct sexpression sexpr;
     
     assert_int_equal(sheap_insert(NULL, &sexpr), SHEAP_ERROR);
 
 }
 
-static void test_sheap_insert_should_return_SHEAP_NULL_if_sexpr_is_null(void ** state) {
+static void sheap_insert_should_return_SHEAP_NULL_if_sexpr_is_null(void ** state) {
     struct sheap heap;
     
     assert_int_equal(sheap_insert(&heap, NULL), SHEAP_NULL);
     
 }
     
-static void test_sheap_insert_should_return_SHEAP_FULL_if_sexpr_is_full(void ** state) {
+static void sheap_insert_should_return_SHEAP_FULL_if_sexpr_is_full(void ** state) {
     struct sheap heap;
     struct sexpression sexpr;
     
@@ -99,7 +99,7 @@ static void test_sheap_insert_should_return_SHEAP_FULL_if_sexpr_is_full(void ** 
     
 }
 
-static void test_sheap_insert_should_put_sexpr_at_first_position_if_heap_is_empty(void ** state) {
+static void sheap_insert_should_put_sexpr_at_first_position_if_heap_is_empty(void ** state) {
     struct sheap heap;
     struct sexpression sexpr;
     struct sexpression * data [100];
@@ -117,7 +117,7 @@ static void test_sheap_insert_should_put_sexpr_at_first_position_if_heap_is_empt
     assert_ptr_equal(data[0], &sexpr);
 }
     
-static void test_sheap_insert_should_preserve_heap_property(void ** state) {
+static void sheap_insert_should_preserve_heap_property(void ** state) {
     struct sheap heap;
     struct sexpression * data [100];
     struct sexpression * expected [8];
@@ -207,18 +207,18 @@ int main (void)
     const struct CMUnitTest sheap_test [] =
     {
         cmocka_unit_test (test_create_release_sheap),
-        cmocka_unit_test (test_sheap_is_full_should_return_false_if_heap_is_null),
-        cmocka_unit_test (test_sheap_is_full_should_return_false_if_size_lt_capacity),
-        cmocka_unit_test (test_sheap_is_full_should_return_true_if_size_ge_capacity),
-        cmocka_unit_test (test_sheap_capacity_should_return_0_if_heap_is_null),
-        cmocka_unit_test (test_sheap_capacity_should_return_the_heap_capacity),
-        cmocka_unit_test (test_sheap_size_should_return_0_if_heap_is_null),
-        cmocka_unit_test (test_sheap_size_should_return_the_heap_size),
-        cmocka_unit_test (test_sheap_insert_should_return_SHEAP_ERROR_if_heap_is_null),
-        cmocka_unit_test (test_sheap_insert_should_return_SHEAP_NULL_if_sexpr_is_null),
-        cmocka_unit_test (test_sheap_insert_should_return_SHEAP_FULL_if_sexpr_is_full),
-        cmocka_unit_test (test_sheap_insert_should_put_sexpr_at_first_position_if_heap_is_empty),
-        cmocka_unit_test (test_sheap_insert_should_preserve_heap_property),
+        cmocka_unit_test (sheap_is_full_should_return_false_if_heap_is_null),
+        cmocka_unit_test (sheap_is_full_should_return_false_if_size_lt_capacity),
+        cmocka_unit_test (sheap_is_full_should_return_true_if_size_ge_capacity),
+        cmocka_unit_test (sheap_capacity_should_return_0_if_heap_is_null),
+        cmocka_unit_test (sheap_capacity_should_return_the_heap_capacity),
+        cmocka_unit_test (sheap_size_should_return_0_if_heap_is_null),
+        cmocka_unit_test (sheap_size_should_return_the_heap_size),
+        cmocka_unit_test (sheap_insert_should_return_SHEAP_ERROR_if_heap_is_null),
+        cmocka_unit_test (sheap_insert_should_return_SHEAP_NULL_if_sexpr_is_null),
+        cmocka_unit_test (sheap_insert_should_return_SHEAP_FULL_if_sexpr_is_full),
+        cmocka_unit_test (sheap_insert_should_put_sexpr_at_first_position_if_heap_is_empty),
+        cmocka_unit_test (sheap_insert_should_preserve_heap_property),
         cmocka_unit_test (sheap_visit_should_call_the_callback_function_for_all_elements),
         
     };
