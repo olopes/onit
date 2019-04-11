@@ -18,6 +18,12 @@ https://medium.com/100-days-of-algorithms/day-86-binary-heap-8af7c1abc8d0
 #define INITIAL_CAPACITY 1024
 static void percolate_up(struct sexpression ** heap, size_t position);
 static int contains_value(struct sheap * heap, uintptr_t value, size_t pos);
+static void 
+heapify(struct sexpression ** sexpr, size_t size, int (*comparator)(struct sexpression * a, struct sexpression * b));
+static void 
+sift_down(struct sexpression ** sexpr, size_t start, size_t size, int (*comparator)(struct sexpression * a, struct sexpression * b));
+static void 
+swap_elements (struct sexpression ** sexpr, size_t a, size_t b);
 
 
 /**
@@ -154,10 +160,93 @@ sheap_visit(struct sheap * heap, void * param, void (*callback)(void * param, st
 
 /**
  * Heap sort :-)
+ * 
+ * Reference implementation taken from Wikipedia
  */
-extern int 
-sheap_sort(struct sexpression * sexpr, size_t size, int (*comparator)(struct sexpression * a, struct sexpression * b));
+int 
+sheap_sort(struct sexpression ** sexpr, size_t size, int (*comparator)(struct sexpression * a, struct sexpression * b)) {
+    size_t end;
+    if(sexpr == NULL || comparator == NULL) {
+        return SHEAP_ERROR;
+    }
+    
+    if(size <= 1) {
+        /* already sorted */
+        return 0;
+    }
+    
+    heapify(sexpr, size, comparator);
+    end = size - 1;
+    while(end > 0) {
+        swap_elements(sexpr, 0, end);
+        end--;
+        sift_down(sexpr, 0, end, comparator);
+    }
+    
+    
+    return 0;
+}
 
+#define left_child(position) ((position)*2+1)
+
+static void 
+heapify(struct sexpression ** sexpr, size_t size, int (*comparator)(struct sexpression * a, struct sexpression * b)) {
+    size_t start;
+    size_t end;
+    
+    end = size - 1;
+    start = left_child(end);
+    
+    while(start > 0) {
+        sift_down(sexpr, start, end, comparator);
+        start--;
+    }
+    sift_down(sexpr, start, end, comparator);
+}
+
+static void 
+sift_down(struct sexpression ** sexpr, size_t start, size_t end, int (*comparator)(struct sexpression * a, struct sexpression * b)) {
+    struct sexpression * tmp;
+    size_t root;
+    size_t swap;
+    size_t left;
+    size_t right;
+    
+    root = start;
+    left = left_child(root);
+    
+    while(left <= end) {
+        right = left + 1;
+        swap = root;
+        
+        if (comparator(sexpr[swap], sexpr[left]) < 0) {
+            swap = left;
+        }
+        
+        if(right <= end && comparator(sexpr[swap], sexpr[right]) < 0) {
+            swap = right;
+        }
+        
+        if(swap == root) {
+            return;
+        }
+        
+        swap_elements(sexpr, root, swap);
+
+        root = swap;
+        left = left_child(root);
+    }
+    
+}
+
+static void 
+swap_elements(struct sexpression ** sexpr, size_t a, size_t b) {
+    struct sexpression * tmp;
+    
+    tmp = sexpr[a];
+    sexpr[a] = sexpr[b];
+    sexpr[b] = tmp;
+}
 
 /*
 

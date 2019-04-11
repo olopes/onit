@@ -182,12 +182,182 @@ static void test_callback(void * param, struct sexpression * value) {
     visited[visited_position] = 1;
 }
 
-/*
-extern int
-sheap_visit(struct sheap * heap, void * param, void (*callback)(void * param, struct sexpression * value));
-extern int 
-sheap_sort(struct sexpression * sexpr, size_t size, int (*comparator)(struct sexpression * a, struct sexpression * b));
-*/
+
+static int 
+test_comparator(struct sexpression * a, struct sexpression * b);
+
+static void
+sheap_sort_should_return_ERROR_when_array_is_null(void ** param) {
+    
+    assert_int_equal(sheap_sort(NULL, 8, test_comparator), SHEAP_ERROR);
+    
+}
+
+static void
+sheap_sort_should_return_ERROR_when_comparator_is_null(void ** param) {
+    struct sexpression * data_to_sort;
+    
+    assert_int_equal(sheap_sort(&data_to_sort, 8, NULL), SHEAP_ERROR);
+    
+}
+
+static void
+sheap_sort_should_sort_the_given_array(void ** param) {
+    struct sexpression * data_to_sort[] = {
+        (struct sexpression *) 7,
+        (struct sexpression *) -4,
+        (struct sexpression *) 65,
+        (struct sexpression *) 17,
+        (struct sexpression *) 87,
+        (struct sexpression *) 10,
+        (struct sexpression *) -100,
+        (struct sexpression *) 38,
+        (struct sexpression *) 7,
+    };
+    struct sexpression * expected_data[] = {
+        (struct sexpression *) 87,
+        (struct sexpression *) 65,
+        (struct sexpression *) 38,
+        (struct sexpression *) 17,
+        (struct sexpression *) 10,
+        (struct sexpression *) 7,
+        (struct sexpression *) -4,
+        (struct sexpression *) -100,
+        (struct sexpression *) 7,
+    };
+    int return_value;
+    size_t i;
+    
+    
+    return_value = sheap_sort(data_to_sort, 8, test_comparator);
+    
+    // assert_memory_equal(data_to_sort, expected_data, sizeof(struct sexpression *)*8);
+    for(i = 0; i < 9; i++) {
+        assert_ptr_equal(expected_data[i], data_to_sort[i]);
+    }
+}
+
+static void
+sheap_sort_should_sort_the_given_array0(void ** param) {
+    struct sexpression * data_to_sort[] = {
+        (struct sexpression *) 7,
+        (struct sexpression *) -4,
+        (struct sexpression *) 65,
+        (struct sexpression *) 17,
+        (struct sexpression *) 87,
+        (struct sexpression *) 10,
+        (struct sexpression *) -100,
+        (struct sexpression *) 38,
+        (struct sexpression *) 7,
+    };
+    struct sexpression * expected_data[] = {
+        (struct sexpression *) 87,
+        (struct sexpression *) 65,
+        (struct sexpression *) 38,
+        (struct sexpression *) 17,
+        (struct sexpression *) 10,
+        (struct sexpression *) 7,
+        (struct sexpression *) 7,
+        (struct sexpression *) -4,
+        (struct sexpression *) -100,
+    };
+    int return_value;
+    size_t i;
+    
+    
+    return_value = sheap_sort(data_to_sort, 9, test_comparator);
+    
+    // assert_memory_equal(data_to_sort, expected_data, sizeof(struct sexpression *)*8);
+    for(i = 0; i < 9; i++) {
+        assert_ptr_equal(expected_data[i], data_to_sort[i]);
+    }
+}
+
+static void
+sheap_sort_should_sort_the_given_array1(void ** param) {
+    struct sexpression * data_to_sort[] = {
+        (struct sexpression *) 87,
+    };
+    struct sexpression * expected_data[] = {
+        (struct sexpression *) 87,
+    };
+    int return_value;
+    size_t i;
+    
+    
+    return_value = sheap_sort(data_to_sort, 1, test_comparator);
+    
+    for(i = 0; i < 1; i++) {
+        assert_ptr_equal(expected_data[i], data_to_sort[i]);
+    }
+}
+
+static void
+sheap_sort_should_sort_the_given_array2(void ** param) {
+    struct sexpression * data_to_sort[] = {
+        (struct sexpression *) 87,
+        (struct sexpression *) -10,
+    };
+    struct sexpression * expected_data[] = {
+        (struct sexpression *) 87,
+        (struct sexpression *) -10,
+    };
+    int return_value;
+    size_t i;
+    
+    
+    return_value = sheap_sort(data_to_sort, 2, test_comparator);
+    
+    for(i = 0; i < 2; i++) {
+        assert_ptr_equal(expected_data[i], data_to_sort[i]);
+    }
+}
+
+static void
+sheap_sort_should_sort_the_given_array3(void ** param) {
+    struct sexpression * data_to_sort[] = {
+        (struct sexpression *) -10,
+        (struct sexpression *) 87,
+    };
+    struct sexpression * expected_data[] = {
+        (struct sexpression *) 87,
+        (struct sexpression *) -10,
+    };
+    int return_value;
+    size_t i;
+    
+    
+    return_value = sheap_sort(data_to_sort, 2, test_comparator);
+    
+    for(i = 0; i < 2; i++) {
+        assert_ptr_equal(expected_data[i], data_to_sort[i]);
+    }
+}
+
+#define TEST_ARRAY_SIZE 100000
+static void
+sheap_sort_should_sort_the_given_random_array(void ** param) {
+    struct sexpression * data_to_sort[TEST_ARRAY_SIZE];
+    size_t i;
+    
+    for(i = 0; i < TEST_ARRAY_SIZE; i++) {
+        data_to_sort[i] = (struct sexpression *) rand();
+    }
+    
+    sheap_sort(data_to_sort, TEST_ARRAY_SIZE, test_comparator);
+    
+    for(i = 1; i < TEST_ARRAY_SIZE; i++) {
+        assert_true((int)data_to_sort[i-1] >= (int)data_to_sort[i]);
+    }
+}
+
+static int 
+test_comparator(struct sexpression * a, struct sexpression * b) {
+    return ((int)b - (int)a);
+}
+
+
+
 
 /* These functions will be used to initialize
    and clean resources up after each test run */
@@ -220,9 +390,22 @@ int main (void)
         cmocka_unit_test (sheap_insert_should_put_sexpr_at_first_position_if_heap_is_empty),
         cmocka_unit_test (sheap_insert_should_preserve_heap_property),
         cmocka_unit_test (sheap_visit_should_call_the_callback_function_for_all_elements),
-        
+        cmocka_unit_test (sheap_sort_should_return_ERROR_when_array_is_null),
+        cmocka_unit_test (sheap_sort_should_return_ERROR_when_comparator_is_null),
+        cmocka_unit_test (sheap_sort_should_sort_the_given_array),
+        cmocka_unit_test (sheap_sort_should_sort_the_given_array0),
+        cmocka_unit_test (sheap_sort_should_sort_the_given_array1),
+        cmocka_unit_test (sheap_sort_should_sort_the_given_array2),
+        cmocka_unit_test (sheap_sort_should_sort_the_given_array3),
+        cmocka_unit_test (sheap_sort_should_sort_the_given_random_array),
+        cmocka_unit_test (sheap_sort_should_sort_the_given_random_array),
+        cmocka_unit_test (sheap_sort_should_sort_the_given_random_array),
+        cmocka_unit_test (sheap_sort_should_sort_the_given_random_array),
+        cmocka_unit_test (sheap_sort_should_sort_the_given_random_array),
     };
 
+    srand(131071);
+    
     /* If setup and teardown functions are not
        needed, then NULL may be passed instead */
 

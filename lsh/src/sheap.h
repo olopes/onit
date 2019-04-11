@@ -68,7 +68,7 @@ sheap_visit(struct sheap * heap, void * param, void (*callback)(void * param, st
  * Heap sort :-)
  */
 extern int 
-sheap_sort(struct sexpression * sexpr, size_t size, int (*comparator)(struct sexpression * a, struct sexpression * b));
+sheap_sort(struct sexpression ** sexpr, size_t num_members, int (*comparator)(struct sexpression * a, struct sexpression * b));
 
 
 #endif
