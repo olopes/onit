@@ -328,9 +328,6 @@ static void recycle(struct sctx * sctx) {
         
     free_unvisited_references(sctx);
     
-    /* defreag heap */
-    qsort(sctx->heap, sctx->heap_size, sizeof(struct sexpression *), sref_comparator);
-    
     /* grow heap  if load >= 50% of the heap size */
     grow_heap_if_necessary(sctx);
     
@@ -364,11 +361,30 @@ static void free_unvisited_references(struct sctx * sctx) {
     struct sexpression ** heap;
     size_t i;
     
-    for(i = 0, heap = sctx->heap; i < sctx->heap_size; i++, heap++) {
-        if(*heap != NULL && !sexpr_marked(*heap, sctx->visit)) {
+	/* new algo
+	 for each element
+	     if visited
+	       do nothing
+             else
+	       free element
+	       move last into current position
+	       set last element to null
+	       decrease list size by one
+	       restart from this position
+	 * refacture to extract a structure for the heap
+	       */
+
+
+
+    for(heap = sctx->heap; *heap != NULL; heap++) {
+        if(!sexpr_marked(*heap, sctx->visit)) {
             sexpr_free_object(*heap);
             *heap = NULL;
+	    *heap = sctx->heap[sctx->heap_load];
+	    sctx->heap[sctx->heap_load]=NULL;
             sctx->heap_load--;
+	    heap--;
+
         }
     }
 }
