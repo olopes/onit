@@ -27,7 +27,7 @@ TESTS_COV = $(patsubst %.t,%.info,$(TESTS))
 #CC=../tcc/bin/tcc
 CC=gcc
 
-all: build/ostr build/sexpr build/sparse build/lsh coverage
+all: build/ostr build/sexpr build/sparse build/lsh check
 
 build/main.c:
 	echo 'int MAIN(int a, char ** b); int main(int a, char**b) { return MAIN(a,b); }' > build/main.c
