@@ -3,6 +3,39 @@
 #include "sexpr.h"
 #include "sheap.h"
 
+#define assert_arrays_equal(a, b, nmemb) _assert_arrays_equal(a, b, nmemb, __FILE__, __LINE__)
+#define assert_array_index_equal(a, b, i) \
+    _assert_int_equal(cast_ptr_to_largest_integral_type(a[i]), \
+                      cast_ptr_to_largest_integral_type(b[i]), \
+                      file, line)
+
+static void _assert_arrays_equal(
+    struct sexpression ** a, struct sexpression ** b, size_t nmemb,
+    const char * const file, const int line) {
+    size_t i;
+    
+    for(i = 0; i < nmemb; i++) {
+        assert_array_index_equal(a, b, i);
+    }
+}
+
+#undef assert_array_index_equal
+
+_Pragma("GCC diagnostic push")
+_Pragma("GCC diagnostic ignored \"-Wpointer-to-int-cast\"")
+static inline int cast_to_int(struct sexpression * ptr) {
+    return (int)ptr;
+}
+_Pragma("GCC diagnostic pop")
+
+_Pragma("GCC diagnostic push")
+_Pragma("GCC diagnostic ignored \"-Wint-to-pointer-cast\"")
+static inline struct sexpression * cast_to_sexpr(int value) {
+    return (struct sexpression *) value;
+
+}
+_Pragma("GCC diagnostic pop")
+
 static void test_create_release_sheap(void ** state) {
     struct sheap * heap;
     
@@ -122,20 +155,20 @@ static void sheap_insert_should_preserve_heap_property(void ** state) {
     struct sexpression * data [100];
     struct sexpression * expected [8];
     
-    expected[0] = (struct sexpression *) 20;
-    expected[1] = (struct sexpression *) 15;
-    expected[2] = (struct sexpression *) 17;
-    expected[3] = (struct sexpression *) 6;
-    expected[4] = (struct sexpression *) 9;
-    expected[5] = (struct sexpression *) 7;
-    expected[6] = (struct sexpression *) 10;
+    expected[0] = cast_to_sexpr(20);
+    expected[1] = cast_to_sexpr(15);
+    expected[2] = cast_to_sexpr(17);
+    expected[3] = cast_to_sexpr(6);
+    expected[4] = cast_to_sexpr(9);
+    expected[5] = cast_to_sexpr(7);
+    expected[6] = cast_to_sexpr(10);
     
-    data[0] = (struct sexpression *) 17;
-    data[1] = (struct sexpression *) 15;
-    data[2] = (struct sexpression *) 10;
-    data[3] = (struct sexpression *) 6;
-    data[4] = (struct sexpression *) 9;
-    data[5] = (struct sexpression *) 7;
+    data[0] = cast_to_sexpr(17);
+    data[1] = cast_to_sexpr(15);
+    data[2] = cast_to_sexpr(10);
+    data[3] = cast_to_sexpr(6);
+    data[4] = cast_to_sexpr(9);
+    data[5] = cast_to_sexpr(7);
     
     heap = (struct sheap){
         .capacity = 100,
@@ -143,7 +176,7 @@ static void sheap_insert_should_preserve_heap_property(void ** state) {
         .data = data,
     };
     
-    assert_int_equal(sheap_insert(&heap, (struct sexpression *) 20), SHEAP_OK);
+    assert_int_equal(sheap_insert(&heap, cast_to_sexpr(20)), SHEAP_OK);
     
     assert_int_equal(memcmp(expected, data, sizeof(struct sexpression*)*7), 0);
 }
@@ -153,12 +186,12 @@ static void sheap_visit_should_call_the_callback_function_for_all_elements(void 
     int visited [] = {0,0,0,0};
     struct sheap heap;
     struct sexpression * data [] = {
-        (struct sexpression *)0,
-        (struct sexpression *)1,
-        (struct sexpression *)2,
-        (struct sexpression *)3,
-        (struct sexpression *)4,
-        (struct sexpression *)5,
+        cast_to_sexpr(0),
+        cast_to_sexpr(1),
+        cast_to_sexpr(2),
+        cast_to_sexpr(3),
+        cast_to_sexpr(4),
+        cast_to_sexpr(5),
         NULL
     };
     int i;
@@ -204,156 +237,146 @@ sheap_sort_should_return_ERROR_when_comparator_is_null(void ** param) {
 static void
 sheap_sort_should_sort_the_given_array(void ** param) {
     struct sexpression * data_to_sort[] = {
-        (struct sexpression *) 7,
-        (struct sexpression *) -4,
-        (struct sexpression *) 65,
-        (struct sexpression *) 17,
-        (struct sexpression *) 87,
-        (struct sexpression *) 10,
-        (struct sexpression *) -100,
-        (struct sexpression *) 38,
-        (struct sexpression *) 7,
+        cast_to_sexpr(7),
+        cast_to_sexpr(-4),
+        cast_to_sexpr(65),
+        cast_to_sexpr(17),
+        cast_to_sexpr(87),
+        cast_to_sexpr(10),
+        cast_to_sexpr(-100),
+        cast_to_sexpr(38),
+        cast_to_sexpr(7),
     };
     struct sexpression * expected_data[] = {
-        (struct sexpression *) 87,
-        (struct sexpression *) 65,
-        (struct sexpression *) 38,
-        (struct sexpression *) 17,
-        (struct sexpression *) 10,
-        (struct sexpression *) 7,
-        (struct sexpression *) -4,
-        (struct sexpression *) -100,
-        (struct sexpression *) 7,
+        cast_to_sexpr(87),
+        cast_to_sexpr(65),
+        cast_to_sexpr(38),
+        cast_to_sexpr(17),
+        cast_to_sexpr(10),
+        cast_to_sexpr(7),
+        cast_to_sexpr(-4),
+        cast_to_sexpr(-100),
+        cast_to_sexpr(7),
     };
-    int return_value;
-    size_t i;
     
+    assert_int_equal(sheap_sort(data_to_sort, 8, test_comparator), SHEAP_OK);
     
-    return_value = sheap_sort(data_to_sort, 8, test_comparator);
-    
-    // assert_memory_equal(data_to_sort, expected_data, sizeof(struct sexpression *)*8);
-    for(i = 0; i < 9; i++) {
-        assert_ptr_equal(expected_data[i], data_to_sort[i]);
-    }
+    assert_arrays_equal(expected_data, data_to_sort, 9);
 }
 
 static void
 sheap_sort_should_sort_the_given_array0(void ** param) {
     struct sexpression * data_to_sort[] = {
-        (struct sexpression *) 7,
-        (struct sexpression *) -4,
-        (struct sexpression *) 65,
-        (struct sexpression *) 17,
-        (struct sexpression *) 87,
-        (struct sexpression *) 10,
-        (struct sexpression *) -100,
-        (struct sexpression *) 38,
-        (struct sexpression *) 7,
+        cast_to_sexpr(7),
+        cast_to_sexpr(-4),
+        cast_to_sexpr(65),
+        cast_to_sexpr(17),
+        cast_to_sexpr(87),
+        cast_to_sexpr(10),
+        cast_to_sexpr(-100),
+        cast_to_sexpr(38),
+        cast_to_sexpr(7),
     };
     struct sexpression * expected_data[] = {
-        (struct sexpression *) 87,
-        (struct sexpression *) 65,
-        (struct sexpression *) 38,
-        (struct sexpression *) 17,
-        (struct sexpression *) 10,
-        (struct sexpression *) 7,
-        (struct sexpression *) 7,
-        (struct sexpression *) -4,
-        (struct sexpression *) -100,
+        cast_to_sexpr(87),
+        cast_to_sexpr(65),
+        cast_to_sexpr(38),
+        cast_to_sexpr(17),
+        cast_to_sexpr(10),
+        cast_to_sexpr(7),
+        cast_to_sexpr(7),
+        cast_to_sexpr(-4),
+        cast_to_sexpr(-100),
     };
-    int return_value;
-    size_t i;
     
+    assert_int_equal(sheap_sort(data_to_sort, 9, test_comparator), SHEAP_OK);
     
-    return_value = sheap_sort(data_to_sort, 9, test_comparator);
-    
-    // assert_memory_equal(data_to_sort, expected_data, sizeof(struct sexpression *)*8);
-    for(i = 0; i < 9; i++) {
-        assert_ptr_equal(expected_data[i], data_to_sort[i]);
-    }
+    assert_arrays_equal(expected_data, data_to_sort, 9);
 }
 
 static void
 sheap_sort_should_sort_the_given_array1(void ** param) {
     struct sexpression * data_to_sort[] = {
-        (struct sexpression *) 87,
+        cast_to_sexpr(87),
     };
     struct sexpression * expected_data[] = {
-        (struct sexpression *) 87,
+        cast_to_sexpr(87),
     };
-    int return_value;
-    size_t i;
     
+    assert_int_equal(sheap_sort(data_to_sort, 1, test_comparator), SHEAP_OK);
     
-    return_value = sheap_sort(data_to_sort, 1, test_comparator);
-    
-    for(i = 0; i < 1; i++) {
-        assert_ptr_equal(expected_data[i], data_to_sort[i]);
-    }
+    assert_arrays_equal(expected_data, data_to_sort, 1);
 }
 
 static void
 sheap_sort_should_sort_the_given_array2(void ** param) {
     struct sexpression * data_to_sort[] = {
-        (struct sexpression *) 87,
-        (struct sexpression *) -10,
+        cast_to_sexpr(87),
+        cast_to_sexpr(-10),
     };
     struct sexpression * expected_data[] = {
-        (struct sexpression *) 87,
-        (struct sexpression *) -10,
+        cast_to_sexpr(87),
+        cast_to_sexpr(-10),
     };
-    int return_value;
-    size_t i;
     
+    assert_int_equal(sheap_sort(data_to_sort, 2, test_comparator), SHEAP_OK);
     
-    return_value = sheap_sort(data_to_sort, 2, test_comparator);
-    
-    for(i = 0; i < 2; i++) {
-        assert_ptr_equal(expected_data[i], data_to_sort[i]);
-    }
+    assert_arrays_equal(expected_data, data_to_sort, 2);
 }
 
 static void
 sheap_sort_should_sort_the_given_array3(void ** param) {
     struct sexpression * data_to_sort[] = {
-        (struct sexpression *) -10,
-        (struct sexpression *) 87,
+        cast_to_sexpr(-10),
+        cast_to_sexpr(87),
     };
     struct sexpression * expected_data[] = {
-        (struct sexpression *) 87,
-        (struct sexpression *) -10,
+        cast_to_sexpr(87),
+        cast_to_sexpr(-10),
     };
-    int return_value;
-    size_t i;
     
+    assert_int_equal(sheap_sort(data_to_sort, 2, test_comparator), SHEAP_OK);
     
-    return_value = sheap_sort(data_to_sort, 2, test_comparator);
-    
-    for(i = 0; i < 2; i++) {
-        assert_ptr_equal(expected_data[i], data_to_sort[i]);
-    }
+    assert_arrays_equal(expected_data, data_to_sort, 2);
 }
+
+
 
 #define TEST_ARRAY_SIZE 100000
 static void
 sheap_sort_should_sort_the_given_random_array(void ** param) {
-    struct sexpression * data_to_sort[TEST_ARRAY_SIZE];
+    struct sexpression * data_to_sort[TEST_ARRAY_SIZE+2];
     size_t i;
     
-    for(i = 0; i < TEST_ARRAY_SIZE; i++) {
-        data_to_sort[i] = (struct sexpression *) rand();
-    }
+    /*
+    Prepare an array like this:
+    [-1, rand(), rand(), rand(), ... , rand(), -1]
+    first and last -1 are the guard values.
+    if they are modified, the test must fail
+    */
     
-    sheap_sort(data_to_sort, TEST_ARRAY_SIZE, test_comparator);
+    for(i = 0; i < TEST_ARRAY_SIZE; i++) {
+        data_to_sort[i+1] = cast_to_sexpr(rand());
+    }
+    /* set the guards */
+    data_to_sort[0] = data_to_sort[TEST_ARRAY_SIZE+1] = cast_to_sexpr(-1);
+    
+    
+    sheap_sort(data_to_sort+1, TEST_ARRAY_SIZE, test_comparator);
     
     for(i = 1; i < TEST_ARRAY_SIZE; i++) {
-        assert_true((int)data_to_sort[i-1] >= (int)data_to_sort[i]);
+        assert_true(cast_to_int(data_to_sort[i]) >= cast_to_int(data_to_sort[i+1]));
     }
+    
+    /* check the guards */
+    assert_int_equal(cast_to_int(data_to_sort[0]), -1);
+    assert_int_equal(cast_to_int(data_to_sort[TEST_ARRAY_SIZE+1]), -1);
+
 }
 
 static int 
 test_comparator(struct sexpression * a, struct sexpression * b) {
-    return ((int)b - (int)a);
+    return cast_to_int(b) - cast_to_int(a);
 }
 
 

@@ -10,6 +10,9 @@ struct primitive;
 typedef struct sexpression * (*primitive_fn)(void * sctx, struct sexpression  *);
 typedef void (*destructor_fn)(void * sctx, struct primitive *);
 
+#define SCTX_INIT_OK 0
+#define SCTX_INIT_ERROR 1
+
 #define PRIMITIVE_FUNCTION 0
 #define PRIMITIVE_SEXPRESSION 1
 #define PRIMITIVE_STRING 2
@@ -25,14 +28,19 @@ struct primitive {
 };
 
 
+struct mem_heap {
+    int visit;
+    size_t size;
+    size_t load;
+    struct sexpression ** data;
+};
+
 struct sctx {
     struct shash_table primitives;
     struct sexpression * namespaces;
-    int visit;
-    int heap_size;
-    int heap_load;
-    struct sexpression ** heap;
+    struct mem_heap heap;
     void (*namespace_destructor)(struct sctx * ctx);
+    int init_complete;
 };
 
 #define HEAP_MIN_SIZE 32
@@ -40,10 +48,10 @@ struct sctx {
 
 
 extern struct sctx * 
-init_environment(char **argv, char **envp);
+create_new_sctx(char **argv, char **envp);
 
 extern void 
-release_environment(struct sctx * sctx);
+release_sctx(struct sctx * sctx);
 
 extern void 
 sctx_gc(struct sctx * sctx);

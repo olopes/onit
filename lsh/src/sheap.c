@@ -17,7 +17,6 @@ https://medium.com/100-days-of-algorithms/day-86-binary-heap-8af7c1abc8d0
 
 #define INITIAL_CAPACITY 1024
 static void percolate_up(struct sexpression ** heap, size_t position);
-static int contains_value(struct sheap * heap, uintptr_t value, size_t pos);
 static void 
 heapify(struct sexpression ** sexpr, size_t size, int (*comparator)(struct sexpression * a, struct sexpression * b));
 static void 
@@ -206,7 +205,6 @@ heapify(struct sexpression ** sexpr, size_t size, int (*comparator)(struct sexpr
 
 static void 
 sift_down(struct sexpression ** sexpr, size_t start, size_t end, int (*comparator)(struct sexpression * a, struct sexpression * b)) {
-    struct sexpression * tmp;
     size_t root;
     size_t swap;
     size_t left;

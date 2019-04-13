@@ -7,7 +7,7 @@ void null_test_pass(void ** param) {
 
 void null_test_skip(void ** param) {
 	skip();
-	fail_msg("should have been skipped");
+	fail_msg("should have been skipped %s", __FILE__);
 }
 
 void null_test_failure(void ** param) {

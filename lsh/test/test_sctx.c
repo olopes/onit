@@ -16,8 +16,8 @@ static char * environment[4] = {
 void sctx_do_nothing(void ** param)
 {
     struct sctx * sctx;
-    sctx = init_environment(arguments, environment);
-    release_environment(sctx);
+    sctx = create_new_sctx(arguments, environment);
+    release_sctx(sctx);
     assert_true(1);
 }
 
@@ -28,7 +28,7 @@ void sctx_register_new_symbol(void ** param)
     struct sexpression * name2;
     struct sexpression * value;
     
-    sctx = init_environment(arguments, environment);
+    sctx = create_new_sctx(arguments, environment);
     
     /* add the new symbol */
     name1 = alloc_new_value(sctx, L"VAR_NAME", 8);
@@ -40,7 +40,7 @@ void sctx_register_new_symbol(void ** param)
     
     assert_ptr_equal(value, lookup_name(sctx, name2));
     
-    release_environment(sctx);
+    release_sctx(sctx);
 }
 
 void sctx_enter_namespace_register_new_symbol_leave_namespace_and_gc(void ** param)
@@ -51,6 +51,23 @@ void sctx_enter_namespace_register_new_symbol_leave_namespace_and_gc(void ** par
 }
 
 
+/* These functions will be used to initialize
+   and clean resources up after each test run */
+int setup (void ** state)
+{
+    
+    *state = create_new_sctx(arguments, environment);
+
+    return 0;
+}
+
+int teardown (void ** state)
+{
+
+    release_sctx(*state);
+    
+    return 0;
+}
 
 int main (void)
 {
@@ -58,8 +75,7 @@ int main (void)
     {
         cmocka_unit_test (sctx_do_nothing),
         cmocka_unit_test (sctx_register_new_symbol),
-        /*
-        cmocka_unit_test_setup_teardown (sctx_enter_namespace_register_new_symbol_leave_namespace_and_gc, setup, teardown), */
+        cmocka_unit_test_setup_teardown (sctx_enter_namespace_register_new_symbol_leave_namespace_and_gc, setup, teardown), 
     };
 
     /* If setup and teardown functions are not
