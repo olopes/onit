@@ -380,7 +380,7 @@ static void heap_sanity_check(struct mem_heap * heap, struct sexpression * obj) 
     
     for(i = 0; i < heap->load; i++) {
         if(heap->data[i] == NULL) {
-            fprintf(stderr, "ERROR: heap_sanity_check Memory heap at position %lu is NULL\n", i);
+            fprintf(stderr, "ERROR: heap_sanity_check Memory heap at position %lu is NULL\n", (unsigned long) i);
             raise(SIGSEGV);
         }
         if(heap->data[i] == obj) {
@@ -505,7 +505,7 @@ static void print_heap_contents(struct mem_heap * heap) {
     struct sexpression * obj;
     FILE * const out = stdout;
     
-    fprintf(out, "HEAP CONTENTS: [%lu/%lu]\n", heap->load, heap->size);
+    fprintf(out, "HEAP CONTENTS: [%lu/%lu]\n", (unsigned long) heap->load, (unsigned long) heap->size);
     for(i = 0; i < heap->size; i++) {
         obj = data[i];
         if(sexpr_is_value(obj)) {

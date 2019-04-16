@@ -11,7 +11,11 @@
 #include <setjmp.h>
 #include <wctype.h>
 #include <wchar.h>
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wgnu-zero-variadic-macro-arguments"
 #include <cmocka.h>
+#pragma clang diagnostic pop
 
 /* remove macro defs to use real function declaration */
 #ifdef fgetwc
