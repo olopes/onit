@@ -24,21 +24,21 @@ void sctx_do_nothing(void ** param)
 void sctx_register_new_symbol(void ** param)
 {
     struct sctx * sctx;
-    struct sexpression * name1;
-    struct sexpression * name2;
+    struct sexpression * key;
     struct sexpression * value;
+    struct mem_reference reference;
     
     sctx = create_new_sctx(arguments, environment);
     
     /* add the new symbol */
-    name1 = alloc_new_value(sctx, L"VAR_NAME", 8);
-    value = alloc_new_value(sctx, L"THE VALUE", 9);
-    register_value(sctx, name1, value);
+    create_stack_reference(sctx, L"VAR_NAME", 8, &reference);
+    *reference.value = value = alloc_new_value(sctx, L"THE VALUE", 9);
+
     
     /* fetch the value using a different name */
-    name2 = alloc_new_value(sctx, L"VAR_NAME", 8);
+    key = alloc_new_value(sctx, L"VAR_NAME", 8);
     
-    assert_ptr_equal(value, lookup_name(sctx, name2));
+    assert_ptr_equal(value, lookup_name(sctx, key ));
     
     release_sctx(sctx);
 }
@@ -77,7 +77,9 @@ int main (void)
         cmocka_unit_test (sctx_register_new_symbol),
         cmocka_unit_test_setup_teardown (sctx_enter_namespace_register_new_symbol_leave_namespace_and_gc, setup, teardown), 
     };
-
+    /* disable stdout buffering */
+    setbuf(stderr, NULL);
+    
     /* If setup and teardown functions are not
        needed, then NULL may be passed instead */
 

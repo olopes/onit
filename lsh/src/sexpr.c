@@ -1,4 +1,5 @@
 #include <errno.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "sexpr.h"
@@ -77,12 +78,7 @@ sexpr_free(struct sexpression * sexpr) {
         sexpr_free(sexpr_car(sexpr));
         sexpr_free(sexpr_cdr(sexpr));
     }
-    else if(sexpr_is_value(sexpr)) 
-    {
-        free(sexpr->data.value);
-    }
-        
-    free(sexpr);
+    sexpr_free_object(sexpr);
 }
 
 void
@@ -94,6 +90,7 @@ sexpr_free_object(struct sexpression * sexpr) {
     if(sexpr_is_value(sexpr)) {
         free(sexpr->data.value);
     }
+
     free(sexpr);
 }
 
@@ -271,8 +268,14 @@ sexpr_mark_reachable(struct sexpression * object, unsigned char visit_mark) {
 }
 
 int
-sexpr_marked(struct sexpression * sexpr, unsigned char visit_mark) {
+sexpr_is_marked (struct sexpression * sexpr, unsigned char visit_mark) {
     return sexpr != NULL && sexpr->visit_mark == visit_mark;
+}
+
+void
+sexpr_set_mark (struct sexpression * sexpr, unsigned char visit_mark) {
+    if (sexpr == NULL) return;
+    sexpr->visit_mark = visit_mark;
 }
 
 

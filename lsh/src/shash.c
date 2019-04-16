@@ -146,15 +146,27 @@ int shash_has_key(struct shash_table * hashtable, struct sexpression * key ) {
     return get_index(hashtable, key, &index);
 }
 
-
 void * shash_search(struct shash_table * hashtable, struct sexpression * key ) {
+    struct shash_entry * entry;
+    
+    entry = shash_get_entry(hashtable, key);
+    
+    if(entry == NULL) {
+        return NULL;
+    }
+    
+    return entry->value;
+}
+
+struct shash_entry *
+shash_get_entry(struct shash_table * hashtable, struct sexpression * key ) {
     size_t index;
     
     if(!get_index(hashtable, key, &index)) {
         return NULL;
     }
     
-    return hashtable->table[index].value;
+    return &hashtable->table[index];
 }
 
 void shash_visit(struct shash_table * hashtable, void * param, void (*callback)(void * param, struct sexpression * key, void * value)) {

@@ -138,16 +138,22 @@ extern int
 sexpr_equal(struct sexpression * a, struct sexpression * b);
 
 /**
- * Mark S-Expression and its references as visited
+ * Set the visit mark for the given S-Expression and its references
  */
 extern void
-sexpr_mark_reachable(struct sexpression * sexpr, unsigned char visit_mark);
+sexpr_mark_reachable (struct sexpression * sexpr, unsigned char visit_mark);
 
 /**
  * Return TRUE if S-Expression visit mark is same as the parameter mark
  */
 extern int
-sexpr_marked(struct sexpression * sexpr, unsigned char visit_mark);
+sexpr_is_marked (struct sexpression * sexpr, unsigned char visit_mark);
+
+/**
+ * Set the visit mark for the given S-Expression only
+ */
+extern void
+sexpr_set_mark (struct sexpression * sexpr, unsigned char visit_mark);
 
 /**
  * Compares two VALUE S-Expressions, returning value < 0 if a < b, value = 0 if a = b, value > 0 if a > b

@@ -7,11 +7,12 @@
 #include "shash.h"
 
 struct primitive;
+struct sctx;
 typedef struct sexpression * (*primitive_fn)(void * sctx, struct sexpression  *);
-typedef void (*destructor_fn)(void * sctx, struct primitive *);
+typedef void (*destructor_fn)(struct sctx * sctx, struct primitive *);
 
-#define SCTX_INIT_OK 0
-#define SCTX_INIT_ERROR 1
+#define SCTX_OK 0
+#define SCTX_ERROR 1
 
 #define PRIMITIVE_FUNCTION 0
 #define PRIMITIVE_SEXPRESSION 1
@@ -37,10 +38,15 @@ struct mem_heap {
 
 struct sctx {
     struct shash_table primitives;
+    struct shash_table * global;
     struct sexpression * namespaces;
     struct mem_heap heap;
     void (*namespace_destructor)(struct sctx * ctx);
-    int init_complete;
+};
+
+struct mem_reference {
+    struct sexpression ** key;
+    void ** value;
 };
 
 #define HEAP_MIN_SIZE 32
@@ -56,8 +62,14 @@ release_sctx(struct sctx * sctx);
 extern void 
 sctx_gc(struct sctx * sctx);
 
-extern int 
-register_primitive(struct sctx * sctx, struct sexpression * name, struct primitive * primitive);
+extern int
+create_global_reference(struct sctx * sctx, wchar_t * wcstr, size_t len, struct mem_reference * reference);
+
+extern int
+create_stack_reference(struct sctx * sctx, wchar_t * wcstr, size_t len, struct mem_reference * reference);
+
+extern int
+create_primitive_reference(struct sctx * sctx, wchar_t * wcstr, size_t len, struct mem_reference * reference);
 
 extern struct sexpression * 
 alloc_new_pair(struct sctx * sctx, struct sexpression * car, struct sexpression * cdr);
@@ -73,8 +85,5 @@ leave_namespace(struct sctx * sctx);
 
 extern struct sexpression * 
 lookup_name(struct sctx * sctx, struct sexpression * name);
-
-extern int 
-register_value(struct sctx * sctx, struct sexpression * name, struct sexpression * value);
 
 #endif

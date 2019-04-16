@@ -15,7 +15,7 @@ CFLAGS=-O2 -Wall -pedantic -finput-charset=UTF-8 -fPIC $(DEPFLAGS) -DWEAK_FOR_UN
 LDFLAGS =  
 PROD_OBJ = $(patsubst %.c,%.o,$(subst src/,build/,$(wildcard src/*.c))) build/main.c
 
-TEST_CFLAGS = -g -Wall -pedantic -finput-charset=UTF-8 -fPIC $(DEPFLAGS) -Isrc -I$(CMOCKA_ROOT)/include -include test/test_definitions.h --coverage 
+TEST_CFLAGS =-O2 -g -Wall -pedantic -finput-charset=UTF-8 -fPIC $(DEPFLAGS) -Isrc -I$(CMOCKA_ROOT)/include -include test/test_definitions.h --coverage 
 # TEST_LDFLAGS = -lcmocka -L$(CMOCKA_ROOT)/lib
 TEST_LDFLAGS = ../cmocka/lib/cmocka.o --coverage
 
