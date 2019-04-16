@@ -27,7 +27,7 @@ create_reference(struct shash_table * table, struct sexpression * name, struct m
 
 #ifdef UNIT_TESTING
 static void heap_sanity_check(struct mem_heap * heap, struct sexpression * obj);
-static void print_heap_contents(struct mem_heap * heap);
+static void print_heap_contents(struct mem_heap * heap, char * msg);
 #endif
 
 /* some static/constant names */
@@ -426,18 +426,31 @@ static void visit_namespaces(struct sctx * sctx) {
 
 static void free_unvisited_references(struct mem_heap * heap) {
     size_t i = 0;
+    struct sexpression * sexpr;
+
+#ifdef UNIT_TESTING
+    print_heap_contents(heap, "Heap before GC");
+#endif
 
     while(i < heap->load ) {
-        if ( heap->data[i] == NULL || sexpr_is_marked ( heap->data[i], 1 ) ) {
+        sexpr = heap->data[i];
+        if ( sexpr == NULL ) {
             i++;
-            sexpr_set_mark(heap->data[i], 0);
+        } else if (sexpr_is_marked ( sexpr, 1 ) ) {
+            i++;
+            sexpr_set_mark(sexpr, 0);
         } else {
-            sexpr_free_object ( heap->data[i] );
+            sexpr_free_object ( sexpr );
+            heap->load--;
             heap->data[i] = heap->data[heap->load];
             heap->data[heap->load] = NULL;
-            heap->load--;
         }
     }
+    
+#ifdef UNIT_TESTING
+    print_heap_contents(heap, "Heap after GC");
+#endif
+
 }
 
 
@@ -488,10 +501,6 @@ free_heap_contents (struct mem_heap * heap) {
     size_t i;
     struct sexpression ** data = heap->data;
 
-#ifdef UNIT_TESTING
-    print_heap_contents(heap);
-#endif
-
     for(i = 0; i < heap->load; i++) {
         sexpr_free_object(data[i]);
     }
@@ -499,13 +508,13 @@ free_heap_contents (struct mem_heap * heap) {
 }
 
 #ifdef UNIT_TESTING
-static void print_heap_contents(struct mem_heap * heap) {
+static void print_heap_contents(struct mem_heap * heap, char * msg) {
     size_t i;
     struct sexpression ** data = heap->data;
     struct sexpression * obj;
     FILE * const out = stdout;
     
-    fprintf(out, "HEAP CONTENTS: [%lu/%lu]\n", (unsigned long) heap->load, (unsigned long) heap->size);
+    fprintf(out, "HEAP CONTENTS: %s [%lu/%lu]\n", msg, (unsigned long) heap->load, (unsigned long) heap->size);
     for(i = 0; i < heap->size; i++) {
         obj = data[i];
         if(sexpr_is_value(obj)) {

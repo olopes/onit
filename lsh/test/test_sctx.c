@@ -13,22 +13,19 @@ static char * environment[4] = {
     NULL
 };
     
-void sctx_do_nothing(void ** param)
+static void sctx_do_nothing(void ** param)
 {
-    struct sctx * sctx;
-    sctx = create_new_sctx(arguments, environment);
+    struct sctx * sctx = create_new_sctx(arguments, environment);
     release_sctx(sctx);
     assert_true(1);
 }
 
-void sctx_register_new_symbol(void ** param)
+static void sctx_register_new_symbol(void ** param)
 {
-    struct sctx * sctx;
     struct sexpression * key;
     struct sexpression * value;
     struct mem_reference reference;
-    
-    sctx = create_new_sctx(arguments, environment);
+    struct sctx * sctx = create_new_sctx(arguments, environment);
     
     /* add the new symbol */
     create_stack_reference(sctx, L"VAR_NAME", 8, &reference);
@@ -43,42 +40,73 @@ void sctx_register_new_symbol(void ** param)
     release_sctx(sctx);
 }
 
-void sctx_enter_namespace_register_new_symbol_leave_namespace_and_gc(void ** param)
+/** 
+ * The default heap size is 32. By definition, the test it will alloc 
+ * all test arguments and environment, including the primitives names.
+ * This test will force the heap to grow and garbage collector to run 
+ */
+static void sctx_should_call_gc_when_heap_is_full(void ** param)
 {
-    (void) param; /* unused */
-    /* void * sctx = *param; */
-    assert_true(1);
-}
-
-
-/* These functions will be used to initialize
-   and clean resources up after each test run */
-int setup (void ** state)
-{
+    struct sexpression * unreferenced;
+    struct sexpression * referenced;
+    struct sexpression * last_one;
+    struct mem_reference reference;
+    int test_symbol_found;
+    int last_symbol_found;
+    struct sctx * sctx = create_new_sctx(arguments, environment);
+    wchar_t value_text[32];
+    size_t i;
     
-    *state = create_new_sctx(arguments, environment);
-
-    return 0;
-}
-
-int teardown (void ** state)
-{
-
-    release_sctx(*state);
     
-    return 0;
+    /* create a reference for the S-Expression ("THE VALUE" . ())  */
+    referenced = alloc_new_value(sctx, L"THE VALUE", 9);
+    create_stack_reference(sctx, L"VAR_NAME", 8, &reference);
+    *reference.value = alloc_new_pair(sctx, referenced, NULL);
+
+    /* alloc random objects that will be garbage collected */
+    memset(value_text, 0, sizeof(value_text));
+    for(i = sctx->heap.load; i < sctx->heap.size; i++) {
+        swprintf(value_text, 32, L"VALUE %u", (unsigned) i);
+        unreferenced = alloc_new_value(sctx, value_text, wcslen(value_text));
+    }
+    
+    
+    /* alloc a new object that will trigger GC */
+    last_one = alloc_new_value(sctx, L"LAST ONE", 8);
+    
+    
+    /* check the heap for preserved and GC references */
+    for (i = 0, last_symbol_found = 0, test_symbol_found = 0; i < sctx->heap.size; i++) {
+        if (sctx->heap.data[i] == unreferenced) {
+            fail_msg("Unexpected reference found in the heap: %p should have been garbage collected", 
+                     (void *) unreferenced);
+        }
+        else if (sctx->heap.data[i] == referenced) {
+            /* this one has a reference, it must be preserved. */
+            test_symbol_found = 1;
+        }
+        else if (sctx->heap.data[i] == last_one) {
+            /* this one was inserted after the GC run, so it must be there */
+            last_symbol_found = 1;
+        }
+    }
+    
+    assert_true(test_symbol_found);
+    assert_true(last_symbol_found);
+
+    release_sctx(sctx);
 }
+
 
 int main (void)
 {
     const struct CMUnitTest tests [] =
     {
         cmocka_unit_test (sctx_do_nothing),
-        cmocka_unit_test (sctx_register_new_symbol),
-        cmocka_unit_test_setup_teardown (sctx_enter_namespace_register_new_symbol_leave_namespace_and_gc, setup, teardown), 
+        cmocka_unit_test (sctx_register_new_symbol), 
+        cmocka_unit_test (sctx_should_call_gc_when_heap_is_full), 
     };
-    /* disable stdout buffering */
-    setbuf(stderr, NULL);
+
     
     /* If setup and teardown functions are not
        needed, then NULL may be passed instead */
