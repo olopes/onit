@@ -8,10 +8,20 @@ extern struct LshUnitTest __stop_lshtest;
 extern struct GroupSetupTeardown __start_lshsetup;
 extern struct GroupSetupTeardown __stop_lshsetup;
 
+/* placeholders for the linker script */
+UnitTest(default_test, .ignore=1) { assert_true(1); }
+BeforeAll(default_setup) { return 0; }
+
 
 static void discover_tests(void);
+static void release_tests(void);
 static void discover_group_setup_teardown(void);
 static void discover_unit_tests(void);
+static size_t 
+count_number_of_unit_tests(struct LshUnitTest * const start, struct LshUnitTest * const stop);
+static struct CMUnitTest * alloc_unit_tests_array(size_t num_tests);
+static void 
+copy_unit_tests(struct LshUnitTest * const start, struct LshUnitTest * const stop, struct CMUnitTest * tests);
 static int _run_group_setup(void ** state);
 static int _run_group_teardown(void ** state);
 
@@ -37,19 +47,49 @@ static void discover_group_setup_teardown(void) {
     
     test_group_setup = &__start_lshsetup;
 
-    for(ptr = test_group_setup, num_group_setup = 0; ptr < &__stop_lshsetup; ptr++, num_group_setup++);
+    num_group_setup = 0;
+    for(ptr = test_group_setup; ptr < &__stop_lshsetup; ptr++) {
+        num_group_setup++;
+    }
     
 }
 
 
 static void discover_unit_tests(void) {
-    int i;
-    struct LshUnitTest * ptr;
+
+    num_tests = count_number_of_unit_tests(&__start_lshtest, &__stop_lshtest);
     
-    ptr = &__start_lshtest;
-    for(num_tests = 0; ptr < &__stop_lshtest; ptr++, num_tests++);
+    tests = alloc_unit_tests_array(num_tests);
+    
+    copy_unit_tests(&__start_lshtest, &__stop_lshtest, tests);
+}
+
+static size_t 
+count_number_of_unit_tests(struct LshUnitTest * const start, struct LshUnitTest * const stop) {
+    struct LshUnitTest * ptr;
+    size_t num_tests;
+    
+    num_tests = 0;
+    for(ptr = start; ptr < stop; ptr++) {
+        if(ptr->ignore) {
+            continue;
+        }
+        
+        if(ptr->repeat > 1) {
+            num_tests += ptr->repeat;
+        } else {
+            num_tests++;
+        }
+    }
+    return num_tests;
+}
+
+
+static struct CMUnitTest * alloc_unit_tests_array(size_t num_tests) {
+    struct CMUnitTest * tests;
     
     tests = (struct CMUnitTest *) malloc(sizeof(struct CMUnitTest) * num_tests);
+    
     if(tests == NULL) {
         fprintf(stderr, "ERROR: Error allocating test case array\n");
         fflush(stderr);
@@ -57,12 +97,52 @@ static void discover_unit_tests(void) {
         abort();
     }
     
-    ptr = &__start_lshtest;
-    for(i = 0; i < num_tests; i++) {
-        tests[i] = ptr[i].test;
+    return tests;
+}
+
+
+static void 
+copy_unit_tests(struct LshUnitTest * const start, struct LshUnitTest * const stop, struct CMUnitTest * tests) {
+    struct LshUnitTest * ptr;
+    size_t i;
+    size_t repeat;
+    
+    for(i = 0, ptr = start; ptr < stop; ptr++) {
+        if(ptr->ignore) {
+            continue;
+        }
+        
+        if(ptr->repeat > 1) {
+            repeat = ptr->repeat;
+        } else {
+            repeat = 1;
+        }
+        
+        do {
+            tests[i] = (struct CMUnitTest) {
+                .name = ptr->name,
+                .test_func = ptr->test_func,
+                .setup_func = ptr->setup,
+                .teardown_func = ptr->teardown,
+                .initial_state = ptr->initial_state,
+            };
+            
+            i++;
+            repeat--;
+        } while(repeat > 0);
+        
+    }
+}
+
+static void release_tests(void)
+{
+    if(tests == NULL) {
+        return;
     }
     
+    free(tests);
 }
+
 
 
 static int _run_group_setup(void ** state) {
@@ -111,27 +191,16 @@ static int _run_group_teardown(void ** state) {
     
 }
 
-/* 
- * Default unit test and setup functions to avoid 
- * undefined errors when UnitTest macros are not used
- */
-
-UnitTest(default_test) {
-    assert_true(1);
-}
-
-BeforeAll(default_setup) {
-    return 0;
-}
-
-
 __attribute__((weak))
 int main (int argc, char ** argv)
 {
 
     discover_tests();
     
-    return 
+    int num_tests_failed =
         _cmocka_run_group_tests(argv[0], tests, num_tests, _run_group_setup, _run_group_teardown);
 
+    release_tests();
+    
+    return num_tests_failed;
 }

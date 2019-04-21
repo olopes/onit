@@ -49,8 +49,14 @@ struct sparser_test_params {
 };
 
 struct LshUnitTest {
-    struct CMUnitTest test;
-    int filler;
+    const char *name;
+    CMUnitTestFunction test_func;
+    CMFixtureFunction setup;
+    CMFixtureFunction teardown;
+    void *initial_state;
+    size_t repeat;
+    char ignore;
+    char _filler;
 } __attribute__((aligned(64)));
 
 
@@ -61,25 +67,18 @@ struct GroupSetupTeardown {
 
 #define sexpr_create_cstr(x) sexpr_create_value((x), wcslen(x))
 
-#define UnitTestSetupTeadown(test_name, setup, teadown) \
+#define LSH_EXPAND(x) x
+
+#define __UnitTestSetupTeadown(test_name, ...) \
 static void test_name (void ** state); \
 struct LshUnitTest __attribute__((section ("lshtest"))) _ ## test_name = { \
-    .test = { \
-        .name = #test_name, \
-        .test_func = test_name, \
-        .setup_func = setup, \
-        .teardown_func = teadown, \
-        .initial_state = NULL \
-    }, \
-    .filler = 0 \
+    .name = #test_name, \
+    .test_func = test_name, \
+    __VA_ARGS__ \
 }; \
 static void test_name (void ** state)
 
-#define UnitTest(test_name) UnitTestSetupTeadown(test_name, NULL, NULL)
-
-#define UnitTestSetup(test_name, setup) UnitTestSetupTeadown(test_name, setup, NULL)
-
-#define UnitTestTeardown(test_name, teardown ) UnitTestSetupTeadown(test_name, NULL, teardown)
+#define UnitTest(...) LSH_EXPAND(__UnitTestSetupTeadown(__VA_ARGS__, ._filler=0))
 
 #define BeforeAll(setup_name) \
 static int setup_name (void ** state); \
