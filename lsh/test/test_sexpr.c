@@ -2,7 +2,7 @@
 #include "test_definitions.h"
 #include "sexpr.h"
 
-#include "assert_sexpr.c"
+#include "assert_sexpr.h"
 
 void sexpr_cons_should_alloc_new_sexpression(void ** param)
 {

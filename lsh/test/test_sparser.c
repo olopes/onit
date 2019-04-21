@@ -4,7 +4,7 @@
 #include "cstr_sparser_adapter.h"
 #include "wcstr_sparser_adapter.h"
 #include "stdio_sparser_adapter.h"
-#include "assert_sexpr.c"
+#include "assert_sexpr.h"
 
 void sparse_should_do_parse_string_and_return_ok(void ** param) {
     struct sexpression * expected_object;
