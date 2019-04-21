@@ -21,7 +21,8 @@ TEST_LDFLAGS = ../cmocka/lib/cmocka.o --coverage
 
 TESTS_PROD_SRC = $(wildcard src/*.c)
 TESTS_PROD_OBJ = $(patsubst %.c,build/%.o,$(subst src/,test/,$(TESTS_PROD_SRC)))
-TESTS = $(patsubst %.c,build/%.t,$(wildcard test/test*.c))
+TEST_MAIN = test/test_main.c
+TESTS = $(patsubst %.c,build/%.t,$(filter-out $(TEST_MAIN),$(wildcard test/test*.c)))
 TESTS_PASS = $(patsubst %.t,%.gcda,$(TESTS))
 TESTS_COV = $(patsubst %.t,%.info,$(TESTS))
 #CC=../tcc/bin/tcc
@@ -59,7 +60,7 @@ build/test/%.o: src/%.c
 build/test/unit_%.o: test/%.c
 	$(CC) $(TEST_CFLAGS) -c -o $@ $<
 
-build/test/%.t: build/test/unit_%.o $(TESTS_PROD_OBJ)
+build/test/%.t: build/test/unit_%.o $(TEST_MAIN) $(TESTS_PROD_OBJ)
 	$(CC) $(TEST_LDFLAGS) $(TEST_CFLAGS) -o $@ $^
 
 build/test/%.gcda: build/test/%.t
