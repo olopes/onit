@@ -65,8 +65,18 @@
 </xsl:template>
 
 <xsl:template match="testsuite">
+<xsl:variable name="src_file">
+    <xsl:choose>
+    <xsl:when test="starts-with(@name, 'build/')">
+        <xsl:value-of select="concat(substring-before(substring(@name, 7), '.t'), '.c')" />
+    </xsl:when>
+    <xsl:otherwise>
+        <xsl:value-of select="@name" />
+    </xsl:otherwise>
+    </xsl:choose>
+</xsl:variable>
 <xsl:variable name="srcurl">
-    <xsl:value-of select="concat('../coverage/', @name, '.gcov.html')"/>
+    <xsl:value-of select="concat('../coverage/', $src_file, '.gcov.html')"/>
 </xsl:variable>
 <div class="testsuite">
     <input id="{@name}" type="checkbox">
@@ -83,7 +93,7 @@
             </xsl:choose>
         </xsl:attribute>
         <span class="square"></span>
-        <span class="testfile"><xsl:value-of select="@name" /></span>
+        <span class="testfile"><xsl:value-of select="$src_file" /></span>
         <span>Runs: <span class="count"><xsl:value-of select="@tests - @skipped" /> / <xsl:value-of select="@tests" /></span></span>
         <span class="error"><span class="square"></span>Errors: <span class="count"><xsl:value-of select="@errors" /></span></span>
         <span class="failure"><span class="square"></span>Failures: <span class="count"><xsl:value-of select="@failures" /></span></span>

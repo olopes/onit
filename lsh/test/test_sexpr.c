@@ -4,9 +4,8 @@
 
 #include "assert_sexpr.h"
 
-void sexpr_cons_should_alloc_new_sexpression(void ** param)
+UnitTest(sexpr_cons_should_alloc_new_sexpression)
 {
-    (void) param; /* unused */
     struct sexpression * sexpr;
     struct sexpression dummy_car;
     struct sexpression dummy_cdr;
@@ -21,9 +20,8 @@ void sexpr_cons_should_alloc_new_sexpression(void ** param)
     free(sexpr);
 }
 
-void sexpr_create_value_should_alloc_new_sexpression_and_alloc_value_string(void ** param)
+UnitTest(sexpr_create_value_should_alloc_new_sexpression_and_alloc_value_string)
 {
-    (void) param; /* unused */
     struct sexpression * sexpr;
     
     sexpr = sexpr_create_value(L"TEST", 4);
@@ -37,9 +35,8 @@ void sexpr_create_value_should_alloc_new_sexpression_and_alloc_value_string(void
     free(sexpr);
 }
 
-void sexpr_free_value_should_release_sexpression_recursively(void ** param)
+UnitTest(sexpr_free_value_should_release_sexpression_recursively)
 {
-    (void) param; /* unused */
     struct sexpression * sexpr;
     
     /* alloc list (CAR CDR) */
@@ -55,9 +52,8 @@ void sexpr_free_value_should_release_sexpression_recursively(void ** param)
     /* cmocka will validate allocated/released chunks */
 }
 
-void sexpr_free_object_value_should_release_only_the_first_pair(void ** param)
+UnitTest(sexpr_free_object_value_should_release_only_the_first_pair)
 {
-    (void) param; /* unused */
     struct sexpression * sexpr1;
     struct sexpression * sexpr2;
     struct sexpression * sexpr3;
@@ -80,9 +76,8 @@ void sexpr_free_object_value_should_release_only_the_first_pair(void ** param)
     /* cmocka will validate allocated/released chunks */
 }
 
-void sexpr_car_should_return_data_pointer_if_type_is_cons(void ** param)
+UnitTest(sexpr_car_should_return_data_pointer_if_type_is_cons)
 {
-    (void) param; /* unused */
     struct sexpression dummy;
 
     memset(&dummy, 0, sizeof(dummy));
@@ -91,10 +86,9 @@ void sexpr_car_should_return_data_pointer_if_type_is_cons(void ** param)
     
     assert_ptr_equal(sexpr_car(&dummy), (struct sexpression *) 12345);
 }
-    
-void sexpr_car_should_return_null_if_type_is_not_cons(void ** param)
+
+UnitTest(sexpr_car_should_return_null_if_type_is_not_cons)
 {
-    (void) param; /* unused */
     struct sexpression dummy;
 
     memset(&dummy, 0, sizeof(dummy));
@@ -104,9 +98,8 @@ void sexpr_car_should_return_null_if_type_is_not_cons(void ** param)
     assert_null(sexpr_car(&dummy));
 }
     
-void sexpr_cdr_should_return_cdr_pointer_if_type_is_cons(void ** param)
+UnitTest(sexpr_cdr_should_return_cdr_pointer_if_type_is_cons)
 {
-    (void) param; /* unused */
     struct sexpression dummy;
 
     memset(&dummy, 0, sizeof(dummy));
@@ -116,9 +109,8 @@ void sexpr_cdr_should_return_cdr_pointer_if_type_is_cons(void ** param)
     assert_ptr_equal(sexpr_cdr(&dummy), (struct sexpression *) 12345);
 }
     
-void sexpr_cdr_should_return_null_if_type_is_not_cons(void ** param)
+UnitTest(sexpr_cdr_should_return_null_if_type_is_not_cons)
 {
-    (void) param; /* unused */
     struct sexpression dummy;
 
     memset(&dummy, 0, sizeof(dummy));
@@ -129,9 +121,8 @@ void sexpr_cdr_should_return_null_if_type_is_not_cons(void ** param)
 }
 
 
-void sexpr_value_should_return_value_pointer_if_type_is_value(void ** param)
+UnitTest(sexpr_value_should_return_value_pointer_if_type_is_value)
 {
-    (void) param; /* unused */
     struct sexpression dummy;
 
     memset(&dummy, 0, sizeof(dummy));
@@ -141,9 +132,8 @@ void sexpr_value_should_return_value_pointer_if_type_is_value(void ** param)
     assert_ptr_equal(sexpr_value(&dummy), (wchar_t *) 12345);
 }
     
-void sexpr_value_should_return_null_if_type_is_not_value(void ** param)
+UnitTest(sexpr_value_should_return_null_if_type_is_not_value)
 {
-    (void) param; /* unused */
     struct sexpression dummy;
 
     memset(&dummy, 0, sizeof(dummy));
@@ -153,9 +143,8 @@ void sexpr_value_should_return_null_if_type_is_not_value(void ** param)
     assert_null(sexpr_value(&dummy));
 }
 
-void sexpr_type_should_return_sexpression_type(void ** param)
+UnitTest(sexpr_type_should_return_sexpression_type)
 {
-    (void) param; /* unused */
     struct sexpression dummy;
 
     memset(&dummy, 0, sizeof(dummy));
@@ -164,16 +153,13 @@ void sexpr_type_should_return_sexpression_type(void ** param)
     assert_int_equal(sexpr_type(&dummy), ST_VALUE);
 }
     
-void sexpr_value_should_return_NIL_if_sexpression_is_null(void ** param)
+UnitTest(sexpr_value_should_return_NIL_if_sexpression_is_null)
 {
-    (void) param; /* unused */
-    
     assert_int_equal(sexpr_type(NULL), ST_NIL);
 }
 
-void sexpr_is_nil_should_return_true_if_type_is_nil_or_sexpression_is_null(void ** param)
+UnitTest(sexpr_is_nil_should_return_true_if_type_is_nil_or_sexpression_is_null)
 {
-    (void) param; /* unused */
     struct sexpression dummy;
     
     assert_true(sexpr_is_nil(NULL));
@@ -191,9 +177,8 @@ void sexpr_is_nil_should_return_true_if_type_is_nil_or_sexpression_is_null(void 
     assert_false(sexpr_is_nil(&dummy));
 }
 
-void sexpr_is_cons_should_return_true_if_type_is_cons(void ** param)
+UnitTest(sexpr_is_cons_should_return_true_if_type_is_cons)
 {
-    (void) param; /* unused */
     struct sexpression dummy;
     
     assert_false(sexpr_is_cons(NULL));
@@ -211,9 +196,8 @@ void sexpr_is_cons_should_return_true_if_type_is_cons(void ** param)
     assert_false(sexpr_is_cons(&dummy));
 }
 
-void sexpr_is_value_should_return_true_if_type_is_value(void ** param)
+UnitTest(sexpr_is_value_should_return_true_if_type_is_value)
 {
-    (void) param; /* unused */
     struct sexpression dummy;
     
     assert_false(sexpr_is_value(NULL));
@@ -231,9 +215,8 @@ void sexpr_is_value_should_return_true_if_type_is_value(void ** param)
     assert_false(sexpr_is_value(&dummy));
 }
 
-void sexpr_is_ptr_should_return_true_if_type_is_ptr(void ** param)
+UnitTest(sexpr_is_ptr_should_return_true_if_type_is_ptr)
 {
-    (void) param; /* unused */
     struct sexpression dummy;
     
     assert_false(sexpr_is_ptr(NULL));
@@ -252,7 +235,7 @@ void sexpr_is_ptr_should_return_true_if_type_is_ptr(void ** param)
 }
 
 /* couple of tests for sexpr_equal */
-void sexpr_equal_should_return_true_if_both_sexpressions_are_equal(void ** param) {
+UnitTest(sexpr_equal_should_return_true_if_both_sexpressions_are_equal) {
     struct sexpression * a;
     struct sexpression * b;
     
@@ -272,7 +255,7 @@ void sexpr_equal_should_return_true_if_both_sexpressions_are_equal(void ** param
     
 }
 
-void sexpr_equal_should_return_false_if_both_sexpressions_are_not_equal(void ** param) {
+UnitTest(sexpr_equal_should_return_false_if_both_sexpressions_are_not_equal) {
     struct sexpression * a;
     struct sexpression * b;
     
@@ -302,7 +285,7 @@ void sexpr_equal_should_return_false_if_both_sexpressions_are_not_equal(void ** 
 
 
 /* few tests for sexpr_reverse */
-void sexpr_reverse_should_return_same_sexpression_if_param_is_not_cons(void ** param) {
+UnitTest(sexpr_reverse_should_return_same_sexpression_if_param_is_not_cons) {
     struct sexpression * a;
     struct sexpression * b;
     
@@ -316,7 +299,7 @@ void sexpr_reverse_should_return_same_sexpression_if_param_is_not_cons(void ** p
     
 }
 
-void sexpr_reverse_should_should_swap_car_with_cdr_if_param_is_a_pair(void ** param) {
+UnitTest(sexpr_reverse_should_should_swap_car_with_cdr_if_param_is_a_pair) {
     struct sexpression * a;
     struct sexpression * b;
     struct sexpression * c;
@@ -337,7 +320,7 @@ void sexpr_reverse_should_should_swap_car_with_cdr_if_param_is_a_pair(void ** pa
     
 }
 
-void sexpr_reverse_should_should_return_same_param_if_param_is_len_1(void ** param) {
+UnitTest(sexpr_reverse_should_should_return_same_param_if_param_is_len_1) {
     struct sexpression * sexpr;
     struct sexpression * expected;
     struct sexpression * actual;
@@ -356,7 +339,7 @@ void sexpr_reverse_should_should_return_same_param_if_param_is_len_1(void ** par
     
 }
 
-void sexpr_reverse_should_should_return_a_reversed_list_if_param_is_a_list(void ** param) {
+UnitTest(sexpr_reverse_should_should_return_a_reversed_list_if_param_is_a_list) {
     struct sexpression * sexpr;
     struct sexpression * expected;
     struct sexpression * actual;
@@ -373,7 +356,7 @@ void sexpr_reverse_should_should_return_a_reversed_list_if_param_is_a_list(void 
     
 }
 
-void create_cons_should_create_list_and_set_correct_length(void ** param) {
+UnitTest(create_cons_should_create_list_and_set_correct_length) {
     struct sexpression * sexpr;
     
     sexpr = sexpr_cons(sexpr_create_cstr(L"hey"), 
@@ -385,63 +368,3 @@ void create_cons_should_create_list_and_set_correct_length(void ** param) {
     
     sexpr_free(sexpr);
 }
-
-
-/* These functions will be used to initialize
-   and clean resources up after each test run */
-int setup (void ** state)
-{
-    return 0;
-}
-
-int teardown (void ** state)
-{
-    return 0;
-}
-
-
-int main (void)
-{
-    const struct CMUnitTest tests [] =
-    {
-        cmocka_unit_test (sexpr_cons_should_alloc_new_sexpression),
-        cmocka_unit_test (sexpr_create_value_should_alloc_new_sexpression_and_alloc_value_string),
-        cmocka_unit_test (sexpr_free_value_should_release_sexpression_recursively),
-        cmocka_unit_test (sexpr_free_object_value_should_release_only_the_first_pair),
-        
-        cmocka_unit_test (sexpr_car_should_return_data_pointer_if_type_is_cons),
-        cmocka_unit_test (sexpr_car_should_return_null_if_type_is_not_cons),
-        
-        cmocka_unit_test (sexpr_cdr_should_return_cdr_pointer_if_type_is_cons),
-        cmocka_unit_test (sexpr_cdr_should_return_null_if_type_is_not_cons),
-        
-        cmocka_unit_test (sexpr_value_should_return_value_pointer_if_type_is_value),
-        cmocka_unit_test (sexpr_value_should_return_null_if_type_is_not_value),
-        
-        cmocka_unit_test (sexpr_type_should_return_sexpression_type),
-        cmocka_unit_test (sexpr_value_should_return_NIL_if_sexpression_is_null),
-        cmocka_unit_test (sexpr_is_nil_should_return_true_if_type_is_nil_or_sexpression_is_null),
-        cmocka_unit_test (sexpr_is_cons_should_return_true_if_type_is_cons),
-        cmocka_unit_test (sexpr_is_value_should_return_true_if_type_is_value),
-        cmocka_unit_test (sexpr_is_ptr_should_return_true_if_type_is_ptr),
-        
-        cmocka_unit_test (sexpr_equal_should_return_true_if_both_sexpressions_are_equal),
-        cmocka_unit_test (sexpr_equal_should_return_false_if_both_sexpressions_are_not_equal),
-        
-        cmocka_unit_test (sexpr_reverse_should_return_same_sexpression_if_param_is_not_cons),
-        cmocka_unit_test (sexpr_reverse_should_should_swap_car_with_cdr_if_param_is_a_pair),
-        cmocka_unit_test (sexpr_reverse_should_should_return_same_param_if_param_is_len_1),
-        cmocka_unit_test (sexpr_reverse_should_should_return_a_reversed_list_if_param_is_a_list),
-        
-        cmocka_unit_test (create_cons_should_create_list_and_set_correct_length),
-    };
-
-    /* If setup and teardown functions are not
-       needed, then NULL may be passed instead */
-
-    int count_fail_tests =
-        cmocka_run_group_tests_name (__FILE__, tests, setup, teardown);
-
-    return count_fail_tests;
-}
-

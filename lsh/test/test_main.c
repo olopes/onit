@@ -32,13 +32,8 @@ static void discover_tests(void) {
     
 }
 
-
 static void discover_group_setup_teardown(void) {
     struct GroupSetupTeardown * ptr;
-    
-    printf("Group setup/teardown are placed from address 0x%p to 0x%p\n",
-        (void *)&__start_lshsetup,
-        (void *)&__stop_lshsetup);
     
     test_group_setup = &__start_lshsetup;
 
@@ -51,16 +46,10 @@ static void discover_unit_tests(void) {
     int i;
     struct LshUnitTest * ptr;
     
-   printf("Unit tests are placed from address 0x%p to 0x%p\n",
-        (void *)&__start_lshsetup,
-        (void *)&__stop_lshsetup);
-    
-   ptr = &__start_lshtest;
+    ptr = &__start_lshtest;
     for(num_tests = 0; ptr < &__stop_lshtest; ptr++, num_tests++);
     
-    
-    printf("Found %lu tests\n", num_tests);
-    tests = (struct CMUnitTest *) malloc(sizeof(struct CMUnitTest)* num_tests);
+    tests = (struct CMUnitTest *) malloc(sizeof(struct CMUnitTest) * num_tests);
     if(tests == NULL) {
         fprintf(stderr, "ERROR: Error allocating test case array\n");
         fflush(stderr);
@@ -122,12 +111,27 @@ static int _run_group_teardown(void ** state) {
     
 }
 
-int main (void)
+/* 
+ * Default unit test and setup functions to avoid 
+ * undefined errors when UnitTest macros are not used
+ */
+
+UnitTest(default_test) {
+    assert_true(1);
+}
+
+BeforeAll(default_setup) {
+    return 0;
+}
+
+
+__attribute__((weak))
+int main (int argc, char ** argv)
 {
 
     discover_tests();
     
     return 
-        _cmocka_run_group_tests(__FILE__, tests, num_tests, _run_group_setup, _run_group_teardown);
+        _cmocka_run_group_tests(argv[0], tests, num_tests, _run_group_setup, _run_group_teardown);
 
 }

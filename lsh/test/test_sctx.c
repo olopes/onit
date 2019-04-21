@@ -12,15 +12,15 @@ static char * environment[4] = {
     "HOME=/home/user",
     NULL
 };
-    
-static void sctx_do_nothing(void ** param)
+
+UnitTest(sctx_do_nothing)
 {
     struct sctx * sctx = create_new_sctx(arguments, environment);
     release_sctx(sctx);
     assert_true(1);
 }
 
-static void sctx_register_new_symbol(void ** param)
+UnitTest(sctx_register_new_symbol)
 {
     struct sexpression * key;
     struct sexpression * value;
@@ -45,7 +45,7 @@ static void sctx_register_new_symbol(void ** param)
  * all test arguments and environment, including the primitives names.
  * This test will force the heap to grow and garbage collector to run 
  */
-static void sctx_should_call_gc_when_heap_is_full(void ** param)
+UnitTest(sctx_should_call_gc_when_heap_is_full)
 {
     struct sexpression * unreferenced;
     struct sexpression * referenced;
@@ -97,22 +97,3 @@ static void sctx_should_call_gc_when_heap_is_full(void ** param)
     release_sctx(sctx);
 }
 
-
-int main (void)
-{
-    const struct CMUnitTest tests [] =
-    {
-        cmocka_unit_test (sctx_do_nothing),
-        cmocka_unit_test (sctx_register_new_symbol), 
-        cmocka_unit_test (sctx_should_call_gc_when_heap_is_full), 
-    };
-
-    
-    /* If setup and teardown functions are not
-       needed, then NULL may be passed instead */
-
-    int count_fail_tests =
-        cmocka_run_group_tests_name (__FILE__, tests, NULL, NULL);
-
-    return count_fail_tests;
-}

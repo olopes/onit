@@ -74,7 +74,7 @@ check: tests $(TESTS_PASS)
 
 build/test/%.info: build/test/%.t
 	-@lcov -q -z -d build/test 
-	-rm build/report/$(basename $(notdir $<)).xml
+	-@rm -f build/report/$(basename $(notdir $<)).xml
 	-CMOCKA_XML_FILE=build/report/$(basename $(notdir $<)).xml CMOCKA_MESSAGE_OUTPUT=xml $< 
 	-@lcov -q -c -d build/test -o $@ -t $(basename $(notdir $<))
 
@@ -82,8 +82,8 @@ coverage: tests $(TESTS_COV)
 	-@lcov -t coverage $(addprefix -a ,$(TESTS_COV)) -o build/coverage.info
 	-@genhtml -q -s -k --legend --highlight --output-directory build/coverage build/coverage.info
 	#-@genhtml -q -f -s -k --legend --highlight --output-directory build/coverage build/coverage.info
-	@ls -1 build/report/test*.xml | gawk 'BEGIN {print "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<?xml-stylesheet type=\"text/xsl\" href=\"report.xsl\"?>\n<files sysinfo=\"$(SYSINFO)\" created=\"" strftime("%Y-%m-%dT%H:%M:%S") "\">"} {n=split($$0,a,/\//); print "<file>" a[n] "</file>" } END {print "</files>\n"}' > build/report/report.xml
-	@xsltproc --nonet -o build/report/index.html src/report.xsl build/report/report.xml
+	@ls -1 build/report/test*.xml | gawk 'BEGIN {print "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<files sysinfo=\"$(SYSINFO)\" created=\"" strftime("%Y-%m-%dT%H:%M:%S") "\">"} {n=split($$0,a,/\//); print "<file>" a[n] "</file>" } END {print "</files>\n"}' > build/report/report.xml
+	@xsltproc --nonet -o build/report/index.html test/report.xsl build/report/report.xml
 
 
 .PHONY: all tests check coverage clean
