@@ -66,20 +66,20 @@ stdio_release_file_stream(struct sparser_stream * ctx) {
 }
 
 
-static struct sparse_adapter _STDIO_ADAPTER = {
+static struct sparse_adapter _FILE_DESCRIPTOR_ADAPTER = {
     stdio_init_stream,
     stdio_read_char,
     stdio_unread_char,
     stdio_release_stream
 };
 
-static struct sparse_adapter _STDIO_FILE_ADAPTER = {
+static struct sparse_adapter _FILE_NAME_ADAPTER = {
     stdio_init_file_stream,
     stdio_read_char,
     stdio_unread_char,
     stdio_release_file_stream
 };
 
-const struct sparse_adapter * const STDIO_ADAPTER = &_STDIO_ADAPTER;
+const struct sparse_adapter * const FILE_DESCRIPTOR_ADAPTER = &_FILE_DESCRIPTOR_ADAPTER;
 
-const struct sparse_adapter * const FILE_ADAPTER = &_STDIO_FILE_ADAPTER;
+const struct sparse_adapter * const FILE_NAME_ADAPTER = &_FILE_NAME_ADAPTER;

@@ -86,14 +86,14 @@ UnitTest(sparse_should_do_parse_pair_and_return_ok) {
     release_sparser_stream(stream);
 }
 
-UnitTest(sparse_should_do_parse_a_list_from_a_file) {
+UnitTest(sparse_should_parse_a_list_from_a_file) {
     struct sexpression * expected_object;
     struct sexpression * actual_object;
     struct sparser_stream * stream;
     char * filename = "test/sexpression.lsh"; /* (abc |d.e-f| "ghi" 1/3+4i)  */
     
     
-    stream = create_sparser_stream(FILE_ADAPTER, filename);
+    stream = create_sparser_stream(FILE_NAME_ADAPTER, filename);
     expected_object = sexpr_cons(sexpr_create_cstr(L"abc"), 
                             sexpr_cons(sexpr_create_cstr(L"d.e-f"),
                                 sexpr_cons(sexpr_create_cstr(L"ghi"),
@@ -107,6 +107,38 @@ UnitTest(sparse_should_do_parse_a_list_from_a_file) {
     sexpr_free(expected_object);
     
     release_sparser_stream(stream);
+}
+
+UnitTest(sparse_should_parse_a_list_from_a_file_descriptor) {
+    struct sexpression * expected_object;
+    struct sexpression * actual_object;
+    struct sparser_stream * stream;
+    char * filename = "test/sexpression.lsh"; /* (abc |d.e-f| "ghi" 1/3+4i)  */
+    FILE * input;
+    
+    input = fopen(filename, "rb");
+    if(input == NULL) {
+        print_error("Could not open the test file '%s'\n", filename);
+        skip();
+        return;
+    }
+    
+    stream = create_sparser_stream( FILE_DESCRIPTOR_ADAPTER, input);
+    expected_object = sexpr_cons(sexpr_create_cstr(L"abc"), 
+                            sexpr_cons(sexpr_create_cstr(L"d.e-f"),
+                                sexpr_cons(sexpr_create_cstr(L"ghi"),
+                                    sexpr_cons(sexpr_create_cstr(L"1/3+4i"),NULL))));
+    
+    assert_int_equal(sparse(stream, &actual_object), SPARSE_OK);
+    
+    assert_sexpr_equal(expected_object, actual_object);
+
+    sexpr_free(actual_object);
+    sexpr_free(expected_object);
+    
+    release_sparser_stream(stream);
+    
+    fclose(input);
 }
 
 UnitTest(sparse_should_parse_multiple_objects_from_a_stream) {

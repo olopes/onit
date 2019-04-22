@@ -16,7 +16,7 @@ lsh_main(int argc, char ** argv) {
     
     wprintf(L"S-Expression Parser POC\n> ");
     fflush ( stdout );
-    stream = create_sparser_stream(STDIO_ADAPTER, stdin);
+    stream = create_sparser_stream( FILE_DESCRIPTOR_ADAPTER, stdin);
     
     while((return_value=sparse(stream, &object)) != SPARSE_EOF) {
         if(return_value == SPARSE_OK) {
