@@ -6,7 +6,7 @@
 #include "stdio_sparser_adapter.h"
 #include "assert_sexpr.h"
 
-void sparse_should_do_parse_string_and_return_ok(void ** param) {
+UnitTest(sparse_should_do_parse_string_and_return_ok) {
     struct sexpression * expected_object;
     struct sexpression * actual_object;
     struct sparser_stream * stream;
@@ -26,7 +26,7 @@ void sparse_should_do_parse_string_and_return_ok(void ** param) {
     release_sparser_stream(stream);
 }
 
-void sparse_should_do_parse_symbol_and_return_ok(void ** param) {
+UnitTest(sparse_should_do_parse_symbol_and_return_ok) {
     struct sexpression * expected_object;
     struct sexpression * actual_object;
     struct sparser_stream * stream;
@@ -45,7 +45,7 @@ void sparse_should_do_parse_symbol_and_return_ok(void ** param) {
     release_sparser_stream(stream);
 }
 
-void sparse_should_do_parse_list_and_return_ok(void ** param) {
+UnitTest(sparse_should_do_parse_list_and_return_ok) {
     struct sexpression * expected_object;
     struct sexpression * actual_object;
     struct sparser_stream * stream;
@@ -67,7 +67,7 @@ void sparse_should_do_parse_list_and_return_ok(void ** param) {
     release_sparser_stream(stream);
 }
 
-void sparse_should_do_parse_pair_and_return_ok(void ** param) {
+UnitTest(sparse_should_do_parse_pair_and_return_ok) {
     struct sexpression * expected_object;
     struct sexpression * actual_object;
     struct sparser_stream * stream;
@@ -86,7 +86,7 @@ void sparse_should_do_parse_pair_and_return_ok(void ** param) {
     release_sparser_stream(stream);
 }
 
-void sparse_should_do_parse_a_list_from_a_file(void ** param) {
+UnitTest(sparse_should_do_parse_a_list_from_a_file) {
     struct sexpression * expected_object;
     struct sexpression * actual_object;
     struct sparser_stream * stream;
@@ -109,7 +109,7 @@ void sparse_should_do_parse_a_list_from_a_file(void ** param) {
     release_sparser_stream(stream);
 }
 
-void sparse_should_parse_multiple_objects_from_a_stream(void ** param) {
+UnitTest(sparse_should_parse_multiple_objects_from_a_stream) {
     struct sexpression * actual_object;
     struct sexpression * expected_objects[4];
     struct sexpression ** expected_object;
@@ -142,7 +142,7 @@ void sparse_should_parse_multiple_objects_from_a_stream(void ** param) {
     release_sparser_stream(stream);
 }
 
-void sparse_should_ignore_comments(void ** param) {
+UnitTest(sparse_should_ignore_comments) {
     struct sexpression * actual_object;
     struct sexpression * expected_object;
     struct sparser_stream * stream;
@@ -165,40 +165,41 @@ void sparse_should_ignore_comments(void ** param) {
     release_sparser_stream(stream);
 }
 
-
-/* These functions will be used to initialize
-   and clean resources up after each test run */
-int setup (void ** state)
-{
-    return 0;
-}
-
-int teardown (void ** state)
-{
+UnitTest(sparse_should_return_pair_with_quote_symbol_when_data_starts_with_single_quote) {
+    struct sexpression * actual_object;
+    struct sexpression * expected_object;
+    struct sparser_stream * stream;
+    wchar_t * data = L"'symbol";
     
+    expected_object = sexpr_cons(sexpr_create_cstr(L"quote"), sexpr_cons(sexpr_create_cstr(L"symbol"), NULL));
     
-    return 0;
+    stream = create_sparser_stream(WCSTR_ADAPTER, data,wcslen(data));
+    assert_int_equal(sparse(stream, &actual_object), SPARSE_OK);
+    
+    assert_sexpr_equal(expected_object, actual_object);
+    
+    sexpr_free(actual_object);
+    sexpr_free(expected_object);
+
+    release_sparser_stream(stream);
 }
 
+UnitTest(sparse_should_return_value_with_quoted_chars_when_data_is_string_with_quoted_chars) {
+    struct sexpression * actual_object;
+    struct sexpression * expected_object;
+    struct sparser_stream * stream;
+    wchar_t * data = L"\" \\n \\r \\\" \\' \\\\ \\ua \"";
+    
+    expected_object = sexpr_create_cstr(L" \n \r \" ' \\ \n ");
+    
+    stream = create_sparser_stream(WCSTR_ADAPTER, data,wcslen(data));
+    assert_int_equal(sparse(stream, &actual_object), SPARSE_OK);
+    
+    assert_sexpr_equal(expected_object, actual_object);
 
-int main (void)
-{
-    const struct CMUnitTest tests [] =
-    {
-        cmocka_unit_test (sparse_should_do_parse_string_and_return_ok),
-        cmocka_unit_test (sparse_should_do_parse_symbol_and_return_ok),
-        cmocka_unit_test (sparse_should_do_parse_list_and_return_ok),
-        cmocka_unit_test (sparse_should_do_parse_pair_and_return_ok),
-        cmocka_unit_test (sparse_should_do_parse_a_list_from_a_file),
-        cmocka_unit_test (sparse_should_parse_multiple_objects_from_a_stream),
-        cmocka_unit_test (sparse_should_ignore_comments),
-    };
+    sexpr_free(actual_object);
+    sexpr_free(expected_object);
 
-    /* If setup and teardown functions are not
-       needed, then NULL may be passed instead */
-
-    int count_fail_tests =
-        cmocka_run_group_tests_name (__FILE__, tests, setup, teardown);
-
-    return count_fail_tests;
+    release_sparser_stream(stream);
 }
+

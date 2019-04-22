@@ -163,23 +163,28 @@ sparse_string(struct sparse_ctx * ctx, struct sexpression ** obj) {
                     ostr_append(str, ctx->next);
                 }
             }
+        } else if(escape_state == 3) {
+            ostr_append(str, ctx->next);
+            escape_state = 0;
         } else if(ctx->prev == L'\\') {
             /* must replace last entered char with current char */
-            if(ctx->next==L'n') {
+            if(ctx->next == L'n') {
                 ostr_replace_last(str, L'\n');
-                ctx->next=L'\n';
-            } else if(ctx->next==L'r') {
+                ctx->next = L'\n';
+            } else if(ctx->next == L'r') {
                 ostr_replace_last(str, L'\r');
                 ctx->next=L'\r';
-            } else if(ctx->next==L'\\' || ctx->next==L'"' || ctx->next==L'\'') {
+            } else if(ctx->next == L'"' || ctx->next == L'\'') {
                 ostr_replace_last(str, ctx->next);
-            } else if(ctx->next==L'u') {
+            } else if(ctx->next == L'u') {
                 escape_pos = 0;
                 escape_state = 2;
             } else if(ctx->next >= L'0' && ctx->next <= L'7') {
                 escape_pos = 1;
                 escape_state = 1;
                 escaped_chars[0] = ctx->next;
+            } else if(ctx->next == L'\\') {
+                escape_state = 3;
             } else {
                 /* bad escape sequence */
                 ostr_destroy(str);

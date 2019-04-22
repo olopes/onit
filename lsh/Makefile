@@ -88,5 +88,4 @@ coverage: tests $(TESTS_COV)
 
 .PHONY: all tests check coverage clean
 
-.PRECIOUS: build/test/%.t build/test/%.o build/%.o
-
+.PRECIOUS: build/test/%.t build/test/%.o build/%.o build/test/unit_%.o
