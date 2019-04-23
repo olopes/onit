@@ -8,6 +8,7 @@
 #include "shash.h"
 #include "aa_tree.h"
 #include "sctx.h"
+#include "svisitor.h"
 
 static int load_array_to_sexpr(struct sctx * sctx, struct sexpression ** list, char ** array);
 static void load_primitives(struct sctx * sctx);
@@ -24,6 +25,8 @@ static inline int heap_should_grow(struct mem_heap * heap);
 static void mark_reachable_references_cb (void * sctx_ptr, struct sexpression * key, void * reference);
 static int 
 create_reference(struct shash_table * table, struct sexpression * name, struct mem_reference * reference);
+static void 
+move_to_heap_visitor(struct sexpression * sexpr, struct scallback * callback);
 
 #ifdef UNIT_TESTING
 static void heap_sanity_check(struct mem_heap * heap, struct sexpression * obj);
@@ -62,6 +65,7 @@ create_new_sctx(char **argv, char **envp) {
         },
         .global = NULL,
         .namespaces = NULL,
+        .in_load = NULL,
         .heap = (struct mem_heap) {
             .visit = 0,
             .size = HEAP_MIN_SIZE,
@@ -393,7 +397,8 @@ static void heap_sanity_check(struct mem_heap * heap, struct sexpression * obj) 
 
 static void recycle(struct sctx * sctx) {
     
-    /* visit all nodes reachable from the namespaces */
+    /* visit all nodes reachable from the namespaces, including sexpr being loaded */
+    sexpr_mark_reachable(sctx->in_load, 1);
     visit_namespaces(sctx);
     free_unvisited_references(&sctx->heap);
     
@@ -528,3 +533,38 @@ static void print_heap_contents(struct mem_heap * heap, char * msg) {
     fflush(out);
 }
 #endif
+
+
+int
+move_to_heap(struct sctx * sctx, struct sexpression * sexpr) {
+    if(sctx == NULL) {
+        return SCTX_ERROR;
+    }
+    
+    struct scallback callback = {
+        .enter = NULL,
+        .visit = move_to_heap_visitor,
+        .leave = NULL,
+        .context = sctx,
+        .state = SCTX_OK
+    };
+    
+    
+    sctx->in_load = sexpr;
+    
+    // do stuff
+    svisitor(sexpr, &callback);
+    
+    sctx->in_load = NULL;
+    
+    return callback.state;
+}
+
+static void 
+move_to_heap_visitor(struct sexpression * sexpr, struct scallback * callback) {
+    /* do nothing if the previous state is not 0 (OK) */
+    if(callback->state != SCTX_OK) return;
+    
+    callback->state = record_new_object((struct sctx *) callback->context, sexpr);
+    
+}

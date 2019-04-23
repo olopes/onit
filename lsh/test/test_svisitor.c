@@ -3,13 +3,22 @@
 #include "svisitor.h"
 
 /* mock implementations */
+static int CALL_REAL_SVISITOR = 0;
+
+extern void 
+__svisitor(struct sexpression * obj, struct scallback * callback);
+
 void svisitor(struct sexpression * sobj, struct scallback * cb) {
     check_expected(sobj);
     check_expected(cb->context);
+    
+    if(CALL_REAL_SVISITOR) {
+        __svisitor(sobj, cb);
+    }
 }
 
 /* test case */
-void dump_sobj_should_call_svisitor (void ** state) {
+UnitTest(dump_sobj_should_call_svisitor) {
     struct sexpression dummy_obj;
     FILE dummy_file;
     
@@ -19,33 +28,4 @@ void dump_sobj_should_call_svisitor (void ** state) {
     
     dump_sexpr(&dummy_obj, &dummy_file);
     
-}
-
-/* These functions will be used to initialize
-   and clean resources up after each test run */
-int setup (void ** state)
-{
-    return 0;
-}
-
-int teardown (void ** state)
-{
-    return 0;
-}
-
-
-int main (void)
-{
-    const struct CMUnitTest tests [] =
-    {
-        cmocka_unit_test (dump_sobj_should_call_svisitor),
-    };
-
-    /* If setup and teardown functions are not
-       needed, then NULL may be passed instead */
-
-    int count_fail_tests =
-        cmocka_run_group_tests_name (__FILE__, tests, setup, teardown);
-
-    return count_fail_tests;
 }

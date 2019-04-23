@@ -6,43 +6,35 @@
 #include "sexpr_stack.h"
 #include "svisitor.h"
 
-/* TODO Implementar um visitor */
-/*
-Esse visitor recebe como parametros um objecto e um pointer para funcao.
-Para pensar:
- - a funcao recebe um enum com {pre val pos} quando chamada antes de, durante, após visitar um nó;
- - em vez de funcao usar um struct com 3 pointers para funcao
-
-Quando estiver concluido, implementar o dump usando o visitor.
-Possibilita fazer um map e um reduce :-)
-
-Para stack usar uma S-Expression.
-*/
-/* Maybe a SAX-y implementation? */
-
 /* syntatic sugar */
-typedef struct fn_holder {
-    size_t len;
-    void (*fn) (struct sexpression *, struct scallback *);
-} fn_holder;
+struct fn_holder {
+    visitor_callback_fn fn;
+};
 
-static void
-empty_cb (struct sexpression * sexpr, struct scallback * callback) {
-    /* do nothing */
-}
+static void cb_enter(struct sexpression *obj, struct scallback *cb);
+static void cb_visit(struct sexpression *obj, struct scallback *cb);
+static void cb_leave(struct sexpression *obj, struct scallback *cb);
+static void empty_cb (struct sexpression * sexpr, struct scallback * cb);
+
+void svisitor () __attribute__ ((weak, alias ("__svisitor")));
 
 /**
  * S-Expression visitor
  */
-void WEAK_FOR_UNIT_TEST
-svisitor(struct sexpression * obj, struct scallback * callback) {
-    fn_holder cb_enter;
-    fn_holder cb_visit;
-    fn_holder cb_leave;
+void 
+__svisitor(struct sexpression * obj, struct scallback * callback) {
+    
+    if(obj == NULL || callback == NULL) {
+        return;
+    }
+    
+    struct fn_holder cb_enter = { .fn = callback->enter ? callback->enter : &empty_cb };
+    struct fn_holder cb_visit = { .fn = callback->visit ? callback->visit : &empty_cb };
+    struct fn_holder cb_leave = { .fn = callback->leave ? callback->leave : &empty_cb };
     struct sexpression * stack;
     struct sexpression * value;
     struct sexpression * event;
-    struct sexpression event_enter = (struct sexpression){
+    struct sexpression event_enter = {
         .len = 0, 
         .data = {.ptr = &cb_enter},
         .cdr = {.sexpr = NULL},
@@ -67,26 +59,18 @@ svisitor(struct sexpression * obj, struct scallback * callback) {
         .content = SC_PRIMITIVE,
     };
     
-    if(obj == NULL || callback == NULL) {
-        return;
-    }
-    
-    cb_enter.fn = callback->enter ? callback->enter : &empty_cb;
-    cb_visit.fn = callback->visit ? callback->visit : &empty_cb;
-    cb_leave.fn = callback->leave ? callback->leave : &empty_cb;
-    
     stack = NULL;
     
     sexpr_push(&stack, obj);
     
-    while(sexpr_can_pop(stack)) {
+    while(sexpr_can_pop(&stack)) {
         value = sexpr_pop(&stack);
         
         if(value == &event_enter || value == &event_visit || value == &event_leave) {
             /* handle event */
             event = value;
             value = sexpr_pop(&stack);
-            ((fn_holder *) sexpr_ptr(event))->fn(value, callback);
+            ((struct fn_holder *) sexpr_ptr(event))->fn(value, callback);
         } else {
             
             /* insert leave event and add cdr */
@@ -108,6 +92,28 @@ svisitor(struct sexpression * obj, struct scallback * callback) {
             }
         }
     }
+}
+
+static void
+empty_cb (struct sexpression * sexpr, struct scallback * cb) {
+    /* do nothing */
+}
+
+/**
+ * Dump S-Expression
+ */
+void 
+dump_sexpr(struct sexpression * sobj, FILE * out) {
+    struct scallback print_callback = {
+        .enter = &cb_enter,
+        .visit = &cb_visit,
+        .leave = &cb_leave,
+        .context = out,
+        .state = 0,
+    };
+
+    svisitor(sobj, &print_callback);
+
 }
 
 
@@ -163,24 +169,7 @@ static void cb_leave(struct sexpression *obj, struct scallback *cb) {
 /**
  * Dump S-Expression
  */
-void WEAK_FOR_UNIT_TEST
-dump_sexpr(struct sexpression * sobj, FILE * out) {
-    struct scallback print_callback = {
-        &cb_enter,
-        &cb_visit,
-        &cb_leave,
-        out
-    };
-
-    svisitor(sobj, &print_callback);
-
-}
-
-
-/**
- * Dump S-Expression
- */
-void WEAK_FOR_UNIT_TEST
+void 
 dump_sexpr_r(struct sexpression * obj, FILE * out) {    
     if(obj == NULL) {
         return;

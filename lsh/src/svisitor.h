@@ -4,24 +4,35 @@
 #include <stdio.h>
 #include "sexpr.h"
 
+struct scallback;
+
+typedef void (*visitor_callback_fn) (struct sexpression *, struct scallback *);
+
 struct scallback {
     /**
      * Called when entering a CONS object
      */
-    void (*enter) (struct sexpression *, struct scallback *);
+    visitor_callback_fn enter;
+    
     /**
      * Called when visiting an object
      */
-    void (*visit) (struct sexpression *, struct scallback *);
+    visitor_callback_fn visit;
+
     /**
      * Called when leaving a CONS object
      */
-    void (*leave) (struct sexpression *, struct scallback *);
+    visitor_callback_fn leave;
     
     /**
      * Generic context
      */
     void * context;
+    
+    /**
+     * Generic state managed by the callback functions
+     */
+    int state;
 };
 
 /**

@@ -40,6 +40,7 @@ struct sctx {
     struct shash_table primitives;
     struct shash_table * global;
     struct sexpression * namespaces;
+    struct sexpression * in_load;
     struct mem_heap heap;
     void (*namespace_destructor)(struct sctx * ctx);
 };
@@ -85,5 +86,8 @@ leave_namespace(struct sctx * sctx);
 
 extern struct sexpression * 
 lookup_name(struct sctx * sctx, struct sexpression * name);
+
+extern int
+move_to_heap(struct sctx * sctx, struct sexpression * sexpr);
 
 #endif

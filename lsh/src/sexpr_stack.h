@@ -1,6 +1,8 @@
 #ifndef __SEXPR_STACK__H__
 #define __SEXPR_STACK__H__
 
+#include "sexpr.h"
+
 /**
  * Push a S-Expression object into the top of the stack
  */
@@ -23,7 +25,7 @@ sexpr_pop(struct sexpression ** );
  * Returns TRUE if the stack can pop the top-most element, ie, is not empty.
  */
 extern int
-sexpr_can_pop(struct sexpression * );
+sexpr_can_pop(struct sexpression ** );
 
 
 #endif /* __SEXPR_STACK__H__ */

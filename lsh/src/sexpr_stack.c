@@ -5,7 +5,7 @@
 /**
  * Push a S-Expression object into the top of the stack
  */
-void WEAK_FOR_UNIT_TEST
+void 
 sexpr_push(struct sexpression ** sexpr, void * obj) {
     struct sexpression * node;
     
@@ -19,7 +19,7 @@ sexpr_push(struct sexpression ** sexpr, void * obj) {
 /**
  * Fetch the top most element of the stack
  */
-void * WEAK_FOR_UNIT_TEST
+void *
 sexpr_peek(struct sexpression ** sexpr) {
     return sexpr_car(*sexpr);
 }
@@ -27,7 +27,7 @@ sexpr_peek(struct sexpression ** sexpr) {
 /**
  * Remove and return the top-most element of the stack
  */
-void * WEAK_FOR_UNIT_TEST
+void *
 sexpr_pop(struct sexpression ** sexpr) {
     void * car;
     struct sexpression * cdr;
@@ -44,8 +44,8 @@ sexpr_pop(struct sexpression ** sexpr) {
 /**
  * Returns TRUE if the stack can pop the top-most element, ie, is not empty.
  */
-int WEAK_FOR_UNIT_TEST
-sexpr_can_pop(struct sexpression * sexpr) {
-    return sexpr && sexpr_is_cons(sexpr_cdr(sexpr));
+int
+sexpr_can_pop(struct sexpression ** sexpr) {
+    return sexpr_is_cons(*sexpr);
 }
 

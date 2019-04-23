@@ -97,3 +97,48 @@ UnitTest(sctx_should_call_gc_when_heap_is_full)
     release_sctx(sctx);
 }
 
+UnitTest(move_to_heap_should_put_the_give_sexpression_into_the_heap_avoiding_the_garbage_collector) {
+    struct sexpression * sexpr1;
+    struct sexpression * sexpr2;
+    struct sexpression * sexpr3;
+    int sexpr1_found;
+    int sexpr2_found;
+    int sexpr3_found;
+    struct sctx * sctx = create_new_sctx(arguments, environment);
+    wchar_t value_text[32];
+    size_t i;
+    
+    sexpr3 = sexpr_create_cstr(L"SECOND VALUE");
+    sexpr2 = sexpr_cons(sexpr3, NULL);
+    sexpr1 = sexpr_cons(sexpr_create_cstr(L"FIRST_VALUE"), sexpr2);
+    
+    /* alloc random objects until the heap is almost full */
+    memset(value_text, 0, sizeof(value_text));
+    for(i = sctx->heap.load; i < sctx->heap.size-1; i++) {
+        swprintf(value_text, 32, L"VALUE %u", (unsigned) i);
+        alloc_new_value(sctx, value_text, wcslen(value_text));
+    }
+    
+    move_to_heap(sctx, sexpr1);
+    
+    /* check the heap for preserved and GC references */
+    sexpr1_found = sexpr2_found = sexpr3_found = 0;
+    for (i = 0; i < sctx->heap.load; i++) {
+        if (sctx->heap.data[i] == sexpr1) {
+            sexpr1_found = 1;
+        }
+        if (sctx->heap.data[i] == sexpr2) {
+            sexpr2_found = 1;
+        }
+        if (sctx->heap.data[i] == sexpr3) {
+            sexpr3_found = 1;
+        }
+    }
+    
+    assert_true(sexpr1_found);
+    assert_true(sexpr2_found);
+    assert_true(sexpr3_found);
+
+    /* the expressions allocated manually will be released by release_sctx() */
+    release_sctx(sctx);
+}
