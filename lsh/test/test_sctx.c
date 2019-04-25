@@ -142,3 +142,99 @@ UnitTest(move_to_heap_should_put_the_give_sexpression_into_the_heap_avoiding_the
     /* the expressions allocated manually will be released by release_sctx() */
     release_sctx(sctx);
 }
+
+static void test_primitive_dtor(struct sctx * sctx, struct primitive *primitive) {
+    /* do nothing */
+}
+
+UnitTest(lookup_name_should_search_primitives_and_all_namespaces) {
+    struct mem_reference ref1;
+    struct mem_reference ref2;
+    struct mem_reference ref3;
+    struct primitive primitive = {
+        .destructor = test_primitive_dtor
+    };
+    
+    struct sctx * sctx = create_new_sctx(arguments, environment);
+    enter_namespace(sctx);
+
+    assert_int_equal(create_primitive_reference(sctx, L"pr1", 3, &ref1), SCTX_OK);
+    assert_int_equal(create_global_reference(sctx, L"gr2", 3, &ref2), SCTX_OK);
+    assert_int_equal(create_stack_reference(sctx, L"sr3", 3, &ref3), SCTX_OK);
+    
+    enter_namespace(sctx);
+    
+    *ref1.value = &primitive;
+    *ref2.value = alloc_new_value(sctx, L"gv2", 3);
+    *ref3.value = alloc_new_value(sctx, L"sv3", 3);
+    
+    /* query name spaces */
+    assert_ptr_equal(lookup_name(sctx, alloc_new_value(sctx, L"pr1", 3)), *ref1.value);
+    assert_ptr_equal(lookup_name(sctx, alloc_new_value(sctx, L"gr2", 3)), *ref2.value);
+    assert_ptr_equal(lookup_name(sctx, alloc_new_value(sctx, L"sr3", 3)), *ref3.value);
+    
+    leave_namespace(sctx);
+    leave_namespace(sctx);
+    
+    release_sctx(sctx);
+}
+
+UnitTest(lookup_name_should_return_null_when_reference_out_of_scope) {
+    struct mem_reference ref1;
+    struct mem_reference ref2;
+    struct mem_reference ref3;
+    struct primitive primitive = {
+        .destructor = test_primitive_dtor
+    };
+    
+    struct sctx * sctx = create_new_sctx(arguments, environment);
+    enter_namespace(sctx);
+
+    assert_int_equal(create_primitive_reference(sctx, L"pr1", 3, &ref1), SCTX_OK);
+    assert_int_equal(create_global_reference(sctx, L"gr2", 3, &ref2), SCTX_OK);
+    assert_int_equal(create_stack_reference(sctx, L"sr3", 3, &ref3), SCTX_OK);
+    
+    enter_namespace(sctx);
+    
+    *ref1.value = &primitive;
+    *ref2.value = alloc_new_value(sctx, L"gv2", 3);
+    *ref3.value = alloc_new_value(sctx, L"sv3", 3);
+    
+    leave_namespace(sctx);
+    leave_namespace(sctx);
+    
+    /* query name spaces */
+    assert_ptr_equal(lookup_name(sctx, alloc_new_value(sctx, L"pr1", 3)), *ref1.value);
+    assert_ptr_equal(lookup_name(sctx, alloc_new_value(sctx, L"gr2", 3)), *ref2.value);
+    assert_ptr_equal(lookup_name(sctx, alloc_new_value(sctx, L"sr3", 3)), NULL);
+    
+    release_sctx(sctx);
+}
+
+UnitTest(lookup_name_should_search_primitives_first) {
+    struct mem_reference ref1;
+    struct mem_reference ref2;
+    struct mem_reference ref3;
+    struct primitive primitive = {
+        .destructor = test_primitive_dtor
+    };
+    
+    struct sctx * sctx = create_new_sctx(arguments, environment);
+    enter_namespace(sctx);
+
+    assert_int_equal(create_primitive_reference(sctx, L"pr1", 3, &ref1), SCTX_OK);
+    assert_int_equal(create_global_reference(sctx, L"pr1", 3, &ref2), SCTX_OK);
+    assert_int_equal(create_stack_reference(sctx, L"pr1", 3, &ref3), SCTX_OK);
+    
+    *ref1.value = &primitive;
+    *ref2.value = alloc_new_value(sctx, L"gv2", 3);
+    *ref3.value = alloc_new_value(sctx, L"sv3", 3);
+    
+    /* query name spaces */
+    assert_ptr_equal(lookup_name(sctx, alloc_new_value(sctx, L"pr1", 3)), *ref1.value);
+    
+    leave_namespace(sctx);
+    
+    release_sctx(sctx);
+}
+
