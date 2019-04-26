@@ -6,28 +6,8 @@
 #include "ostr.h"
 #include "shash.h"
 
-struct primitive;
-struct sctx;
-typedef struct sexpression * (*primitive_fn)(void * sctx, struct sexpression  *);
-typedef void (*destructor_fn)(struct sctx * sctx, struct primitive *);
-
 #define SCTX_OK 0
 #define SCTX_ERROR 1
-
-#define PRIMITIVE_FUNCTION 0
-#define PRIMITIVE_SEXPRESSION 1
-#define PRIMITIVE_STRING 2
-
-struct primitive {
-    unsigned int type;
-    union {
-        primitive_fn function;
-        struct sexpression * sexpression;
-        struct ostr * string;
-    } value;
-    destructor_fn destructor;
-};
-
 
 struct mem_heap {
     int visit;
@@ -77,6 +57,9 @@ alloc_new_pair(struct sctx * sctx, struct sexpression * car, struct sexpression 
 
 extern struct sexpression * 
 alloc_new_value(struct sctx * sctx, wchar_t * wcstr, size_t len);
+
+extern struct sexpression *
+alloc_new_primitive(struct sctx * sctx, void * ptr, struct sprimitive * handler);
 
 extern int 
 enter_namespace(struct sctx * sctx);

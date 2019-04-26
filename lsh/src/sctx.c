@@ -13,8 +13,6 @@
 static int load_array_to_sexpr(struct sctx * sctx, struct sexpression ** list, char ** array);
 static void load_primitives(struct sctx * sctx);
 static wchar_t * convert_to_wcstr(const char * src);
-static void destroy_primitive_references_cb (void * sctx, struct sexpression * name, void * primitive_ptr);
-static void release_primitive(struct sctx * sctx, struct primitive * primitive);
 static void free_heap_contents (struct mem_heap * heap);
 static int record_new_object(struct sctx * sctx, struct sexpression * obj);
 static void recycle(struct sctx * sctx);
@@ -105,6 +103,11 @@ static int load_array_to_sexpr(struct sctx * sctx, struct sexpression ** list_pt
     struct sexpression * value;
     list = NULL;
     
+    if(array == NULL) {
+        *list_ptr = NULL;
+        return SCTX_OK;
+    }
+    
     while(*array) {
         wcstr = convert_to_wcstr(*array);        
         if(wcstr == NULL) {
@@ -149,28 +152,27 @@ static wchar_t * convert_to_wcstr(const char * src) {
     return wcstr;
 }
 
+static void print_boolean_primitive(void * ptr);
+
+static struct sprimitive boolean_primitive_handler = {
+    .print=print_boolean_primitive
+};
+
+static wchar_t * T = L"#t";
+static wchar_t * F = L"#f";
+
+static void print_boolean_primitive(void * ptr) {
+    wprintf(L"%ls", (wchar_t *) ptr);
+}
+
 static void load_primitives(struct sctx * sctx) {
     struct mem_reference reference;
-    struct primitive * TRUE_PRIMITIVE;
-    struct primitive * FALSE_PRIMITIVE;
+    struct sexpression * TRUE_PRIMITIVE = alloc_new_primitive(sctx, T, &boolean_primitive_handler);
+    struct sexpression * FALSE_PRIMITIVE = alloc_new_primitive(sctx, F, &boolean_primitive_handler);
     
-    TRUE_PRIMITIVE = malloc(sizeof(struct primitive));
-    *TRUE_PRIMITIVE = (struct primitive) {
-        .type = PRIMITIVE_SEXPRESSION,
-        .value = {.sexpression = (struct sexpression*)1},
-        .destructor = NULL,
-    };
-    
-    FALSE_PRIMITIVE = malloc(sizeof(struct primitive));
-    *FALSE_PRIMITIVE = (struct primitive) {
-        .type = PRIMITIVE_SEXPRESSION,
-        .value = {.sexpression = NULL},
-        .destructor = NULL,
-    };
-    
-    create_primitive_reference(sctx, L"#t",2, &reference);
+    create_primitive_reference(sctx, T, 2, &reference);
     *reference.value = TRUE_PRIMITIVE;
-    create_primitive_reference(sctx, L"#f",2, &reference);
+    create_primitive_reference(sctx, F, 2, &reference);
     *reference.value = FALSE_PRIMITIVE;
     
 }
@@ -245,8 +247,6 @@ release_sctx(struct sctx * sctx) {
     }
     
     
-    /* TODO release remaining primitives before releasing the hashtable */
-    shash_visit(&sctx->primitives, sctx, destroy_primitive_references_cb );
     shash_free(&sctx->primitives);
 
     leave_namespace(sctx);
@@ -257,21 +257,6 @@ release_sctx(struct sctx * sctx) {
     free(sctx->heap.data);
     free(sctx);
 }
-
-static void destroy_primitive_references_cb (void * sctx, struct sexpression * name, void * primitive_ptr) {
-    /* name will be garbage collected */
-    release_primitive((struct sctx *) sctx, (struct primitive *)primitive_ptr);
-}
-
-static void release_primitive(struct sctx * sctx, struct primitive * primitive) {
-    if(primitive->destructor != NULL) {
-        primitive->destructor(sctx, primitive);
-    } else {
-        free(primitive);
-    }
-}
-    
-
 
 int enter_namespace(struct sctx * sctx) {
     struct shash_table * new_namespace;
@@ -354,6 +339,25 @@ struct sexpression * alloc_new_value(struct sctx * sctx, wchar_t * wcstr, size_t
     
     return object;
 }
+
+struct sexpression *
+alloc_new_primitive(struct sctx * sctx, void * ptr, struct sprimitive * handler) {
+    struct sexpression * object;
+    
+    object = sexpr_create_primitive(ptr, handler);
+    
+    if(object == NULL) {
+        return NULL;
+    }
+    
+    if(record_new_object(sctx, object)) {
+        /* mem full? error? */
+        sexpr_free_object(object);
+        object = NULL;
+    }
+    
+    return object;
+}    
 
 
 static int record_new_object(struct sctx * sctx, struct sexpression * obj) {

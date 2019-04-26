@@ -1,6 +1,46 @@
 #include "eval.h"
 #include "sexpr.h"
-#include "ostr.h"
+#include "sctx.h"
+
+/**
+ * Eval a S-Expression using the given context
+ */
+struct sexpression * 
+eval_sexpr(struct sctx * sctx, struct sexpression * expression) {
+    if(sctx == NULL || expression == NULL) {
+        return NULL;
+    }
+    
+    if(sexpr_is_value(expression) && expression->content == SC_STRING) {
+        return expression;
+    }
+    
+    if(sexpr_is_value(expression) && expression->content == SC_SYMBOL) {
+        return lookup_name(sctx, expression);
+    }
+    
+    
+    return NULL;
+    
+    /*
+    struct sexpression * accum;
+    struct sexpression * result;
+    
+    
+    accum = sexpr_cons(NULL, NULL);
+    
+    result = sexpr_eval_expand(sexpr, accum);
+    
+    
+    
+    return result;
+    */
+}
+
+
+
+/* ************************************************************* */
+
 
 /*
 O objectivo é passar disto:
@@ -31,29 +71,6 @@ sexpr_eval_reduce(struct sexpression * list) {
     /* TODO oh dear... please help me Mr. Sussman!! */
     
     return sexpr_car(list); /* dummy implementation for now */
-}
-
-
-
-/**
- * Eval a S-Expression
- */
-WEAK_FOR_UNIT_TEST struct sexpression * 
-eval_sexpr(struct sexpression * sexpr) {
-    struct sexpression * accum;
-    struct sexpression * result;
-    
-    if(sexpr == NULL || !sexpr_is_cons(sexpr)) {
-        return sexpr;
-    }
-    
-    accum = sexpr_cons(NULL, NULL);
-    
-    result = sexpr_eval_expand(sexpr, accum);
-    
-    
-    
-    return result; /* do nothing for now */
 }
 
 

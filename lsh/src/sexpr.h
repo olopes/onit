@@ -1,7 +1,9 @@
 #ifndef __SEXPR__H__
 #define __SEXPR__H__
 
+#include <stddef.h>
 #include <wchar.h>
+
 
 /* object types */
 #define ST_NIL   0
@@ -19,6 +21,15 @@
 #define SC_HASHTABLE 6
 #define SC_VECTOR 7
 
+struct sprimitive {
+    void (*destructor)(void *);
+    void (*print)(void *);
+    void (*visit)(void *);
+    void (*mark_reachable)(void *, unsigned char);
+    int (*is_marked)(void *, unsigned char);
+    int (*compare)(void *, void *);
+};
+
 struct sexpression { 
     size_t len;
     union sexpression_data {
@@ -29,6 +40,7 @@ struct sexpression {
     union sexpression_cdr {
         struct sexpression * sexpr;
         unsigned long hashcode;
+        struct sprimitive * handler;
     } cdr;
     unsigned char visit_mark;
     unsigned char type;
@@ -46,6 +58,12 @@ sexpr_cons(struct sexpression * car, struct sexpression * cdr);
  */
 extern struct sexpression * 
 sexpr_create_value(wchar_t * cwstr, size_t length);
+
+/**
+ * Create a S-Expression primitive
+ */
+extern struct sexpression *
+sexpr_create_primitive(void * ptr, struct sprimitive * handler);
 
 /**
  * Release a S-Expression

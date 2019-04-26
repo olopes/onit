@@ -143,17 +143,10 @@ UnitTest(move_to_heap_should_put_the_give_sexpression_into_the_heap_avoiding_the
     release_sctx(sctx);
 }
 
-static void test_primitive_dtor(struct sctx * sctx, struct primitive *primitive) {
-    /* do nothing */
-}
-
 UnitTest(lookup_name_should_search_primitives_and_all_namespaces) {
     struct mem_reference ref1;
     struct mem_reference ref2;
     struct mem_reference ref3;
-    struct primitive primitive = {
-        .destructor = test_primitive_dtor
-    };
     
     struct sctx * sctx = create_new_sctx(arguments, environment);
     enter_namespace(sctx);
@@ -164,7 +157,7 @@ UnitTest(lookup_name_should_search_primitives_and_all_namespaces) {
     
     enter_namespace(sctx);
     
-    *ref1.value = &primitive;
+    *ref1.value = alloc_new_value(sctx, L"gv1", 3);
     *ref2.value = alloc_new_value(sctx, L"gv2", 3);
     *ref3.value = alloc_new_value(sctx, L"sv3", 3);
     
@@ -183,9 +176,6 @@ UnitTest(lookup_name_should_return_null_when_reference_out_of_scope) {
     struct mem_reference ref1;
     struct mem_reference ref2;
     struct mem_reference ref3;
-    struct primitive primitive = {
-        .destructor = test_primitive_dtor
-    };
     
     struct sctx * sctx = create_new_sctx(arguments, environment);
     enter_namespace(sctx);
@@ -196,7 +186,7 @@ UnitTest(lookup_name_should_return_null_when_reference_out_of_scope) {
     
     enter_namespace(sctx);
     
-    *ref1.value = &primitive;
+    *ref1.value = alloc_new_value(sctx, L"gv1", 3);
     *ref2.value = alloc_new_value(sctx, L"gv2", 3);
     *ref3.value = alloc_new_value(sctx, L"sv3", 3);
     
@@ -215,9 +205,6 @@ UnitTest(lookup_name_should_search_primitives_first) {
     struct mem_reference ref1;
     struct mem_reference ref2;
     struct mem_reference ref3;
-    struct primitive primitive = {
-        .destructor = test_primitive_dtor
-    };
     
     struct sctx * sctx = create_new_sctx(arguments, environment);
     enter_namespace(sctx);
@@ -226,7 +213,7 @@ UnitTest(lookup_name_should_search_primitives_first) {
     assert_int_equal(create_global_reference(sctx, L"pr1", 3, &ref2), SCTX_OK);
     assert_int_equal(create_stack_reference(sctx, L"pr1", 3, &ref3), SCTX_OK);
     
-    *ref1.value = &primitive;
+    *ref1.value = alloc_new_value(sctx, L"gv1", 3);
     *ref2.value = alloc_new_value(sctx, L"gv2", 3);
     *ref3.value = alloc_new_value(sctx, L"sv3", 3);
     

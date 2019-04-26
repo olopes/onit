@@ -66,6 +66,35 @@ sexpr_create_value(wchar_t * cstr, size_t len) {
     return sexpr;
 }
 
+/**
+ * Create a S-Expression primitive
+ */
+extern struct sexpression *
+sexpr_create_primitive(void * ptr, struct sprimitive * handler) {
+    struct sexpression * sexpr;
+    
+    if(handler == NULL) {
+        return NULL;
+    }
+    
+    sexpr = sexpr_cons(NULL, NULL);
+    if(sexpr == NULL) {
+        return NULL;
+    }
+    
+    sexpr->type = ST_PTR;
+    sexpr->content = SC_PRIMITIVE;
+    sexpr->len = 0;
+    sexpr->data.ptr = ptr;
+    sexpr->cdr.handler = handler;
+    
+    return sexpr;
+}
+
+
+
+
+
 
 void
 sexpr_free(struct sexpression * sexpr) {
