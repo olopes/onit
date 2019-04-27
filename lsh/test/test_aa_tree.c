@@ -96,7 +96,7 @@ static void test_aa_tree_should_only_accept_value_sexpressions(void ** state) {
     
     pair = sexpr_cons(NULL, NULL);
     nil = NULL;
-    ptr.type = ST_PTR;
+    ptr.type = ST_PRIMITIVE;
     
     memset(&tree, 0, sizeof(struct aa_tree));
     
@@ -167,8 +167,8 @@ int setup (void ** state)
         *ptest_strings = L'\0';
         ptest_strings++;
         
-        test_keys[i] = sexpr_create_value(str_ptr, i+1);
-        test_values[i] = sexpr_create_value(str_ptr, i+1);
+        test_keys[i] = sexpr_create_symbol(str_ptr, i+1);
+        test_values[i] = sexpr_create_string(str_ptr, i+1);
         insertion_order[i] = i;
         deletion_order[i] = i;
     }

@@ -6,20 +6,11 @@
 
 
 /* object types */
-#define ST_NIL   0
-#define ST_CONS  1
-#define ST_VALUE 2
-#define ST_PTR 3
+enum sexpression_type { ST_NIL, ST_CONS, ST_SYMBOL, ST_STRING, ST_PRIMITIVE, ST_FUNCTION };
 
-/* referenced content type */
-#define SC_PAIR 0
-#define SC_STRING 1
-#define SC_SYMBOL 2
-#define SC_NUMBER 3
-#define SC_PROCESS 4
-#define SC_PRIMITIVE 5
-#define SC_HASHTABLE 6
-#define SC_VECTOR 7
+struct sctx;
+struct sexpression;
+typedef struct sexpression (*sexpression_callable)(struct sctx *, struct sexpression *);
 
 struct sprimitive {
     void (*destructor)(void *);
@@ -36,6 +27,7 @@ struct sexpression {
         struct sexpression * sexpr;
         wchar_t * value;
         void * ptr;
+        sexpression_callable function;
     } data;
     union sexpression_cdr {
         struct sexpression * sexpr;
@@ -43,8 +35,7 @@ struct sexpression {
         struct sprimitive * handler;
     } cdr;
     unsigned char visit_mark;
-    unsigned char type;
-    unsigned short content;
+    enum sexpression_type type;
 };
 
 /**
@@ -54,16 +45,28 @@ extern struct sexpression *
 sexpr_cons(struct sexpression * car, struct sexpression * cdr);
 
 /**
- * Create a S-Expression value, usually a string, a symbol or a number
+ * Create a S-Expression symbol or a number
  */
 extern struct sexpression * 
-sexpr_create_value(wchar_t * cwstr, size_t length);
+sexpr_create_symbol(wchar_t * cwstr, size_t length);
+
+/**
+ * Create a S-Expression string
+ */
+extern struct sexpression * 
+sexpr_create_string(wchar_t * cwstr, size_t length);
 
 /**
  * Create a S-Expression primitive
  */
 extern struct sexpression *
 sexpr_create_primitive(void * ptr, struct sprimitive * handler);
+
+/**
+ * Create a S-Expression pointing to a function
+ */
+extern struct sexpression *
+sexpr_create_function(sexpression_callable function);
 
 /**
  * Release a S-Expression
@@ -108,15 +111,27 @@ extern unsigned long
 sexpr_hashcode(struct sexpression * sexpr);
 
 /**
- * Fetch the S-Expression object value as a pointer
+ * Get S-Expression object pointer
  */
-extern void * 
-sexpr_ptr(struct sexpression * sexpr);
+void *
+sexpr_primitive_ptr(struct sexpression *sexpr);
+
+/**
+ * Get S-Expression handler pointer
+ */
+struct sprimitive *
+sexpr_primitive_handler(struct sexpression *sexpr);
+
+/**
+ * Get S-Expression function pointer
+ */
+sexpression_callable 
+sexpr_function(struct sexpression *sexpr);
 
 /**
  * Get the object sobj_get_type
  */
-extern unsigned char
+extern enum sexpression_type
 sexpr_type(struct sexpression * sexpr);
 
 /**
@@ -132,16 +147,28 @@ extern int
 sexpr_is_cons(struct sexpression * sexpr);
 
 /**
+ * Return TRUE if the given object is a symbol
+ */
+extern int
+sexpr_is_symbol(struct sexpression *);
+
+/**
  * Return TRUE if the given object is a string
  */
 extern int
-sexpr_is_value(struct sexpression *);
+sexpr_is_string(struct sexpression *);
 
 /**
  * Return TRUE if the given object is a pointer
  */
 extern int
-sexpr_is_ptr(struct sexpression *);
+sexpr_is_primitive (struct sexpression *);
+
+/**
+ * Return TRUE if the given object is a function
+ */
+extern int
+sexpr_is_function (struct sexpression *);
 
 /**
  * Reverse a S-Expression list

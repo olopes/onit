@@ -7,6 +7,11 @@
 
 static inline size_t stmin(size_t a, size_t b); 
 static unsigned long compute_hashcode(wchar_t * value, size_t len);
+static struct sexpression *
+sexpr_create_value(wchar_t * cstr, size_t len, enum sexpression_type type);
+static void print_fn_ptr(void * ptr);
+static int compare_fn_ptr(void * a, void * b);
+
 
 /**
  * Constructs a pair (A . B)
@@ -37,10 +42,26 @@ sexpr_cons(struct sexpression * car, struct sexpression * cdr) {
 }
 
 /**
- * Create a S-Expression value
+ * Create a S-Expression symbol
  */
 struct sexpression *
-sexpr_create_value(wchar_t * cstr, size_t len) {
+sexpr_create_symbol(wchar_t * cstr, size_t len) {
+    return sexpr_create_value(cstr, len, ST_SYMBOL);
+}
+
+/**
+ * Create a S-Expression quoted string
+ */
+struct sexpression *
+sexpr_create_string(wchar_t * cstr, size_t len) {
+    return sexpr_create_value(cstr, len, ST_STRING);
+}
+
+/**
+ * Create a S-Expression value
+ */
+static struct sexpression *
+sexpr_create_value(wchar_t * cstr, size_t len, enum sexpression_type type) {
     struct sexpression * sexpr;
     
     if(cstr == NULL) {
@@ -52,7 +73,7 @@ sexpr_create_value(wchar_t * cstr, size_t len) {
         return NULL;
     }
     
-    sexpr->type = ST_VALUE;
+    sexpr->type = type;
     sexpr->len = len;
     sexpr->data.value = malloc(sizeof(wchar_t)*(len+1));
     if(sexpr->data.value == NULL) {
@@ -69,7 +90,7 @@ sexpr_create_value(wchar_t * cstr, size_t len) {
 /**
  * Create a S-Expression primitive
  */
-extern struct sexpression *
+struct sexpression *
 sexpr_create_primitive(void * ptr, struct sprimitive * handler) {
     struct sexpression * sexpr;
     
@@ -82,8 +103,7 @@ sexpr_create_primitive(void * ptr, struct sprimitive * handler) {
         return NULL;
     }
     
-    sexpr->type = ST_PTR;
-    sexpr->content = SC_PRIMITIVE;
+    sexpr->type = ST_PRIMITIVE;
     sexpr->len = 0;
     sexpr->data.ptr = ptr;
     sexpr->cdr.handler = handler;
@@ -91,10 +111,33 @@ sexpr_create_primitive(void * ptr, struct sprimitive * handler) {
     return sexpr;
 }
 
+struct sprimitive function_handler = {
+    .destructor = NULL,
+    .print = print_fn_ptr,
+    .print = NULL,
+    .visit = NULL,
+    .mark_reachable = NULL,
+    .is_marked = NULL,
+    .compare = compare_fn_ptr
+};
 
-
-
-
+/**
+ * Create a S-Expression function pointer
+ */
+struct sexpression *
+sexpr_create_function(sexpression_callable function) {
+    struct sexpression * sexpr;
+    
+    sexpr = sexpr_create_primitive(NULL, &function_handler);
+    if(sexpr == NULL) {
+        return NULL;
+    }
+    
+    sexpr->type = ST_FUNCTION;
+    sexpr->data.function = function;
+    
+    return sexpr;
+}
 
 void
 sexpr_free(struct sexpression * sexpr) {
@@ -116,9 +159,12 @@ sexpr_free_object(struct sexpression * sexpr) {
         return;
     }
     
-    if(sexpr_is_value(sexpr)) {
+    if(sexpr_is_string(sexpr) || sexpr_is_symbol(sexpr)) {
         free(sexpr->data.value);
+    } else if(sexpr_is_primitive(sexpr) && sexpr_primitive_handler(sexpr)->destructor != NULL) {
+        sexpr_primitive_handler(sexpr)->destructor(sexpr_primitive_ptr(sexpr));
     }
+
 
     free(sexpr);
 }
@@ -150,7 +196,8 @@ sexpr_cdr(struct sexpression * sexpr) {
  */
 wchar_t *
 sexpr_value(struct sexpression *sexpr) {
-    return sexpr_type(sexpr) == ST_VALUE ? sexpr->data.value : NULL;
+    enum sexpression_type type = sexpr_type(sexpr);
+    return type == ST_SYMBOL || type == ST_STRING  ? sexpr->data.value : NULL;
 }
 
 /**
@@ -158,21 +205,38 @@ sexpr_value(struct sexpression *sexpr) {
  */
 unsigned long
 sexpr_hashcode(struct sexpression *sexpr) {
-    return sexpr_type(sexpr) == ST_VALUE ? sexpr->cdr.hashcode : 0;
+    enum sexpression_type type = sexpr_type(sexpr);
+    return type == ST_SYMBOL || type == ST_STRING ? sexpr->cdr.hashcode : 0;
 }
 
 /**
- * Get S-Expression pointer
+ * Get S-Expression object pointer
  */
 void *
-sexpr_ptr(struct sexpression *sexpr) {
-    return sexpr_type(sexpr) == ST_PTR ? sexpr->data.ptr : NULL;
+sexpr_primitive_ptr(struct sexpression *sexpr) {
+    return sexpr_type(sexpr) == ST_PRIMITIVE ? sexpr->data.ptr : NULL;
+}
+
+/**
+ * Get S-Expression handler pointer
+ */
+struct sprimitive *
+sexpr_primitive_handler(struct sexpression *sexpr) {
+    return sexpr_type(sexpr) == ST_PRIMITIVE ? sexpr->cdr.handler : NULL;
+}
+
+/**
+ * Get S-Expression handler pointer
+ */
+sexpression_callable
+sexpr_function(struct sexpression *sexpr) {
+    return sexpr_type(sexpr) == ST_FUNCTION ? sexpr->data.function : NULL;
 }
 
 /**
  * Get the S-Expression type
  */
-unsigned char
+enum sexpression_type
 sexpr_type(struct sexpression * sexpr) {
     return sexpr == NULL ? ST_NIL : sexpr->type ;
 }
@@ -197,16 +261,32 @@ sexpr_is_cons(struct sexpression * sexpr) {
  * Return TRUE if the given object is a string
  */
 int
-sexpr_is_value(struct sexpression * sexpr) {
-    return sexpr_type(sexpr) == ST_VALUE;
+sexpr_is_string(struct sexpression * sexpr) {
+    return sexpr_type(sexpr) == ST_STRING;
 }
 
 /**
- * Return TRUE if the given object is a pointer
+ * Return TRUE if the given object is a symbol
  */
 int
-sexpr_is_ptr(struct sexpression * sexpr) {
-    return sexpr_type(sexpr) == ST_PTR;
+sexpr_is_symbol(struct sexpression * sexpr) {
+    return sexpr_type(sexpr) == ST_SYMBOL;
+}
+
+/**
+ * Return TRUE if the given object is a primitive
+ */
+int
+sexpr_is_primitive(struct sexpression * sexpr) {
+    return sexpr_type(sexpr) == ST_PRIMITIVE;
+}
+
+/**
+ * Return TRUE if the given object is a function
+ */
+int
+sexpr_is_function(struct sexpression * sexpr) {
+    return sexpr_type(sexpr) == ST_FUNCTION;
 }
 
 /**
@@ -224,8 +304,8 @@ int sexpr_equal(struct sexpression * a, struct sexpression * b) {
         are_equal = 0;
     } else if (sexpr_is_cons(a)) {
         are_equal = (sexpr_equal(sexpr_car(a), sexpr_car(b)) && sexpr_equal(sexpr_cdr(a), sexpr_cdr(b)));
-    } else if (sexpr_is_ptr(a)) {
-        are_equal = (a->data.ptr == b->data.ptr);
+    } else if ( sexpr_is_primitive (a) || sexpr_is_function(a)) {
+        are_equal = (a->data.ptr == b->data.ptr) && (a->cdr.handler == b->cdr.handler);
     } else {
         are_equal = a->len == b->len && wcsncmp((wchar_t *) a->data.value, (wchar_t *) b->data.value, a->len) == 0;
     }
@@ -348,3 +428,10 @@ static inline size_t stmin(size_t a, size_t b) {
     return a > b ? b : a;
 }
 
+static void print_fn_ptr(void * ptr) {
+    wprintf(L"#function %p", ptr);
+}
+
+static int compare_fn_ptr(void * a, void * b) {
+    return a == b ? 0 : (a> b ? 1 : -1); 
+}

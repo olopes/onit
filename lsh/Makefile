@@ -64,7 +64,7 @@ build/test/%.t: build/test/unit_%.o $(TEST_MAIN) $(TESTS_PROD_OBJ)
 	$(CC) $(TEST_LDFLAGS) $(TEST_CFLAGS) -o $@ $^
 
 build/test/%.gcda: build/test/%.t
-	@CMOCKA_MESSAGE_OUTPUT=stdout $<
+	@CMOCKA_MESSAGE_OUTPUT=stdout timeout -k 2s 1s $<
 
 tests: $(TESTS)
 

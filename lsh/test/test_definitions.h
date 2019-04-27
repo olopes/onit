@@ -65,7 +65,8 @@ struct GroupSetupTeardown {
     CMFixtureFunction teardown;
 } __attribute__((aligned(64)));
 
-#define sexpr_create_cstr(x) sexpr_create_value((x), wcslen(x))
+#define sexpr_create_csymbol(x) sexpr_create_symbol((x), wcslen(x))
+#define sexpr_create_cstring(x) sexpr_create_string((x), wcslen(x))
 
 #define LSH_EXPAND(x) x
 

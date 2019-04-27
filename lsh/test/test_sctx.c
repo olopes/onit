@@ -29,11 +29,11 @@ UnitTest(sctx_register_new_symbol)
     
     /* add the new symbol */
     create_stack_reference(sctx, L"VAR_NAME", 8, &reference);
-    *reference.value = value = alloc_new_value(sctx, L"THE VALUE", 9);
+    *reference.value = value = alloc_new_string(sctx, L"THE VALUE", 9);
 
     
     /* fetch the value using a different name */
-    key = alloc_new_value(sctx, L"VAR_NAME", 8);
+    key = alloc_new_symbol(sctx, L"VAR_NAME", 8);
     
     assert_ptr_equal(value, lookup_name(sctx, key ));
     
@@ -59,7 +59,7 @@ UnitTest(sctx_should_call_gc_when_heap_is_full)
     
     
     /* create a reference for the S-Expression ("THE VALUE" . ())  */
-    referenced = alloc_new_value(sctx, L"THE VALUE", 9);
+    referenced = alloc_new_string(sctx, L"THE VALUE", 9);
     create_stack_reference(sctx, L"VAR_NAME", 8, &reference);
     *reference.value = alloc_new_pair(sctx, referenced, NULL);
 
@@ -67,12 +67,12 @@ UnitTest(sctx_should_call_gc_when_heap_is_full)
     memset(value_text, 0, sizeof(value_text));
     for(i = sctx->heap.load; i < sctx->heap.size; i++) {
         swprintf(value_text, 32, L"VALUE %u", (unsigned) i);
-        unreferenced = alloc_new_value(sctx, value_text, wcslen(value_text));
+        unreferenced = alloc_new_string(sctx, value_text, wcslen(value_text));
     }
     
     
     /* alloc a new object that will trigger GC */
-    last_one = alloc_new_value(sctx, L"LAST ONE", 8);
+    last_one = alloc_new_string(sctx, L"LAST ONE", 8);
     
     
     /* check the heap for preserved and GC references */
@@ -108,15 +108,15 @@ UnitTest(move_to_heap_should_put_the_give_sexpression_into_the_heap_avoiding_the
     wchar_t value_text[32];
     size_t i;
     
-    sexpr3 = sexpr_create_cstr(L"SECOND VALUE");
+    sexpr3 = sexpr_create_cstring(L"SECOND VALUE");
     sexpr2 = sexpr_cons(sexpr3, NULL);
-    sexpr1 = sexpr_cons(sexpr_create_cstr(L"FIRST_VALUE"), sexpr2);
+    sexpr1 = sexpr_cons(sexpr_create_cstring(L"FIRST_VALUE"), sexpr2);
     
     /* alloc random objects until the heap is almost full */
     memset(value_text, 0, sizeof(value_text));
     for(i = sctx->heap.load; i < sctx->heap.size-1; i++) {
         swprintf(value_text, 32, L"VALUE %u", (unsigned) i);
-        alloc_new_value(sctx, value_text, wcslen(value_text));
+        alloc_new_string(sctx, value_text, wcslen(value_text));
     }
     
     move_to_heap(sctx, sexpr1);
@@ -157,14 +157,14 @@ UnitTest(lookup_name_should_search_primitives_and_all_namespaces) {
     
     enter_namespace(sctx);
     
-    *ref1.value = alloc_new_value(sctx, L"gv1", 3);
-    *ref2.value = alloc_new_value(sctx, L"gv2", 3);
-    *ref3.value = alloc_new_value(sctx, L"sv3", 3);
+    *ref1.value = alloc_new_string(sctx, L"gv1", 3);
+    *ref2.value = alloc_new_string(sctx, L"gv2", 3);
+    *ref3.value = alloc_new_string(sctx, L"sv3", 3);
     
     /* query name spaces */
-    assert_ptr_equal(lookup_name(sctx, alloc_new_value(sctx, L"pr1", 3)), *ref1.value);
-    assert_ptr_equal(lookup_name(sctx, alloc_new_value(sctx, L"gr2", 3)), *ref2.value);
-    assert_ptr_equal(lookup_name(sctx, alloc_new_value(sctx, L"sr3", 3)), *ref3.value);
+    assert_ptr_equal(lookup_name(sctx, alloc_new_symbol(sctx, L"pr1", 3)), *ref1.value);
+    assert_ptr_equal(lookup_name(sctx, alloc_new_symbol(sctx, L"gr2", 3)), *ref2.value);
+    assert_ptr_equal(lookup_name(sctx, alloc_new_symbol(sctx, L"sr3", 3)), *ref3.value);
     
     leave_namespace(sctx);
     leave_namespace(sctx);
@@ -186,17 +186,17 @@ UnitTest(lookup_name_should_return_null_when_reference_out_of_scope) {
     
     enter_namespace(sctx);
     
-    *ref1.value = alloc_new_value(sctx, L"gv1", 3);
-    *ref2.value = alloc_new_value(sctx, L"gv2", 3);
-    *ref3.value = alloc_new_value(sctx, L"sv3", 3);
+    *ref1.value = alloc_new_string(sctx, L"gv1", 3);
+    *ref2.value = alloc_new_string(sctx, L"gv2", 3);
+    *ref3.value = alloc_new_string(sctx, L"sv3", 3);
     
     leave_namespace(sctx);
     leave_namespace(sctx);
     
     /* query name spaces */
-    assert_ptr_equal(lookup_name(sctx, alloc_new_value(sctx, L"pr1", 3)), *ref1.value);
-    assert_ptr_equal(lookup_name(sctx, alloc_new_value(sctx, L"gr2", 3)), *ref2.value);
-    assert_ptr_equal(lookup_name(sctx, alloc_new_value(sctx, L"sr3", 3)), NULL);
+    assert_ptr_equal(lookup_name(sctx, alloc_new_symbol(sctx, L"pr1", 3)), *ref1.value);
+    assert_ptr_equal(lookup_name(sctx, alloc_new_symbol(sctx, L"gr2", 3)), *ref2.value);
+    assert_ptr_equal(lookup_name(sctx, alloc_new_symbol(sctx, L"sr3", 3)), NULL);
     
     release_sctx(sctx);
 }
@@ -213,12 +213,12 @@ UnitTest(lookup_name_should_search_primitives_first) {
     assert_int_equal(create_global_reference(sctx, L"pr1", 3, &ref2), SCTX_OK);
     assert_int_equal(create_stack_reference(sctx, L"pr1", 3, &ref3), SCTX_OK);
     
-    *ref1.value = alloc_new_value(sctx, L"gv1", 3);
-    *ref2.value = alloc_new_value(sctx, L"gv2", 3);
-    *ref3.value = alloc_new_value(sctx, L"sv3", 3);
+    *ref1.value = alloc_new_string(sctx, L"gv1", 3);
+    *ref2.value = alloc_new_string(sctx, L"gv2", 3);
+    *ref3.value = alloc_new_string(sctx, L"sv3", 3);
     
     /* query name spaces */
-    assert_ptr_equal(lookup_name(sctx, alloc_new_value(sctx, L"pr1", 3)), *ref1.value);
+    assert_ptr_equal(lookup_name(sctx, alloc_new_symbol(sctx, L"pr1", 3)), *ref1.value);
     
     leave_namespace(sctx);
     

@@ -18,6 +18,15 @@ static void empty_cb (struct sexpression * sexpr, struct scallback * cb);
 
 void svisitor () __attribute__ ((weak, alias ("__svisitor")));
 
+static struct sprimitive visitor_handler = {
+    .destructor = NULL,
+    .print = NULL,
+    .visit = NULL,
+    .mark_reachable = NULL,
+    .is_marked = NULL,
+    .compare = NULL
+};
+
 /**
  * S-Expression visitor
  */
@@ -34,30 +43,9 @@ __svisitor(struct sexpression * obj, struct scallback * callback) {
     struct sexpression * stack;
     struct sexpression * value;
     struct sexpression * event;
-    struct sexpression event_enter = {
-        .len = 0, 
-        .data = {.ptr = &cb_enter},
-        .cdr = {.sexpr = NULL},
-        .visit_mark = 0,
-        .type = ST_PTR,
-        .content = SC_PRIMITIVE,
-    };
-    struct sexpression event_visit = {
-        .len = 0, 
-        .data = {.ptr = &cb_visit},
-        .cdr = {.sexpr = NULL},
-        .visit_mark = 0,
-        .type = ST_PTR,
-        .content = SC_PRIMITIVE,
-    };
-    struct sexpression event_leave = {
-        .len = 0, 
-        .data = {.ptr = &cb_leave},
-        .cdr = {.sexpr = NULL},
-        .visit_mark = 0,
-        .type = ST_PTR,
-        .content = SC_PRIMITIVE,
-    };
+    struct sexpression * event_enter = sexpr_create_primitive(&cb_enter, &visitor_handler);
+    struct sexpression * event_visit = sexpr_create_primitive(&cb_visit, &visitor_handler);
+    struct sexpression * event_leave = sexpr_create_primitive(&cb_leave, &visitor_handler);
     
     stack = NULL;
     
@@ -66,11 +54,11 @@ __svisitor(struct sexpression * obj, struct scallback * callback) {
     while(sexpr_can_pop(&stack)) {
         value = sexpr_pop(&stack);
         
-        if(value == &event_enter || value == &event_visit || value == &event_leave) {
+        if(value == event_enter || value == event_visit || value == event_leave) {
             /* handle event */
             event = value;
             value = sexpr_pop(&stack);
-            ((struct fn_holder *) sexpr_ptr(event))->fn(value, callback);
+            ((struct fn_holder *) sexpr_primitive_ptr(event))->fn(value, callback);
         } else {
             
             /* insert leave event and add cdr */
@@ -92,6 +80,9 @@ __svisitor(struct sexpression * obj, struct scallback * callback) {
             }
         }
     }
+    sexpr_free(event_enter);
+    sexpr_free(event_visit);
+    sexpr_free(event_leave);
 }
 
 static void
@@ -140,14 +131,21 @@ static void cb_visit(struct sexpression *obj, struct scallback *cb) {
     case ST_NIL:
         fputws(L"()", out);
         break;
-    case ST_VALUE:
+    case ST_SYMBOL:
         fwprintf(out, L"%*ls", obj->len, obj->data.value);
+        break;
+    case ST_STRING:
+        fwprintf(out, L"\"%*ls\"", obj->len, obj->data.value);
         break;
     case ST_CONS:
         fputws(L" . ", out);
         break;
-    case ST_PTR:
-        fwprintf(out, L"(ptr 0x%p)", obj->data.ptr);
+    case ST_PRIMITIVE:
+        fwprintf(out, L"#primitive 0x%p", obj->data.ptr);
+        /* TODO call print */
+        break;
+    case ST_FUNCTION:
+        fwprintf(out, L"#function 0x%p", obj->data.ptr);
         break;
     default:
         break;
@@ -179,11 +177,11 @@ dump_sexpr_r(struct sexpression * obj, FILE * out) {
     case ST_NIL:
         fputws(L"NIL", out);
         break;
-    case ST_VALUE:
+    case ST_SYMBOL:
         fwprintf(out, L"%*ls", obj->len, obj->data.value);
         break;
-    case ST_PTR:
-        fwprintf(out, L"(ptr 0x%p)", obj->data.ptr);
+    case ST_STRING:
+        fwprintf(out, L"\"%*ls\"", obj->len, obj->data.value);
         break;
     case ST_CONS:
         fputwc(L'(', out);
@@ -191,6 +189,15 @@ dump_sexpr_r(struct sexpression * obj, FILE * out) {
         fputws(L" . ", out);
         dump_sexpr_r(sexpr_cdr(obj), out);
         fputwc(L')', out);
+        break;
+    case ST_PRIMITIVE:
+        fwprintf(out, L"#primitive 0x%p", obj->data.ptr);
+        /* TODO call print */
+        break;
+    case ST_FUNCTION:
+        fwprintf(out, L"#function 0x%p", obj->data.ptr);
+        break;
+    default:
         break;
     }
 

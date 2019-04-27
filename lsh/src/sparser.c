@@ -79,7 +79,7 @@ sparse_object(struct sparse_ctx * ctx, struct sexpression ** obj) {
                 ret_val = sparse_quote(ctx, &sexpr);
             } else if(ctx->next == L';') {
                 /* start single line comment */
-                sexpr = sexpr_create_value(L"\n",1);
+                sexpr = sexpr_create_symbol(L"\n",1);
                 ret_val = SPARSE_COMMENT;
             } else {
                 /* start or end symbol */
@@ -199,8 +199,7 @@ sparse_string(struct sparse_ctx * ctx, struct sexpression ** obj) {
     }
 
     cstr=ostr_str(str);
-    *obj = sexpr_create_value(cstr, ostr_length(str));
-    (*obj)->content = SC_STRING;
+    *obj = sexpr_create_string(cstr, ostr_length(str));
     free(cstr);
 
     ostr_destroy(str);
@@ -336,16 +335,14 @@ SYM_PARSE_END:
     
     if(return_value == SPARSE_OK) {
         cstr=ostr_str(str);
-        *obj = sexpr_create_value(cstr, ostr_length(str));
+        *obj = sexpr_create_symbol(cstr, ostr_length(str));
         free(cstr);
-        (*obj)->content = SC_SYMBOL;
     } else if(return_value == SPARSE_COMMENT) {
         cstr=ostr_str(str);
         cstr[0]=L'|';
         cstr[ostr_length(str)-1] = L'#';
-        *obj = sexpr_create_value(cstr, ostr_length(str));
+        *obj = sexpr_create_symbol(cstr, ostr_length(str));
         free(cstr);
-        (*obj)->content = SC_SYMBOL;
     } else {
         *obj = NULL;
     }
@@ -363,8 +360,7 @@ sparse_quote(struct sparse_ctx * ctx, struct sexpression ** obj) {
     parse_result = sparse_object(ctx, &parsed_object);
     if(parse_result == SPARSE_OK) {
         /* (quote (parsed_object . NULL)) */
-        quote = sexpr_create_value(L"quote", 5);
-        quote->content = SC_SYMBOL;
+        quote = sexpr_create_symbol(L"quote", 5);
         *obj = sexpr_cons(quote, sexpr_cons(parsed_object, NULL));
     }
     

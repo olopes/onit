@@ -22,9 +22,9 @@ sexpr_main(int argc, char ** argv) {
     /* manually build something like this */
     /* (thingy . ((add . "Hellö Wørld!") . NIL)) */
     
-    nobj = sexpr_create_value(ssym, wcslen(ssym));
-    sobj = sexpr_create_value(sstring, wcslen(sstring));
-    aobj = sexpr_create_value(sadd, wcslen(sadd));
+    nobj = sexpr_create_string(ssym, wcslen(ssym));
+    sobj = sexpr_create_symbol(sstring, wcslen(sstring));
+    aobj = sexpr_create_symbol(sadd, wcslen(sadd));
     
     cobj = sexpr_cons(aobj, sobj);
     

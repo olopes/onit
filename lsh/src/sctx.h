@@ -56,10 +56,16 @@ extern struct sexpression *
 alloc_new_pair(struct sctx * sctx, struct sexpression * car, struct sexpression * cdr);
 
 extern struct sexpression * 
-alloc_new_value(struct sctx * sctx, wchar_t * wcstr, size_t len);
+alloc_new_string(struct sctx * sctx, wchar_t * wcstr, size_t len);
+
+extern struct sexpression * 
+alloc_new_symbol(struct sctx * sctx, wchar_t * wcstr, size_t len);
 
 extern struct sexpression *
 alloc_new_primitive(struct sctx * sctx, void * ptr, struct sprimitive * handler);
+
+extern struct sexpression *
+alloc_new_function(struct sctx * sctx, sexpression_callable function);
 
 extern int 
 enter_namespace(struct sctx * sctx);

@@ -11,11 +11,11 @@ eval_sexpr(struct sctx * sctx, struct sexpression * expression) {
         return NULL;
     }
     
-    if(sexpr_is_value(expression) && expression->content == SC_STRING) {
+    if(sexpr_is_string(expression)) {
         return expression;
     }
     
-    if(sexpr_is_value(expression) && expression->content == SC_SYMBOL) {
+    if(sexpr_is_symbol(expression)) {
         return lookup_name(sctx, expression);
     }
     

@@ -24,10 +24,10 @@ UnitTest(sexpr_create_value_should_alloc_new_sexpression_and_alloc_value_string)
 {
     struct sexpression * sexpr;
     
-    sexpr = sexpr_create_value(L"TEST", 4);
+    sexpr = sexpr_create_symbol(L"TEST", 4);
     
     assert_non_null(sexpr);
-    assert_int_equal(sexpr->type, ST_VALUE);
+    assert_int_equal(sexpr->type, ST_SYMBOL);
     assert_int_equal(sexpr->len, 4);
     assert_true(wcsncmp(L"TEST", sexpr->data.value, 4) == 0);
     
@@ -41,9 +41,9 @@ UnitTest(sexpr_free_value_should_release_sexpression_recursively)
     
     /* alloc list (CAR CDR) */
     sexpr = sexpr_cons(
-        sexpr_create_value(L"CAR", 3),
+        sexpr_create_symbol(L"CAR", 3),
         sexpr_cons(
-            sexpr_create_value(L"CDR", 3), NULL
+            sexpr_create_string(L"CDR", 3), NULL
         )
     );
     
@@ -60,8 +60,8 @@ UnitTest(sexpr_free_object_value_should_release_only_the_first_pair)
     
     /* alloc list (CAR CDR) */
     sexpr1 = sexpr_cons(
-        sexpr2 = sexpr_create_value(L"CAR", 3),
-        sexpr3 = sexpr_create_value(L"CDR", 3)
+        sexpr2 = sexpr_create_string(L"CAR", 3),
+        sexpr3 = sexpr_create_string(L"CDR", 3)
     );
     
     /* only sexpr_cons pair will be freed */
@@ -92,7 +92,7 @@ UnitTest(sexpr_car_should_return_null_if_type_is_not_cons)
     struct sexpression dummy;
 
     memset(&dummy, 0, sizeof(dummy));
-    dummy.type=ST_VALUE;
+    dummy.type=ST_STRING;
     dummy.data.sexpr = (struct sexpression *)12345;
     
     assert_null(sexpr_car(&dummy));
@@ -114,7 +114,7 @@ UnitTest(sexpr_cdr_should_return_null_if_type_is_not_cons)
     struct sexpression dummy;
 
     memset(&dummy, 0, sizeof(dummy));
-    dummy.type=ST_VALUE;
+    dummy.type=ST_PRIMITIVE;
     dummy.cdr.sexpr = (struct sexpression *) 12345;
     
     assert_null(sexpr_cdr(&dummy));
@@ -126,7 +126,7 @@ UnitTest(sexpr_value_should_return_value_pointer_if_type_is_value)
     struct sexpression dummy;
 
     memset(&dummy, 0, sizeof(dummy));
-    dummy.type=ST_VALUE;
+    dummy.type=ST_STRING;
     dummy.data.value = (wchar_t *) 12345;
     
     assert_ptr_equal(sexpr_value(&dummy), (wchar_t *) 12345);
@@ -148,9 +148,9 @@ UnitTest(sexpr_type_should_return_sexpression_type)
     struct sexpression dummy;
 
     memset(&dummy, 0, sizeof(dummy));
-    dummy.type=ST_VALUE;
+    dummy.type=ST_FUNCTION;
     
-    assert_int_equal(sexpr_type(&dummy), ST_VALUE);
+    assert_int_equal(sexpr_type(&dummy), ST_FUNCTION);
 }
     
 UnitTest(sexpr_value_should_return_NIL_if_sexpression_is_null)
@@ -170,10 +170,16 @@ UnitTest(sexpr_is_nil_should_return_true_if_type_is_nil_or_sexpression_is_null)
     dummy.type = ST_CONS;
     assert_false(sexpr_is_nil(&dummy));
     
-    dummy.type = ST_VALUE;
+    dummy.type = ST_STRING;
     assert_false(sexpr_is_nil(&dummy));
     
-    dummy.type = ST_PTR;
+    dummy.type = ST_SYMBOL;
+    assert_false(sexpr_is_nil(&dummy));
+    
+    dummy.type = ST_PRIMITIVE;
+    assert_false(sexpr_is_nil(&dummy));
+    
+    dummy.type = ST_FUNCTION;
     assert_false(sexpr_is_nil(&dummy));
 }
 
@@ -189,49 +195,74 @@ UnitTest(sexpr_is_cons_should_return_true_if_type_is_cons)
     dummy.type = ST_CONS;
     assert_true(sexpr_is_cons(&dummy));
     
-    dummy.type = ST_VALUE;
+    dummy.type = ST_SYMBOL;
     assert_false(sexpr_is_cons(&dummy));
     
-    dummy.type = ST_PTR;
+    dummy.type = ST_PRIMITIVE;
     assert_false(sexpr_is_cons(&dummy));
 }
 
-UnitTest(sexpr_is_value_should_return_true_if_type_is_value)
+UnitTest(sexpr_is_string_should_return_true_if_type_is_value)
 {
     struct sexpression dummy;
     
-    assert_false(sexpr_is_value(NULL));
+    assert_false(sexpr_is_string(NULL));
     
     dummy.type = ST_NIL;
-    assert_false(sexpr_is_value(&dummy));
+    assert_false(sexpr_is_string(&dummy));
     
     dummy.type = ST_CONS;
-    assert_false(sexpr_is_value(&dummy));
+    assert_false(sexpr_is_string(&dummy));
     
-    dummy.type = ST_VALUE;
-    assert_true(sexpr_is_value(&dummy));
+    dummy.type = ST_STRING;
+    assert_true(sexpr_is_string(&dummy));
     
-    dummy.type = ST_PTR;
-    assert_false(sexpr_is_value(&dummy));
+    dummy.type = ST_SYMBOL;
+    assert_false(sexpr_is_string(&dummy));
+    
+    dummy.type = ST_PRIMITIVE;
+    assert_false(sexpr_is_string(&dummy));
 }
 
-UnitTest(sexpr_is_ptr_should_return_true_if_type_is_ptr)
+UnitTest(sexpr_is_symbol_should_return_true_if_type_is_value)
 {
     struct sexpression dummy;
     
-    assert_false(sexpr_is_ptr(NULL));
+    assert_false(sexpr_is_symbol(NULL));
     
     dummy.type = ST_NIL;
-    assert_false(sexpr_is_ptr(&dummy));
+    assert_false(sexpr_is_symbol(&dummy));
     
     dummy.type = ST_CONS;
-    assert_false(sexpr_is_ptr(&dummy));
+    assert_false(sexpr_is_symbol(&dummy));
     
-    dummy.type = ST_VALUE;
-    assert_false(sexpr_is_ptr(&dummy));
+    dummy.type = ST_STRING;
+    assert_false(sexpr_is_symbol(&dummy));
     
-    dummy.type = ST_PTR;
-    assert_true(sexpr_is_ptr(&dummy));
+    dummy.type = ST_SYMBOL;
+    assert_true(sexpr_is_symbol(&dummy));
+    
+    dummy.type = ST_PRIMITIVE;
+    assert_false(sexpr_is_symbol(&dummy));
+}
+
+UnitTest(sexpr_is_primitive_should_return_true_if_type_is_ptr)
+{
+    struct sexpression dummy;
+    
+    assert_false(sexpr_is_primitive(NULL));
+    
+    dummy.type = ST_NIL;
+    assert_false(sexpr_is_primitive(&dummy));
+    
+    dummy.type = ST_CONS;
+    assert_false(sexpr_is_primitive(&dummy));
+    
+    dummy.type = ST_STRING;
+    assert_false(sexpr_is_primitive(&dummy));
+    
+    dummy.type = ST_PRIMITIVE;
+    assert_true(sexpr_is_primitive(&dummy));
 }
 
 /* couple of tests for sexpr_equal */
@@ -241,13 +272,13 @@ UnitTest(sexpr_equal_should_return_true_if_both_sexpressions_are_equal) {
     
     assert_true(sexpr_equal(NULL, NULL));
     
-    a = sexpr_create_cstr(L"EQUAL");
+    a = sexpr_create_cstring(L"EQUAL");
     assert_true(sexpr_equal(a, a));
-    b = sexpr_create_cstr(L"EQUAL");
+    b = sexpr_create_cstring(L"EQUAL");
     assert_true(sexpr_equal(a, b));
     
-    a = sexpr_cons(sexpr_create_cstr(L"VALUE"), sexpr_cons(a, NULL));
-    b = sexpr_cons(sexpr_create_cstr(L"VALUE"), sexpr_cons(b, NULL));
+    a = sexpr_cons(sexpr_create_cstring(L"VALUE"), sexpr_cons(a, NULL));
+    b = sexpr_cons(sexpr_create_cstring(L"VALUE"), sexpr_cons(b, NULL));
     assert_true(sexpr_equal(a, b));
     
     sexpr_free(a);
@@ -259,23 +290,23 @@ UnitTest(sexpr_equal_should_return_false_if_both_sexpressions_are_not_equal) {
     struct sexpression * a;
     struct sexpression * b;
     
-    a = sexpr_create_cstr(L"EQUAL");
-    b = sexpr_create_cstr(L"DIFFERENT");
+    a = sexpr_create_cstring(L"EQUAL");
+    b = sexpr_create_cstring(L"DIFFERENT");
     assert_false(sexpr_equal(NULL, a));
     assert_false(sexpr_equal(a, NULL));
     
     assert_false(sexpr_equal(a, b));
     assert_false(sexpr_equal(b, a));
     
-    a = sexpr_cons(sexpr_create_cstr(L"VALUE"), sexpr_cons(a, NULL));
-    b = sexpr_cons(sexpr_create_cstr(L"VALUE"), sexpr_cons(b, NULL));
+    a = sexpr_cons(sexpr_create_cstring(L"VALUE"), sexpr_cons(a, NULL));
+    b = sexpr_cons(sexpr_create_cstring(L"VALUE"), sexpr_cons(b, NULL));
     assert_false(sexpr_equal(a, b));
     
     sexpr_free(a);
     sexpr_free(b);
     
-    a = sexpr_create_cstr(L"VALUE");
-    b = sexpr_cons(NULL, sexpr_create_cstr(L"VALUE"));
+    a = sexpr_create_cstring(L"VALUE");
+    b = sexpr_cons(NULL, sexpr_create_cstring(L"VALUE"));
     assert_false(sexpr_equal(a, b));
     
     sexpr_free(a);
@@ -291,7 +322,7 @@ UnitTest(sexpr_reverse_should_return_same_sexpression_if_param_is_not_cons) {
     
     assert_null(sexpr_reverse(NULL));
     
-    a = sexpr_create_cstr(L"EQUAL");
+    a = sexpr_create_cstring(L"EQUAL");
     b = sexpr_reverse(a);
     assert_ptr_equal(a, b);
     
@@ -305,8 +336,8 @@ UnitTest(sexpr_reverse_should_should_swap_car_with_cdr_if_param_is_a_pair) {
     struct sexpression * c;
     struct sexpression * d;
     
-    a = sexpr_create_cstr(L"CAR");
-    b = sexpr_create_cstr(L"CDR");
+    a = sexpr_create_cstring(L"CAR");
+    b = sexpr_create_cstring(L"CDR");
     c = sexpr_cons(a, b);
     
     d = sexpr_reverse(c);
@@ -325,8 +356,8 @@ UnitTest(sexpr_reverse_should_should_return_same_param_if_param_is_len_1) {
     struct sexpression * expected;
     struct sexpression * actual;
 
-    expected = sexpr_cons(sexpr_create_cstr(L"CAR"), NULL);
-    sexpr = sexpr_cons(sexpr_create_cstr(L"CAR"), NULL);
+    expected = sexpr_cons(sexpr_create_cstring(L"CAR"), NULL);
+    sexpr = sexpr_cons(sexpr_create_cstring(L"CAR"), NULL);
     
     actual = sexpr_reverse(sexpr);
     
@@ -344,8 +375,8 @@ UnitTest(sexpr_reverse_should_should_return_a_reversed_list_if_param_is_a_list) 
     struct sexpression * expected;
     struct sexpression * actual;
     
-    sexpr = sexpr_cons(sexpr_create_cstr(L"A"), sexpr_cons(sexpr_create_cstr(L"B"), sexpr_cons(sexpr_create_cstr(L"C"), sexpr_cons(sexpr_create_cstr(L"D"), NULL))));
-    expected = sexpr_cons(sexpr_create_cstr(L"D"), sexpr_cons(sexpr_create_cstr(L"C"), sexpr_cons(sexpr_create_cstr(L"B"), sexpr_cons(sexpr_create_cstr(L"A"),NULL))));
+    sexpr = sexpr_cons(sexpr_create_csymbol(L"A"), sexpr_cons(sexpr_create_csymbol(L"B"), sexpr_cons(sexpr_create_csymbol(L"C"), sexpr_cons(sexpr_create_csymbol(L"D"), NULL))));
+    expected = sexpr_cons(sexpr_create_csymbol(L"D"), sexpr_cons(sexpr_create_csymbol(L"C"), sexpr_cons(sexpr_create_csymbol(L"B"), sexpr_cons(sexpr_create_csymbol(L"A"),NULL))));
     
     actual = sexpr_reverse(sexpr);
     
@@ -359,10 +390,10 @@ UnitTest(sexpr_reverse_should_should_return_a_reversed_list_if_param_is_a_list) 
 UnitTest(create_cons_should_create_list_and_set_correct_length) {
     struct sexpression * sexpr;
     
-    sexpr = sexpr_cons(sexpr_create_cstr(L"hey"), 
-                sexpr_cons(sexpr_create_cstr(L"y-o-u"),
-                    sexpr_cons(sexpr_create_cstr(L"check them dubs"),
-                        sexpr_cons(sexpr_create_cstr(L"123"),NULL))));
+    sexpr = sexpr_cons(sexpr_create_csymbol(L"hey"), 
+                sexpr_cons(sexpr_create_csymbol(L"y-o-u"),
+                    sexpr_cons(sexpr_create_cstring(L"check them dubs"),
+                        sexpr_cons(sexpr_create_csymbol(L"123"),NULL))));
     
     assert_int_equal(sexpr_length(sexpr), 4);
     

@@ -113,7 +113,7 @@ static int load_array_to_sexpr(struct sctx * sctx, struct sexpression ** list_pt
         if(wcstr == NULL) {
             return SCTX_ERROR;
         }
-        value = alloc_new_value(sctx, wcstr, wcslen(wcstr));
+        value = alloc_new_string(sctx, wcstr, wcslen(wcstr));
         if(value == NULL) {
             free(wcstr);
             return SCTX_ERROR;
@@ -184,7 +184,7 @@ int create_primitive_reference(struct sctx * sctx, wchar_t * wcstr, size_t len, 
         return SCTX_ERROR;
     }
     
-    name = alloc_new_value(sctx, wcstr, len);
+    name = alloc_new_symbol(sctx, wcstr, len);
     
     return create_reference(&sctx->primitives, name, reference);
 }
@@ -196,7 +196,7 @@ int create_global_reference(struct sctx * sctx, wchar_t * wcstr, size_t len, str
         return SCTX_ERROR;
     }
     
-    name = alloc_new_value(sctx, wcstr, len);
+    name = alloc_new_symbol(sctx, wcstr, len);
     
     return create_reference(sctx->global, name, reference);
 }
@@ -209,7 +209,7 @@ int create_stack_reference(struct sctx * sctx, wchar_t * wcstr, size_t len, stru
         return SCTX_ERROR;
     }
     
-    name = alloc_new_value(sctx, wcstr, len);
+    name = alloc_new_symbol(sctx, wcstr, len);
     
     namespace = (struct shash_table *) sexpr_peek(&sctx->namespaces);
     if(namespace == NULL) {
@@ -303,7 +303,8 @@ struct sexpression * lookup_name(struct sctx * sctx, struct sexpression * name) 
     return NULL;
 }
 
-struct sexpression * alloc_new_pair(struct sctx * sctx, struct sexpression * car, struct sexpression * cdr) {
+struct sexpression * 
+alloc_new_pair(struct sctx * sctx, struct sexpression * car, struct sexpression * cdr) {
     struct sexpression * object;
     
     object = sexpr_cons(car, cdr);
@@ -320,12 +321,33 @@ struct sexpression * alloc_new_pair(struct sctx * sctx, struct sexpression * car
     
     return object;
 }
-    
-struct sexpression * alloc_new_value(struct sctx * sctx, wchar_t * wcstr, size_t len) {
+
+struct sexpression * 
+alloc_new_string(struct sctx * sctx, wchar_t * wcstr, size_t len) {
     /* future improvement: string cache */
     struct sexpression * object;
     
-    object = sexpr_create_value(wcstr, len);
+    object = sexpr_create_string(wcstr, len);
+    
+    if(object == NULL) {
+        return NULL;
+    }
+    
+    if(record_new_object(sctx, object)) {
+        /* mem full? error? */
+        sexpr_free_object(object);
+        object = NULL;
+    }
+    
+    return object;
+}
+
+struct sexpression * 
+alloc_new_symbol(struct sctx * sctx, wchar_t * wcstr, size_t len) {
+    /* future improvement: string cache */
+    struct sexpression * object;
+    
+    object = sexpr_create_symbol(wcstr, len);
     
     if(object == NULL) {
         return NULL;
@@ -345,6 +367,25 @@ alloc_new_primitive(struct sctx * sctx, void * ptr, struct sprimitive * handler)
     struct sexpression * object;
     
     object = sexpr_create_primitive(ptr, handler);
+    
+    if(object == NULL) {
+        return NULL;
+    }
+    
+    if(record_new_object(sctx, object)) {
+        /* mem full? error? */
+        sexpr_free_object(object);
+        object = NULL;
+    }
+    
+    return object;
+}    
+
+struct sexpression *
+alloc_new_function(struct sctx * sctx, sexpression_callable function) {
+    struct sexpression * object;
+    
+    object = sexpr_create_function(function);
     
     if(object == NULL) {
         return NULL;
@@ -526,10 +567,16 @@ static void print_heap_contents(struct mem_heap * heap, char * msg) {
     fprintf(out, "HEAP CONTENTS: %s [%lu/%lu]\n", msg, (unsigned long) heap->load, (unsigned long) heap->size);
     for(i = 0; i < heap->size; i++) {
         obj = data[i];
-        if(sexpr_is_value(obj)) {
-            fprintf(out, "\tVALUE object in the heap: %p => \"%.*ls\"\n", (void*)obj, (int)obj->len, obj->data.value); 
+        if(sexpr_is_string(obj)) {
+            fprintf(out, "\tSTRING    object in the heap: %p => \"%.*ls\"\n", (void*)obj, (int)obj->len, obj->data.value); 
+        } else if(sexpr_is_symbol(obj)) {
+            fprintf(out, "\tSYMBOL    object in the heap: %p => %.*ls\n", (void*)obj, (int)obj->len, obj->data.value); 
         } else if(sexpr_is_cons(obj)) {
-            fprintf(out, "\tCONS  object in the heap: %p => (%p . %p)\n", (void*)obj, (void*)obj->data.sexpr, (void*)obj->cdr.sexpr); 
+            fprintf(out, "\tCONS      object in the heap: %p => (%p . %p)\n", (void*)obj, (void*)obj->data.sexpr, (void*)obj->cdr.sexpr); 
+        } else if(sexpr_is_function(obj)) {
+            fprintf(out, "\tFUNCTION  object in the heap: %p => %p\n", (void*)obj, obj->data.ptr); 
+        } else if(sexpr_is_primitive(obj)) {
+            fprintf(out, "\tPRIMITIVE object in the heap: %p => %p\n", (void*)obj, obj->data.ptr);
         } else {
             fprintf(out, "\tFUNNY object in the heap: %p => type[%d]\n", (void*)obj, sexpr_type(obj)); 
         }        
