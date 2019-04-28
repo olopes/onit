@@ -367,10 +367,26 @@ sexpr_reverse(struct sexpression * sexpr) {
 void
 sexpr_mark_reachable(struct sexpression * object, unsigned char visit_mark) {
     struct sexpression * sexpr = object;
+    struct sprimitive * handler;
     
+    if(object == NULL || sexpr->visit_mark == visit_mark) {
+        /* already visited */
+        return;
+    }
+        
     while(sexpr != NULL) {
         sexpr->visit_mark = visit_mark;
-        sexpr_mark_reachable(sexpr_car(sexpr), visit_mark);
+        
+        if(sexpr_is_primitive(sexpr)) {
+            handler = sexpr_primitive_handler(sexpr);
+            
+            if(handler->mark_reachable != NULL) {
+                handler->mark_reachable(sexpr_primitive_ptr(sexpr), visit_mark); 
+            }
+        } else if(sexpr_is_cons(sexpr)) {
+            sexpr_mark_reachable(sexpr_car(sexpr), visit_mark);
+        }
+        
         sexpr = sexpr_cdr(sexpr);
     }
     

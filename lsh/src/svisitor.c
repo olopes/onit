@@ -64,19 +64,19 @@ __svisitor(struct sexpression * obj, struct scallback * callback) {
             /* insert leave event and add cdr */
             if(sexpr_is_cons(value)) {
                 sexpr_push(&stack, value);
-                sexpr_push(&stack, &event_leave);
+                sexpr_push(&stack, event_leave);
                 sexpr_push(&stack, sexpr_cdr(value));
             }
             
             /* insert visit event */
             sexpr_push(&stack, value);
-            sexpr_push(&stack, &event_visit);
+            sexpr_push(&stack, event_visit);
             
             /* insert enter event and add car */
             if(sexpr_is_cons(value)) {
                 sexpr_push(&stack, sexpr_car(value));
                 sexpr_push(&stack, value);
-                sexpr_push(&stack, &event_enter);
+                sexpr_push(&stack, event_enter);
             }
         }
     }

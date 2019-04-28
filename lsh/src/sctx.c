@@ -16,7 +16,6 @@ static wchar_t * convert_to_wcstr(const char * src);
 static void free_heap_contents (struct mem_heap * heap);
 static int record_new_object(struct sctx * sctx, struct sexpression * obj);
 static void recycle(struct sctx * sctx);
-static void visit_namespaces(struct sctx * sctx);
 static void free_unvisited_references(struct mem_heap * heap);
 static void grow_heap_if_necessary(struct mem_heap * heap);
 static inline int heap_should_grow(struct mem_heap * heap);
@@ -36,6 +35,25 @@ static void print_heap_contents(struct mem_heap * heap, char * msg);
 #define ARGUMENTS_SYMBOL_NAME_LENGTH 5
 #define ENVIRONMENT_SYMBOL_NAME L"#end"
 #define ENVIRONMENT_SYMBOL_NAME_LENGTH 4
+
+
+static void 
+shash_namespace_destructor(void * shash);
+static void 
+shash_namespace_visit(void * shash);
+static void 
+shash_namespace_mark_reachable(void * shash, unsigned char mark);
+
+static struct sprimitive shash_namespace_handler = {
+    .destructor=shash_namespace_destructor,
+    .print = NULL,
+    .visit=shash_namespace_visit,
+    .mark_reachable = shash_namespace_mark_reachable,
+    .is_marked = NULL,
+    .compare=NULL
+};
+
+
 
 struct sctx * 
 create_new_sctx(char **argv, char **envp) {
@@ -69,8 +87,7 @@ create_new_sctx(char **argv, char **envp) {
             .size = HEAP_MIN_SIZE,
             .load = 0,
             .data = heap,
-        },
-        .namespace_destructor = NULL,
+        }
     };
     
     
@@ -78,7 +95,7 @@ create_new_sctx(char **argv, char **envp) {
     
     /* create and keep reference for global namespace */
     enter_namespace(sctx);
-    sctx->global = (struct shash_table *) sexpr_peek(&sctx->namespaces);
+    sctx->global = (struct shash_table *) sexpr_primitive_ptr(sexpr_peek(&sctx->namespaces));
     
     load_primitives(sctx);
     
@@ -203,20 +220,20 @@ int create_global_reference(struct sctx * sctx, wchar_t * wcstr, size_t len, str
 
 int create_stack_reference(struct sctx * sctx, wchar_t * wcstr, size_t len, struct mem_reference * reference) {
     struct sexpression * name;
-    struct shash_table * namespace;
+    struct sexpression * namespace;
     
     if(sctx == NULL || wcstr == NULL || len == 0 || reference == NULL) {
         return SCTX_ERROR;
     }
     
     name = alloc_new_symbol(sctx, wcstr, len);
-    
-    namespace = (struct shash_table *) sexpr_peek(&sctx->namespaces);
+
+    namespace = sexpr_peek(&sctx->namespaces);
     if(namespace == NULL) {
         return SCTX_ERROR;
     }
     
-    return create_reference(namespace, name, reference);
+    return create_reference((struct shash_table *) sexpr_primitive_ptr(namespace), name, reference);
 }
 
 static int 
@@ -260,26 +277,51 @@ release_sctx(struct sctx * sctx) {
 
 int enter_namespace(struct sctx * sctx) {
     struct shash_table * new_namespace;
+    struct sexpression * primitive;
     new_namespace = (struct shash_table *) malloc(sizeof(struct shash_table));
     if(new_namespace == NULL) {
-        return 1;
+        return SCTX_ERROR;
     }
     memset(new_namespace, 0, sizeof(struct shash_table));
-    sexpr_push(&sctx->namespaces, new_namespace);
-    return 0;
+    
+    primitive = alloc_new_primitive(sctx, new_namespace, &shash_namespace_handler );
+    if(primitive == NULL) {
+        shash_free(new_namespace);
+        return SCTX_ERROR;
+    }
+    
+    sexpr_push(&sctx->namespaces, primitive);
+    return SCTX_OK;
 }
 
 int leave_namespace(struct sctx * sctx) {
-    struct shash_table * old_namespace;
-    old_namespace = (struct shash_table *) sexpr_pop(&sctx->namespaces);
-    shash_free(old_namespace);
-    free(old_namespace);
-    return 0;
+    if(!sexpr_can_pop(&sctx->namespaces)) {
+        return SCTX_ERROR;
+    }
+    sexpr_pop(&sctx->namespaces);
+    return SCTX_OK;
 }
+
+static void 
+shash_namespace_destructor(void * shash) {
+    shash_free((struct shash_table *)shash);
+    free(shash);
+}
+
+static void 
+shash_namespace_visit(void * shash) {
+    /* do nothing */
+}
+
+static void 
+shash_namespace_mark_reachable(void * shash, unsigned char mark) {
+    shash_visit((struct shash_table *) shash, NULL, mark_reachable_references_cb);
+}
+
 
 struct sexpression * lookup_name(struct sctx * sctx, struct sexpression * name) {
     struct sexpression * namestack;
-    struct shash_table * namespace;
+    struct sexpression * namespace;
     struct sexpression * value;
     
     value = shash_search(&sctx->primitives, name);
@@ -291,9 +333,9 @@ struct sexpression * lookup_name(struct sctx * sctx, struct sexpression * name) 
     namestack = sctx->namespaces;
     
     while(namestack) {
-        namespace = (struct shash_table *) sexpr_car(namestack);
+        namespace = sexpr_car(namestack);
         if(namespace == NULL) continue;
-        value = shash_search(namespace, name);
+        value = shash_search((struct shash_table*) sexpr_primitive_ptr(namespace), name);
         if(value != NULL) {
             return value;
         }
@@ -442,36 +484,16 @@ static void heap_sanity_check(struct mem_heap * heap, struct sexpression * obj) 
 
 static void recycle(struct sctx * sctx) {
     
-    /* visit all nodes reachable from the namespaces, including sexpr being loaded */
+    /* visit all nodes reachable from the namespaces, including sexpr being loaded and primitives */
+    shash_visit(&sctx->primitives, NULL, mark_reachable_references_cb);
     sexpr_mark_reachable(sctx->in_load, 1);
-    visit_namespaces(sctx);
+    sexpr_mark_reachable(sctx->namespaces, 1);
+    
     free_unvisited_references(&sctx->heap);
     
     /* grow heap  if load >= 50% of the heap size */
     grow_heap_if_necessary(&sctx->heap);
     
-}
-
-static void visit_namespaces(struct sctx * sctx) {
-    struct sexpression * ns;
-    struct shash_table * namespace;
-    ns = sctx->namespaces;
-    
-    /*
-     * Algorithm:
-     * for each namespace
-     *   for each reference in namespace
-     *     mark reference
-     *     if(reference is list and reference is not visited)
-     *        visit car
-     *        visit cdr
-     */
-    
-    while(ns != NULL) {
-        namespace = (struct shash_table *) sexpr_car(ns);
-        shash_visit(namespace, NULL, mark_reachable_references_cb );
-        ns = sexpr_cdr(ns);
-    }
 }
 
 static void free_unvisited_references(struct mem_heap * heap) {
@@ -577,6 +599,8 @@ static void print_heap_contents(struct mem_heap * heap, char * msg) {
             fprintf(out, "\tFUNCTION  object in the heap: %p => %p\n", (void*)obj, obj->data.ptr); 
         } else if(sexpr_is_primitive(obj)) {
             fprintf(out, "\tPRIMITIVE object in the heap: %p => %p\n", (void*)obj, obj->data.ptr);
+        } else if(sexpr_is_nil(obj)) {
+            fprintf(out, "\tNIL       object in the heap\n");
         } else {
             fprintf(out, "\tFUNNY object in the heap: %p => type[%d]\n", (void*)obj, sexpr_type(obj)); 
         }        

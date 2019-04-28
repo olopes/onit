@@ -6,7 +6,7 @@
  * Push a S-Expression object into the top of the stack
  */
 void 
-sexpr_push(struct sexpression ** sexpr, void * obj) {
+sexpr_push(struct sexpression ** sexpr, struct sexpression * obj) {
     struct sexpression * node;
     
     node = sexpr_cons((struct sexpression *) obj, *sexpr);
@@ -19,7 +19,7 @@ sexpr_push(struct sexpression ** sexpr, void * obj) {
 /**
  * Fetch the top most element of the stack
  */
-void *
+struct sexpression *
 sexpr_peek(struct sexpression ** sexpr) {
     return sexpr_car(*sexpr);
 }
@@ -27,7 +27,7 @@ sexpr_peek(struct sexpression ** sexpr) {
 /**
  * Remove and return the top-most element of the stack
  */
-void *
+struct sexpression *
 sexpr_pop(struct sexpression ** sexpr) {
     void * car;
     struct sexpression * cdr;

@@ -22,7 +22,6 @@ struct sctx {
     struct sexpression * namespaces;
     struct sexpression * in_load;
     struct mem_heap heap;
-    void (*namespace_destructor)(struct sctx * ctx);
 };
 
 struct mem_reference {
