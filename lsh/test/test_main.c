@@ -24,7 +24,7 @@ static void
 copy_unit_tests(struct LshUnitTest * const start, struct LshUnitTest * const stop, struct CMUnitTest * tests);
 static int _run_group_setup(void ** state);
 static int _run_group_teardown(void ** state);
-
+static void ignored_test (void ** state);
 
 static struct CMUnitTest * tests = NULL;
 static size_t num_tests = 0;
@@ -71,11 +71,11 @@ count_number_of_unit_tests(struct LshUnitTest * const start, struct LshUnitTest 
     
     num_tests = 0;
     for(ptr = start; ptr < stop; ptr++) {
-        if(ptr->ignore) {
+        if(ptr->test_func == default_test) {
             continue;
         }
         
-        if(ptr->repeat > 1) {
+        if(ptr->repeat > 1 && !ptr->ignore) {
             num_tests += ptr->repeat;
         } else {
             num_tests++;
@@ -104,24 +104,27 @@ static struct CMUnitTest * alloc_unit_tests_array(size_t num_tests) {
 static void 
 copy_unit_tests(struct LshUnitTest * const start, struct LshUnitTest * const stop, struct CMUnitTest * tests) {
     struct LshUnitTest * ptr;
+    CMUnitTestFunction fun_ptr;
     size_t i;
     size_t repeat;
     
     for(i = 0, ptr = start; ptr < stop; ptr++) {
-        if(ptr->ignore) {
+        if(ptr->test_func == default_test) {
             continue;
         }
         
-        if(ptr->repeat > 1) {
+        if(ptr->repeat > 1 && !ptr->ignore) {
             repeat = ptr->repeat;
         } else {
             repeat = 1;
         }
         
+        fun_ptr = ptr->ignore ? ignored_test : ptr->test_func;
+        
         do {
             tests[i] = (struct CMUnitTest) {
                 .name = ptr->name,
-                .test_func = ptr->test_func,
+                .test_func = fun_ptr,
                 .setup_func = ptr->setup,
                 .teardown_func = ptr->teardown,
                 .initial_state = ptr->initial_state,
@@ -133,6 +136,11 @@ copy_unit_tests(struct LshUnitTest * const start, struct LshUnitTest * const sto
         
     }
 }
+
+static void ignored_test (void ** state) {
+    skip();
+}
+
 
 static void release_tests(void)
 {

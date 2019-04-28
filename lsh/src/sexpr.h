@@ -10,7 +10,7 @@ enum sexpression_type { ST_NIL, ST_CONS, ST_SYMBOL, ST_STRING, ST_PRIMITIVE, ST_
 
 struct sctx;
 struct sexpression;
-typedef struct sexpression (*sexpression_callable)(struct sctx *, struct sexpression *);
+typedef struct sexpression * (*sexpression_callable)(struct sctx *, struct sexpression *);
 
 struct sprimitive {
     void (*destructor)(void *);

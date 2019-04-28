@@ -2,6 +2,9 @@
 #include "sexpr.h"
 #include "sctx.h"
 
+static struct sexpression * 
+apply_sexpr(struct sctx * sctx, struct sexpression * fn,  struct sexpression * args);
+
 /**
  * Eval a S-Expression using the given context
  */
@@ -11,31 +14,20 @@ eval_sexpr(struct sctx * sctx, struct sexpression * expression) {
         return NULL;
     }
     
-    if(sexpr_is_string(expression)) {
-        return expression;
+    if(sexpr_is_cons(expression)) {
+        struct sexpression * fn = eval_sexpr(sctx, sexpr_car(expression));
+        return sexpr_function(fn)(sctx, sexpr_cdr(expression));
     }
     
     if(sexpr_is_symbol(expression)) {
         return lookup_name(sctx, expression);
     }
+    return expression;
     
-    
-    return NULL;
-    
-    /*
-    struct sexpression * accum;
-    struct sexpression * result;
-    
-    
-    accum = sexpr_cons(NULL, NULL);
-    
-    result = sexpr_eval_expand(sexpr, accum);
-    
-    
-    
-    return result;
-    */
 }
+
+
+
 
 
 
