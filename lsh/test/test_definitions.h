@@ -72,7 +72,7 @@ struct GroupSetupTeardown {
 
 #define __UnitTestSetupTeadown(test_name, ...) \
 static void test_name (void ** state); \
-struct LshUnitTest __attribute__((section ("lshtest"))) _ ## test_name = { \
+struct LshUnitTest __attribute__ ((section ("lshtest"))) _ ## test_name = { \
     .name = #test_name, \
     .test_func = test_name, \
     __VA_ARGS__ \
@@ -81,9 +81,13 @@ static void test_name (void ** state)
 
 #define UnitTest(...) LSH_EXPAND(__UnitTestSetupTeadown(__VA_ARGS__, ._filler=0))
 
+#if defined(__attribute__) && defined(__TINYC__)
+#undef __attribute__
+#endif
+
 #define BeforeAll(setup_name) \
 static int setup_name (void ** state); \
-struct GroupSetupTeardown __attribute__((section ("lshsetup"))) _ ## setup_name = { \
+struct GroupSetupTeardown __attribute__ ((section ("lshsetup"))) _ ## setup_name = { \
     .setup = setup_name, \
     .teardown = NULL \
 }; \
