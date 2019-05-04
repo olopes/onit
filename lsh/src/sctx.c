@@ -74,12 +74,12 @@ create_new_sctx(char **argv, char **envp) {
     memset(heap, 0, sizeof(struct sexpression *) * HEAP_MIN_SIZE);
     
     *sctx = (struct sctx) {
-        .primitives = {
+        .protected_namespace = {
             .size=0,
             .load=0,
             .table=NULL,
         },
-        .global = NULL,
+        .global_namespace = NULL,
         .namespaces = NULL,
         .in_load = NULL,
         .heap = (struct mem_heap) {
@@ -95,7 +95,7 @@ create_new_sctx(char **argv, char **envp) {
     
     /* create and keep reference for global namespace */
     enter_namespace(sctx);
-    sctx->global = (struct shash_table *) sexpr_primitive_ptr(sexpr_peek(&sctx->namespaces));
+    sctx->global_namespace = (struct shash_table *) sexpr_primitive_ptr(sexpr_peek(&sctx->namespaces));
     
     load_primitives(sctx);
     
@@ -187,14 +187,14 @@ static void load_primitives(struct sctx * sctx) {
     struct sexpression * TRUE_PRIMITIVE = alloc_new_primitive(sctx, T, &boolean_primitive_handler);
     struct sexpression * FALSE_PRIMITIVE = alloc_new_primitive(sctx, F, &boolean_primitive_handler);
     
-    create_primitive_reference(sctx, T, 2, &reference);
+    create_protected_reference (sctx, T, 2, &reference);
     *reference.value = TRUE_PRIMITIVE;
-    create_primitive_reference(sctx, F, 2, &reference);
+    create_protected_reference (sctx, F, 2, &reference);
     *reference.value = FALSE_PRIMITIVE;
     
 }
 
-int create_primitive_reference(struct sctx * sctx, wchar_t * wcstr, size_t len, struct mem_reference * reference) {
+int create_protected_reference (struct sctx * sctx, wchar_t * wcstr, size_t len, struct mem_reference * reference) {
     struct sexpression * name;
     
     if(sctx == NULL || wcstr == NULL || len == 0 || reference == NULL) {
@@ -203,7 +203,7 @@ int create_primitive_reference(struct sctx * sctx, wchar_t * wcstr, size_t len, 
     
     name = alloc_new_symbol(sctx, wcstr, len);
     
-    return create_reference(&sctx->primitives, name, reference);
+    return create_reference(&sctx->protected_namespace, name, reference);
 }
 
 int create_global_reference(struct sctx * sctx, wchar_t * wcstr, size_t len, struct mem_reference * reference) {
@@ -215,7 +215,7 @@ int create_global_reference(struct sctx * sctx, wchar_t * wcstr, size_t len, str
     
     name = alloc_new_symbol(sctx, wcstr, len);
     
-    return create_reference(sctx->global, name, reference);
+    return create_reference(sctx->global_namespace, name, reference);
 }
 
 int create_stack_reference(struct sctx * sctx, wchar_t * wcstr, size_t len, struct mem_reference * reference) {
@@ -264,7 +264,7 @@ release_sctx(struct sctx * sctx) {
     }
     
     
-    shash_free(&sctx->primitives);
+    shash_free(&sctx->protected_namespace );
 
     leave_namespace(sctx);
     /* sctx_gc(sctx); */
@@ -324,7 +324,7 @@ struct sexpression * lookup_name(struct sctx * sctx, struct sexpression * name) 
     struct sexpression * namespace;
     struct sexpression * value;
     
-    value = shash_search(&sctx->primitives, name);
+    value = shash_search(&sctx->protected_namespace, name);
     
     if(value != NULL) {
         return value;
@@ -421,13 +421,13 @@ alloc_new_primitive(struct sctx * sctx, void * ptr, struct sprimitive * handler)
     }
     
     return object;
-}    
+}
 
 struct sexpression *
-alloc_new_function(struct sctx * sctx, sexpression_callable function) {
+alloc_new_function (struct sctx * sctx, sexpression_callable function, struct sexpression * body) {
     struct sexpression * object;
     
-    object = sexpr_create_function(function);
+    object = sexpr_create_function(function, body);
     
     if(object == NULL) {
         return NULL;
@@ -440,8 +440,27 @@ alloc_new_function(struct sctx * sctx, sexpression_callable function) {
     }
     
     return object;
-}    
+}
 
+
+struct sexpression *
+alloc_new_error(struct sctx * sctx, wchar_t * wcstr, struct sexpression * call_stack) {
+    struct sexpression * object;
+    
+    object = sexpr_create_error(wcstr, call_stack);
+    
+    if(object == NULL) {
+        return NULL;
+    }
+    
+    if(record_new_object(sctx, object)) {
+        /* mem full? error? */
+        sexpr_free_object(object);
+        object = NULL;
+    }
+    
+    return object;
+}
 
 static int record_new_object(struct sctx * sctx, struct sexpression * obj) {
     struct mem_heap * heap = &sctx->heap;
@@ -485,7 +504,7 @@ static void heap_sanity_check(struct mem_heap * heap, struct sexpression * obj) 
 static void recycle(struct sctx * sctx) {
     
     /* visit all nodes reachable from the namespaces, including sexpr being loaded and primitives */
-    shash_visit(&sctx->primitives, NULL, mark_reachable_references_cb);
+    shash_visit(&sctx->protected_namespace, NULL, mark_reachable_references_cb);
     sexpr_mark_reachable(sctx->in_load, 1);
     sexpr_mark_reachable(sctx->namespaces, 1);
     

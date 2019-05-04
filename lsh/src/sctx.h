@@ -17,8 +17,8 @@ struct mem_heap {
 };
 
 struct sctx {
-    struct shash_table primitives;
-    struct shash_table * global;
+    struct shash_table protected_namespace;
+    struct shash_table * global_namespace;
     struct sexpression * namespaces;
     struct sexpression * in_load;
     struct mem_heap heap;
@@ -43,13 +43,13 @@ extern void
 sctx_gc(struct sctx * sctx);
 
 extern int
-create_global_reference(struct sctx * sctx, wchar_t * wcstr, size_t len, struct mem_reference * reference);
+create_global_reference (struct sctx * sctx, wchar_t * wcstr, size_t len, struct mem_reference * reference);
 
 extern int
-create_stack_reference(struct sctx * sctx, wchar_t * wcstr, size_t len, struct mem_reference * reference);
+create_stack_reference (struct sctx * sctx, wchar_t * wcstr, size_t len, struct mem_reference * reference);
 
 extern int
-create_primitive_reference(struct sctx * sctx, wchar_t * wcstr, size_t len, struct mem_reference * reference);
+create_protected_reference (struct sctx * sctx, wchar_t * wcstr, size_t len, struct mem_reference * reference);
 
 extern struct sexpression * 
 alloc_new_pair(struct sctx * sctx, struct sexpression * car, struct sexpression * cdr);
@@ -64,7 +64,10 @@ extern struct sexpression *
 alloc_new_primitive(struct sctx * sctx, void * ptr, struct sprimitive * handler);
 
 extern struct sexpression *
-alloc_new_function(struct sctx * sctx, sexpression_callable function);
+alloc_new_function (struct sctx * sctx, sexpression_callable function, struct sexpression * body);
+
+extern struct sexpression *
+alloc_new_error(struct sctx * sctx, wchar_t * wcstr, struct sexpression * call_stack);
 
 extern int 
 enter_namespace(struct sctx * sctx);

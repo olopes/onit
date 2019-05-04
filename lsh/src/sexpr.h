@@ -6,11 +6,12 @@
 
 
 /* object types */
-enum sexpression_type { ST_NIL, ST_CONS, ST_SYMBOL, ST_STRING, ST_PRIMITIVE, ST_FUNCTION };
+enum sexpression_type { ST_NIL, ST_CONS, ST_SYMBOL, ST_STRING, ST_PRIMITIVE, ST_FUNCTION, ST_ERROR };
 
 struct sctx;
 struct sexpression;
-typedef struct sexpression * (*sexpression_callable)(struct sctx *, struct sexpression *);
+typedef struct sexpression * 
+(*sexpression_callable)(struct sctx * sctx, struct sexpression * body, struct sexpression * parameters);
 
 struct sprimitive {
     void (*destructor)(void *);
@@ -66,7 +67,14 @@ sexpr_create_primitive(void * ptr, struct sprimitive * handler);
  * Create a S-Expression pointing to a function
  */
 extern struct sexpression *
-sexpr_create_function(sexpression_callable function);
+sexpr_create_function (sexpression_callable function, struct sexpression * body);
+
+/**
+ * Create a S-Expression representing an error
+ */
+extern struct sexpression *
+sexpr_create_error(wchar_t * wcstr, struct sexpression * call_stack);
+
 
 /**
  * Release a S-Expression
@@ -113,20 +121,26 @@ sexpr_hashcode(struct sexpression * sexpr);
 /**
  * Get S-Expression object pointer
  */
-void *
+extern void *
 sexpr_primitive_ptr(struct sexpression *sexpr);
 
 /**
  * Get S-Expression handler pointer
  */
-struct sprimitive *
+extern struct sprimitive *
 sexpr_primitive_handler(struct sexpression *sexpr);
 
 /**
  * Get S-Expression function pointer
  */
-sexpression_callable 
+extern sexpression_callable 
 sexpr_function(struct sexpression *sexpr);
+
+/**
+ * Get S-Expression function body
+ */
+extern struct sexpression *
+sexpr_function_body(struct sexpression *sexpr);
 
 /**
  * Get the object sobj_get_type
@@ -169,6 +183,12 @@ sexpr_is_primitive (struct sexpression *);
  */
 extern int
 sexpr_is_function (struct sexpression *);
+
+/**
+ * Return TRUE if the given object is an error
+ */
+extern int
+sexpr_is_error (struct sexpression *);
 
 /**
  * Reverse a S-Expression list

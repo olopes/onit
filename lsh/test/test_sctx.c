@@ -151,7 +151,7 @@ UnitTest(lookup_name_should_search_primitives_and_all_namespaces) {
     struct sctx * sctx = create_new_sctx(arguments, environment);
     enter_namespace(sctx);
 
-    assert_int_equal(create_primitive_reference(sctx, L"pr1", 3, &ref1), SCTX_OK);
+    assert_int_equal( create_protected_reference (sctx, L"pr1", 3, &ref1), SCTX_OK);
     assert_int_equal(create_global_reference(sctx, L"gr2", 3, &ref2), SCTX_OK);
     assert_int_equal(create_stack_reference(sctx, L"sr3", 3, &ref3), SCTX_OK);
     
@@ -180,7 +180,7 @@ UnitTest(lookup_name_should_return_null_when_reference_out_of_scope) {
     struct sctx * sctx = create_new_sctx(arguments, environment);
     enter_namespace(sctx);
 
-    assert_int_equal(create_primitive_reference(sctx, L"pr1", 3, &ref1), SCTX_OK);
+    assert_int_equal( create_protected_reference (sctx, L"pr1", 3, &ref1), SCTX_OK);
     assert_int_equal(create_global_reference(sctx, L"gr2", 3, &ref2), SCTX_OK);
     assert_int_equal(create_stack_reference(sctx, L"sr3", 3, &ref3), SCTX_OK);
     
@@ -209,7 +209,7 @@ UnitTest(lookup_name_should_search_primitives_first) {
     struct sctx * sctx = create_new_sctx(arguments, environment);
     enter_namespace(sctx);
 
-    assert_int_equal(create_primitive_reference(sctx, L"pr1", 3, &ref1), SCTX_OK);
+    assert_int_equal( create_protected_reference (sctx, L"pr1", 3, &ref1), SCTX_OK);
     assert_int_equal(create_global_reference(sctx, L"pr1", 3, &ref2), SCTX_OK);
     assert_int_equal(create_stack_reference(sctx, L"pr1", 3, &ref3), SCTX_OK);
     

@@ -16,7 +16,12 @@ eval_sexpr(struct sctx * sctx, struct sexpression * expression) {
     
     if(sexpr_is_cons(expression)) {
         struct sexpression * fn = eval_sexpr(sctx, sexpr_car(expression));
-        return sexpr_function(fn)(sctx, sexpr_cdr(expression));
+        
+        if(sexpr_is_function(fn))  {
+            return apply_sexpr(sctx, fn, sexpr_cdr(expression));
+        }
+        
+        return alloc_new_error(sctx, L"yikes!", fn);
     }
     
     if(sexpr_is_symbol(expression)) {
@@ -24,6 +29,22 @@ eval_sexpr(struct sctx * sctx, struct sexpression * expression) {
     }
     return expression;
     
+}
+
+static struct sexpression * 
+apply_sexpr(struct sctx * sctx, struct sexpression * fn,  struct sexpression * args) {
+    struct sexpression * result;
+    struct sexpression * body;
+    sexpression_callable function;
+    
+    enter_namespace(sctx);
+    body = sexpr_function_body(fn);
+    function = sexpr_function(fn);
+
+    result = function(sctx, body, args);
+    
+    leave_namespace(sctx);
+    return result;
 }
 
 

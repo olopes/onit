@@ -125,19 +125,40 @@ struct sprimitive function_handler = {
  * Create a S-Expression function pointer
  */
 struct sexpression *
-sexpr_create_function(sexpression_callable function) {
+sexpr_create_function(sexpression_callable function, struct sexpression * body) {
     struct sexpression * sexpr;
     
-    sexpr = sexpr_create_primitive(NULL, &function_handler);
+    sexpr = sexpr_cons(NULL, NULL);
     if(sexpr == NULL) {
         return NULL;
     }
     
     sexpr->type = ST_FUNCTION;
     sexpr->data.function = function;
+    sexpr->cdr.sexpr = body;
+    sexpr->len = 0;
+    
     
     return sexpr;
 }
+
+/**
+ * Create a S-Expression representing an error
+ */
+struct sexpression *
+sexpr_create_error(wchar_t * wcstr, struct sexpression * call_stack) {
+    struct sexpression * sexpr;
+    
+    sexpr = sexpr_create_value(wcstr, wcslen(wcstr), ST_ERROR);
+    if(sexpr == NULL) {
+        return NULL;
+    }
+    
+    sexpr->cdr.sexpr = call_stack;
+    
+    return sexpr;
+}
+
 
 void
 sexpr_free(struct sexpression * sexpr) {
@@ -159,7 +180,7 @@ sexpr_free_object(struct sexpression * sexpr) {
         return;
     }
     
-    if(sexpr_is_string(sexpr) || sexpr_is_symbol(sexpr)) {
+    if(sexpr_is_string(sexpr) || sexpr_is_symbol(sexpr) || sexpr_is_error(sexpr)) {
         free(sexpr->data.value);
     } else if(sexpr_is_primitive(sexpr) && sexpr_primitive_handler(sexpr)->destructor != NULL) {
         sexpr_primitive_handler(sexpr)->destructor(sexpr_primitive_ptr(sexpr));
@@ -234,6 +255,14 @@ sexpr_function(struct sexpression *sexpr) {
 }
 
 /**
+ * Get S-Expression function body
+ */
+struct sexpression *
+sexpr_function_body(struct sexpression *sexpr) {
+    return sexpr_type(sexpr) == ST_FUNCTION ? sexpr->cdr.sexpr: NULL;
+}
+
+/**
  * Get the S-Expression type
  */
 enum sexpression_type
@@ -287,6 +316,14 @@ sexpr_is_primitive(struct sexpression * sexpr) {
 int
 sexpr_is_function(struct sexpression * sexpr) {
     return sexpr_type(sexpr) == ST_FUNCTION;
+}
+
+/**
+ * Return TRUE if the given object is an error
+ */
+int
+sexpr_is_error(struct sexpression * sexpr) {
+    return sexpr_type(sexpr) == ST_ERROR;
 }
 
 /**
