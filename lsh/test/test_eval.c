@@ -2,6 +2,9 @@
 #include "assert_sexpr.h"
 #include "eval.h"
 
+static struct sexpression * 
+test_function(struct sctx * sctx, struct sexpression * body, struct sexpression * arguments);
+
 UnitTest(eval_should_return_null_when_either_parameter_is_null) {
     struct sexpression dummy_sexpr;
     struct sctx dummy_sctx;
@@ -41,12 +44,6 @@ UnitTest(eval_should_return_referenced_value_in_sctx_when_parameter_is_a_symbol)
 }
 
 
-static struct sexpression * test_function(struct sctx * sctx, struct sexpression * body, struct sexpression * arguments) {
-    assert_sexpr_equal(sexpr_car(arguments), alloc_new_string(sctx, L"PARAM", 5));
-    return alloc_new_string(sctx, L"PASS", 4);
-}
-
-
 UnitTest(eval_should_call_function_when_parameter_is_a_list_and_head_references_a_function) {
     struct mem_reference ref1;
     struct sexpression * expr;
@@ -65,6 +62,13 @@ UnitTest(eval_should_call_function_when_parameter_is_a_list_and_head_references_
     
     release_sctx(sctx);
 }
+
+static struct sexpression * 
+test_function(struct sctx * sctx, struct sexpression * body, struct sexpression * arguments) {
+    assert_sexpr_equal(sexpr_car(arguments), alloc_new_string(sctx, L"PARAM", 5));
+    return alloc_new_string(sctx, L"PASS", 4);
+}
+
 
 
 UnitTest(eval_should_raise_error_when_parameter_is_a_list_and_head_does_not_references_a_function) {
@@ -86,4 +90,3 @@ UnitTest(eval_should_raise_error_when_parameter_is_a_list_and_head_does_not_refe
     
     release_sctx(sctx);
 }
-
