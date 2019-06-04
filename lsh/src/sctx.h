@@ -29,7 +29,7 @@ struct mem_reference {
     void ** value;
 };
 
-#define HEAP_MIN_SIZE 32
+#define HEAP_MIN_SIZE 128
 #define HEAP_MAX_SIZE 131072
 
 

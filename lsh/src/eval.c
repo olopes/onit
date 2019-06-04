@@ -2,14 +2,16 @@
 #include "sexpr.h"
 #include "sctx.h"
 
-static struct sexpression * 
-apply_sexpr(struct sctx * sctx, struct sexpression * fn,  struct sexpression * args);
+static enum sexpression_result 
+apply_sexpr(struct sctx * sctx, struct sexpression ** result, struct sexpression * fn,  struct sexpression * args);
 
 /**
  * Eval a S-Expression using the given context
  */
 struct sexpression * 
 eval_sexpr(struct sctx * sctx, struct sexpression * expression) {
+    struct sexpression * result = expression;
+    
     if(sctx == NULL || expression == NULL) {
         return NULL;
     }
@@ -18,33 +20,34 @@ eval_sexpr(struct sctx * sctx, struct sexpression * expression) {
         struct sexpression * fn = eval_sexpr(sctx, sexpr_car(expression));
         
         if(sexpr_is_function(fn))  {
-            return apply_sexpr(sctx, fn, sexpr_cdr(expression));
+            // TODO fix this to return the error !!!!!!
+            apply_sexpr(sctx, & result, fn, sexpr_cdr(expression));
+        } else {
+            result = alloc_new_error(sctx, L"yikes!", fn);
         }
         
-        return alloc_new_error(sctx, L"yikes!", fn);
+    } else if(sexpr_is_symbol(expression)) {
+        result = lookup_name(sctx, expression);
     }
     
-    if(sexpr_is_symbol(expression)) {
-        return lookup_name(sctx, expression);
-    }
-    return expression;
+    return result;
     
 }
 
-static struct sexpression * 
-apply_sexpr(struct sctx * sctx, struct sexpression * fn,  struct sexpression * args) {
-    struct sexpression * result;
-    struct sexpression * body;
+static enum sexpression_result 
+apply_sexpr(struct sctx * sctx, struct sexpression ** result, struct sexpression * fn,  struct sexpression * args) {
+    struct sexpression * closure;
     sexpression_callable function;
+    enum sexpression_result return_value;
     
     enter_namespace(sctx);
-    body = sexpr_function_body(fn);
+    closure = sexpr_function_closure(fn);
     function = sexpr_function(fn);
 
-    result = function(sctx, body, args);
+    return_value = function(sctx, result, closure, args);
     
     leave_namespace(sctx);
-    return result;
+    return return_value;
 }
 
 

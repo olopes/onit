@@ -2,8 +2,8 @@
 #include "assert_sexpr.h"
 #include "eval.h"
 
-static struct sexpression * 
-test_function(struct sctx * sctx, struct sexpression * body, struct sexpression * arguments);
+static enum sexpression_result 
+test_function(struct sctx * sctx, struct sexpression ** result, struct sexpression * body, struct sexpression * args);
 
 UnitTest(eval_should_return_null_when_either_parameter_is_null) {
     struct sexpression dummy_sexpr;
@@ -63,10 +63,11 @@ UnitTest(eval_should_call_function_when_parameter_is_a_list_and_head_references_
     release_sctx(sctx);
 }
 
-static struct sexpression * 
-test_function(struct sctx * sctx, struct sexpression * body, struct sexpression * arguments) {
-    assert_sexpr_equal(sexpr_car(arguments), alloc_new_string(sctx, L"PARAM", 5));
-    return alloc_new_string(sctx, L"PASS", 4);
+static enum sexpression_result 
+test_function(struct sctx * sctx, struct sexpression ** result, struct sexpression * body, struct sexpression * args) {
+    assert_sexpr_equal(sexpr_car(args), alloc_new_string(sctx, L"PARAM", 5));
+    *result = alloc_new_string(sctx, L"PASS", 4);
+    return FN_OK;
 }
 
 

@@ -10,8 +10,31 @@ enum sexpression_type { ST_NIL, ST_CONS, ST_SYMBOL, ST_STRING, ST_PRIMITIVE, ST_
 
 struct sctx;
 struct sexpression;
-typedef struct sexpression * 
-(*sexpression_callable)(struct sctx * sctx, struct sexpression * body, struct sexpression * parameters);
+
+enum sexpression_result {FN_OK, FN_NULL_SCTX, FN_NULL_RESULT, FN_ERROR};
+
+/**
+ * Primitive function interface.
+ * Implementations should respect the following behavior
+ * 
+ * Parameters:
+ *   sctx - vm context (should not be NULL)
+ *   result - store resulting S-Expression in this address (should not be NULL)
+ *   body - lambda function body
+ *   parameters - arguments to pass to the primitive function
+ * 
+ * Returns:
+ *   FN_OK - function finished successfuly
+ *   FN_NULL_SCTX - sctx is NULL
+ *   FN_NULL_RESULT - result is NULL
+ *   FN_ERROR - An error has occurred. The result can be used to provide more details
+ */
+typedef enum sexpression_result
+(*sexpression_callable)(
+    struct sctx * sctx, 
+    struct sexpression ** result,
+    struct sexpression * closure, 
+    struct sexpression * parameters);
 
 struct sprimitive {
     void (*destructor)(void *);
@@ -140,7 +163,7 @@ sexpr_function(struct sexpression *sexpr);
  * Get S-Expression function body
  */
 extern struct sexpression *
-sexpr_function_body(struct sexpression *sexpr);
+sexpr_function_closure (struct sexpression *sexpr);
 
 /**
  * Get the object sobj_get_type

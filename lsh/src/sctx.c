@@ -424,10 +424,10 @@ alloc_new_primitive(struct sctx * sctx, void * ptr, struct sprimitive * handler)
 }
 
 struct sexpression *
-alloc_new_function (struct sctx * sctx, sexpression_callable function, struct sexpression * body) {
+alloc_new_function (struct sctx * sctx, sexpression_callable function, struct sexpression * closure) {
     struct sexpression * object;
     
-    object = sexpr_create_function(function, body);
+    object = sexpr_create_function(function, closure);
     
     if(object == NULL) {
         return NULL;
@@ -659,6 +659,7 @@ move_to_heap_visitor(struct sexpression * sexpr, struct scallback * callback) {
     /* do nothing if the previous state is not 0 (OK) */
     if(callback->state != SCTX_OK) return;
     
-    callback->state = record_new_object((struct sctx *) callback->context, sexpr);
+    if(sexpr != NULL)
+        callback->state = record_new_object((struct sctx *) callback->context, sexpr);
     
 }

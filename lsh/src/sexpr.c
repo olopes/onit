@@ -258,7 +258,7 @@ sexpr_function(struct sexpression *sexpr) {
  * Get S-Expression function body
  */
 struct sexpression *
-sexpr_function_body(struct sexpression *sexpr) {
+sexpr_function_closure (struct sexpression *sexpr) {
     return sexpr_type(sexpr) == ST_FUNCTION ? sexpr->cdr.sexpr: NULL;
 }
 
