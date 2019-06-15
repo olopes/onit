@@ -40,14 +40,25 @@ UnitTest(fn_lambda_should_return_FN_NULL_RESULT_when_result_is_null) {
     assert_return_code(fn_lambda(&ptr, NULL, NULL, NULL), FN_NULL_RESULT);
 }
 
+UnitTest(fn_lambda_should_return_FN_ERROR_when_parameters_list_is_null) {
+    struct sctx ptr;
+    struct sexpression * result;
+    assert_return_code(fn_lambda(&ptr, &result, NULL, NULL), FN_ERROR);
+}
+
+UnitTest(fn_lambda_should_return_FN_ERROR_when_parameters_is_not_pair) {
+    struct sctx ptr;
+    struct sexpression * result;
+    struct sexpression * argument = sexpr_create_string(L"AA", 2);
+    assert_return_code(fn_lambda(&ptr, &result, NULL, argument), FN_ERROR);
+    sexpr_free(argument);
+}
+
 // first form (lambda (arg1 arg2) expr1 expr2)
 
 UnitTest(fn_lambda_should_return_a_procedural_closure_when_first_argument_is_pair) {
     struct sexpression * arguments;
     struct sexpression * result;
-    struct sexpression * expected_name;
-    struct sexpression * expected_value;
-    struct sexpression * actual_value;
     struct sctx * sctx;
     
     sctx = create_new_sctx(NULL, NULL);
@@ -64,12 +75,11 @@ UnitTest(fn_lambda_should_return_a_procedural_closure_when_first_argument_is_pai
 UnitTest(fn_lambda_should_return_a_procedural_closure_when_first_argument_is_symbol) {
     struct sexpression * arguments;
     struct sexpression * result;
-    struct sexpression * expected_name;
-    struct sexpression * expected_value;
-    struct sexpression * actual_value;
     struct sctx * sctx;
     
     sctx = create_new_sctx(NULL, NULL);
+    
+    /* arguments stored in the symbol 'args' */
     arguments = _sxpr(sctx, L"(args expr1 expr2)");
 
     assert_return_code(fn_lambda(sctx, &result, NULL, arguments), FN_OK);
@@ -83,12 +93,11 @@ UnitTest(fn_lambda_should_return_a_procedural_closure_when_first_argument_is_sym
 UnitTest(fn_lambda_should_return_a_procedural_closure_when_first_argument_is_nil) {
     struct sexpression * arguments;
     struct sexpression * result;
-    struct sexpression * expected_name;
-    struct sexpression * expected_value;
-    struct sexpression * actual_value;
     struct sctx * sctx;
     
     sctx = create_new_sctx(NULL, NULL);
+    
+    /* no arguments lambda */
     arguments = _sxpr(sctx, L"(() expr1 expr2)");
 
     assert_return_code(fn_lambda(sctx, &result, NULL, arguments), FN_OK);
@@ -100,7 +109,7 @@ UnitTest(fn_lambda_should_return_a_procedural_closure_when_first_argument_is_nil
 }
 
 
-UnitTest(fn_lambda_should_raise_error_when_first_argument_is_not_symbol_or_pair) {
+UnitTest(fn_lambda_should_raise_error_when_first_argument_is_not_nil_or_symbol_or_pair) {
     struct sexpression * arguments;
     struct sexpression * result;
     struct sctx * sctx;
@@ -109,6 +118,38 @@ UnitTest(fn_lambda_should_raise_error_when_first_argument_is_not_symbol_or_pair)
     
     /* string */
     arguments = _sxpr(sctx, L"(\"test\" expr1 expr2)");
+    assert_return_code(fn_lambda(sctx, &result, NULL, arguments), FN_ERROR);
+    
+    release_sctx(sctx);
+    
+}
+
+UnitTest(fn_lambda_should_return_a_procedural_closure_when_first_argument_is_list_and_have_symbol_or_nil_elements) {
+    struct sexpression * arguments;
+    struct sexpression * result;
+    struct sctx * sctx;
+    
+    sctx = create_new_sctx(NULL, NULL);
+    
+    /* capture 1st, 2nd, 4th arguments in specific vars and a list with the remaining */
+    arguments = _sxpr(sctx, L"((arg1 arg2 () arg4 . remaining) expr1 expr2)");
+    assert_return_code(fn_lambda(sctx, &result, NULL, arguments), FN_OK);
+    
+    assert_ptr_equal(sexpr_function_closure(result), arguments);
+    
+    release_sctx(sctx);
+    
+}
+
+UnitTest(fn_lambda_should_raise_error_when_first_argument_is_list_and_have_elements_other_than_symbol_or_nil) {
+    struct sexpression * arguments;
+    struct sexpression * result;
+    struct sctx * sctx;
+    
+    sctx = create_new_sctx(NULL, NULL);
+    
+    /* string */
+    arguments = _sxpr(sctx, L"((arg1 arg2 () arg3 \"test\") expr1 expr2)");
     assert_return_code(fn_lambda(sctx, &result, NULL, arguments), FN_ERROR);
     
     release_sctx(sctx);
