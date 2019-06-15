@@ -6,7 +6,7 @@
 #include "sparser.h"
 #include "sparser_privates.h"
 #include "ostr.h"
-
+#include "sexpr_stack.h"
 
 /* sintatic suggar */
 #define READ_CHAR(stream) (stream)->adapter->read_char((stream))
@@ -367,6 +367,10 @@ sparse_quote(struct sparse_ctx * ctx, struct sexpression ** obj) {
     return parse_result;
 }
 
+#define CONS_NO_DOT 0
+#define CONS_DOT_FOUND 1
+#define CONS_DOT_CDR_FOUND 2
+
 static int 
 sparse_cons(struct sparse_ctx * ctx, struct sexpression ** obj) {
     struct sexpression * sexpr;
@@ -375,52 +379,60 @@ sparse_cons(struct sparse_ctx * ctx, struct sexpression ** obj) {
     int return_value;
     int state;
     
+    state = CONS_NO_DOT;
     list = NULL;
-    state = 0;
 
-    /* FIXME here be memleaks */
-    
-    while(1) {
+    while (1) {
         sparse_object_result = sparse_object(ctx, &sexpr);
         
-        if(sparse_object_result == SPARSE_EOF) {
-            goto EXIT_WITH_ERROR;
-        } else if(sparse_object_result == SPARSE_PAREN) {
-            return_value = SPARSE_OK;
-            if(state == 1) {
-                *obj = list;
+        if (sparse_object_result == SPARSE_PAREN) {
+            if(state == CONS_DOT_FOUND) {
+                return_value = SPARSE_BAD_SYM;
             } else {
-                *obj = sexpr_reverse(list);
+                return_value = SPARSE_OK;
             }
-            goto EXIT_WITH_SUCCESS;
-        } else if(state == 1 && sparse_object_result != SPARSE_OK) {
-            goto EXIT_WITH_ERROR;
-        } else if(sparse_object_result == SPARSE_DOT_SYM && list == NULL) {
-            goto EXIT_WITH_ERROR;
+            break;
         } else if(sparse_object_result == SPARSE_DOT_SYM) {
-            state = 1;
-        } else if(state == 1 && sparse_object_result == SPARSE_OK) {
-            if(list->cdr.sexpr != NULL) {
-                goto EXIT_WITH_ERROR;
+            if(state == CONS_NO_DOT) {
+                state = CONS_DOT_FOUND;
             } else {
-                list->cdr.sexpr = sexpr;
+                /* already found a dot. exit with error */
+                return_value = SPARSE_BAD_SYM;
+                break;
             }
         } else if(sparse_object_result == SPARSE_OK) {
-            list = sexpr_cons(sexpr, list);
+            sexpr_push(&list, sexpr);
+            
+            if(state == CONS_DOT_FOUND) {
+                /* last symbol */
+                state = CONS_DOT_CDR_FOUND;
+            } else if(state == CONS_DOT_CDR_FOUND) {
+                /* already found the object after the dot. exit with error */
+                return_value = SPARSE_BAD_SYM;
+                break;
+            }
         } else {
             return_value = sparse_object_result;
-            *obj = NULL;
-            goto EXIT_WITH_SUCCESS;
+            break;
         }
-        
     }
 
-EXIT_WITH_ERROR:
-    sexpr_free(list);
-    return_value = SPARSE_BAD_SYM;
     *obj = NULL;
+    if (return_value == SPARSE_OK) {
+        /* reverse the list */
+        if(state == CONS_DOT_CDR_FOUND) {
+            *obj = sexpr_pop(&list);
+        }
+        
+        while(sexpr_can_pop(&list)) {
+            sexpr_push(obj, sexpr_pop(&list));
+        }
+        
+    } else {
+        /* cleanup */
+        sexpr_free(list);
+    }
     
-EXIT_WITH_SUCCESS:
     return return_value;
 }
 

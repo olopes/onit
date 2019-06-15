@@ -235,3 +235,32 @@ UnitTest(sparse_should_return_value_with_quoted_chars_when_data_is_string_with_q
     release_sparser_stream(stream);
 }
 
+UnitTest(sparse_should_return_a_semi_list_when_data_has_list_with_dot_in_last_position) {
+    struct sexpression * actual_object;
+    struct sexpression * expected_object;
+    struct sparser_stream * stream;
+    wchar_t * data = L"(a b c . d)";
+    
+    expected_object = sexpr_cons(
+        sexpr_create_symbol(L"a", 1), 
+        sexpr_cons(
+            sexpr_create_symbol(L"b", 1), 
+            sexpr_cons(
+                sexpr_create_symbol(L"c", 1), 
+                sexpr_create_symbol(L"d", 1)
+            )
+        )
+    );
+    
+    stream = create_sparser_stream(WCSTR_ADAPTER, data,wcslen(data));
+    assert_int_equal(sparse(stream, &actual_object), SPARSE_OK);
+    
+    assert_sexpr_equal(expected_object, actual_object);
+
+    sexpr_free(actual_object);
+    sexpr_free(expected_object);
+
+    release_sparser_stream(stream);
+}
+
+
