@@ -422,6 +422,8 @@ sexpr_mark_reachable(struct sexpression * object, unsigned char visit_mark) {
             }
         } else if(sexpr_is_cons(sexpr)) {
             sexpr_mark_reachable(sexpr_car(sexpr), visit_mark);
+        } else if(sexpr_is_function(sexpr)) {
+            sexpr_mark_reachable(sexpr_function_closure(sexpr), visit_mark);
         }
         
         sexpr = sexpr_cdr(sexpr);

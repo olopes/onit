@@ -7,17 +7,18 @@ static enum sexpression_result
 _fn_define(struct sctx * sctx, struct sexpression ** result, struct sexpression * body, struct sexpression * arguments );
 static int arguments_are_invalid(struct sexpression * arguments);
 static int get_name_symbol(struct sexpression * arguments, struct sexpression ** name);
-static int compute_referenced_value(struct sctx * sctx, struct sexpression * arguments, struct sexpression ** value);
-
+static enum sexpression_result
+compute_referenced_value(struct sctx * sctx, struct sexpression * arguments, struct sexpression ** value);
+static int
+store_value_in_context(struct sctx * sctx, struct sexpression * name_symbol, struct sexpression * value);
 
 sexpression_callable fn_define = _fn_define;
 
 
 static enum sexpression_result 
 _fn_define(struct sctx * sctx, struct sexpression ** result, struct sexpression * body, struct sexpression * arguments ) {
-    struct mem_reference mem_ref;
     struct sexpression * name_symbol;
-    struct sexpression * referenced_value;
+    enum sexpression_result return_value;
     
     if(sctx == NULL) {
         return FN_NULL_SCTX;
@@ -37,18 +38,16 @@ _fn_define(struct sctx * sctx, struct sexpression ** result, struct sexpression 
         return FN_ERROR;
     }
     
-    if(compute_referenced_value(sctx, arguments, &referenced_value)) {
-        *result = alloc_new_string(sctx, L"bad value", 9);
-        return FN_ERROR;
+    return_value = compute_referenced_value(sctx, arguments, result);
+    if(return_value != FN_OK) {
+        return return_value;
     }
     
-    if(create_global_reference (sctx, sexpr_value(name_symbol), sexpr_length(name_symbol), &mem_ref)) {
+    if(store_value_in_context(sctx, name_symbol, *result)) {
         *result = alloc_new_string(sctx, L"new definition failed", 21);
         return FN_ERROR;
     }
     
-    *mem_ref.value = eval_sexpr(sctx, referenced_value);
-        
     return FN_OK;
 }
 
@@ -103,15 +102,17 @@ static int get_name_symbol(struct sexpression * arguments, struct sexpression **
     return 0;
 }
 
-static int compute_referenced_value(struct sctx * sctx, struct sexpression * arguments, struct sexpression ** value) {
+static enum sexpression_result
+compute_referenced_value(struct sctx * sctx, struct sexpression * arguments, struct sexpression ** value) {
     struct sexpression * head;
     struct sexpression * tail;
+    struct sexpression * expression;
     
     head = sexpr_car( arguments );
     tail = sexpr_cdr( arguments );
     
     if (sexpr_is_symbol( head )) {
-        *value = eval_sexpr(sctx, sexpr_car(tail));
+        expression = sexpr_car(tail);
     } else {
         // (define (a b c) ....) => (lambda (b c) ...)
         struct sexpression * lambda_symbol = alloc_new_symbol(sctx, L"lambda", 6);
@@ -121,8 +122,18 @@ static int compute_referenced_value(struct sctx * sctx, struct sexpression * arg
         struct sexpression * function_definition = 
             alloc_new_pair(sctx, lambda_symbol, alloc_new_pair(sctx, function_arguments, function_body));
         
-        *value = eval_sexpr(sctx, function_definition);
+        expression = function_definition;
     }
     
+    return fn_procedure_step(sctx, value, expression);
+}
+
+static int
+store_value_in_context(struct sctx * sctx, struct sexpression * name_symbol, struct sexpression * value) {
+    struct mem_reference mem_ref;
+    if(create_global_reference (sctx, sexpr_value(name_symbol), sexpr_length(name_symbol), &mem_ref)) {
+        return 1;
+    }
+    *mem_ref.value = value;
     return 0;
 }

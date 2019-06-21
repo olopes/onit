@@ -7,8 +7,8 @@
 /**
  * Eval a S-Expression Object
  */
-extern struct sexpression * 
-eval_sexpr(struct sctx *, struct sexpression *);
+extern enum sexpression_result
+eval_sexpr(struct sctx * sctx, struct sexpression ** result, struct sexpression * expression);
 
 
 #endif /* __EVAL__H__ */
