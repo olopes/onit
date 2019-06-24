@@ -49,7 +49,7 @@ UnitTest(fn_define_should_eval_expression_and_save_the_result_into_global_contex
     expected_name = alloc_new_symbol(sctx, L"test", 4);
     expected_value = alloc_new_string(sctx, L"value", 5);
     
-    actual_value = (struct sexpression *) shash_search(sctx->global_namespace, expected_name);
+    actual_value = (struct sexpression *) shash_search(&sctx->global_namespace->table, expected_name);
     
     assert_sexpr_equal(actual_value, expected_value);
     
@@ -128,7 +128,7 @@ UnitTest(fn_define_should_create_implicit_lambda_when_expression_head_is_a_list)
     expected_name = alloc_new_symbol(sctx, L"fn", 2);
     expected_body = _sxpr(sctx, L"((arg1 arg2) arg2)");
     
-    actual_value = (struct sexpression *) shash_search(sctx->global_namespace, expected_name);
+    actual_value = (struct sexpression *) shash_search(&sctx->global_namespace->table, expected_name);
     
     assert_int_equal(sexpr_type(actual_value), ST_FUNCTION);
     assert_ptr_equal(sexpr_function(actual_value), _mock_lambda);
@@ -160,7 +160,7 @@ UnitTest(fn_define_should_create_implicit_lambda_when_expression_head_is_a_pair)
     expected_name = alloc_new_symbol(sctx, L"fn", 2);
     expected_body = _sxpr(sctx, L"(args (apply + args))");
     
-    actual_value = (struct sexpression *) shash_search(sctx->global_namespace, expected_name);
+    actual_value = (struct sexpression *) shash_search(&sctx->global_namespace->table, expected_name);
     
     assert_int_equal(sexpr_type(actual_value), ST_FUNCTION);
     assert_ptr_equal(sexpr_function(actual_value), _mock_lambda);

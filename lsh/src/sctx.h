@@ -16,9 +16,15 @@ struct mem_heap {
     struct sexpression ** data;
 };
 
+struct shash_namespace {
+    struct shash_table table;
+    size_t temp_length;
+    struct sexpression ** temp_entries;
+};
+
 struct sctx {
-    struct shash_table protected_namespace;
-    struct shash_table * global_namespace;
+    struct shash_namespace protected_namespace;
+    struct shash_namespace * global_namespace;
     struct sexpression * namespaces;
     struct sexpression * in_load;
     struct mem_heap heap;
