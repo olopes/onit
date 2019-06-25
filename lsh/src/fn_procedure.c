@@ -2,7 +2,13 @@
 #include "core_functions.h"
 
 static enum sexpression_result 
+_fn_procedure(struct sctx * sctx, struct sexpression ** result, struct sexpression * closure, struct sexpression * parameters);
+static enum sexpression_result 
 apply_sexpr(struct sctx * sctx, struct sexpression ** result, struct sexpression * fn,  struct sexpression * args);
+
+
+sexpression_callable fn_procedure = _fn_procedure;
+
 
 static enum sexpression_result 
 _fn_procedure(struct sctx * sctx, struct sexpression ** result, struct sexpression * closure, struct sexpression * parameters) {
@@ -122,6 +128,4 @@ sexpr_eval_reduce(struct sexpression * list) {
 
 
 
-
-sexpression_callable fn_procedure = _fn_procedure;
 

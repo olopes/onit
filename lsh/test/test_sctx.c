@@ -1,6 +1,7 @@
 /* prod code includes */
 #include "test_definitions.h"
 #include "sctx.h"
+#include "sexpr_stack.h"
 
 static char * arguments[2] = {
     "arg1",
@@ -222,6 +223,99 @@ UnitTest(lookup_name_should_search_primitives_first) {
     
     leave_namespace(sctx);
     
+    release_sctx(sctx);
+}
+
+UnitTest(create_temporary_reference_should_return_SCTX_ERROR_when_sctx_is_NULL)
+{
+    struct mem_reference reference;
+    assert_return_code(create_temporary_reference(NULL, &reference), SCTX_ERROR);
+}
+
+UnitTest(create_temporary_reference_should_return_SCTX_ERROR_when_reference_is_NULL)
+{
+    struct sctx * sctx = create_new_sctx(arguments, environment);
+
+    assert_return_code(create_temporary_reference(sctx, NULL), SCTX_ERROR);
+
+    release_sctx(sctx);
+}
+
+UnitTest(create_temporary_reference_should_grow_temporary_references_array_when_new_temporary_reference_is_created)
+{
+    struct mem_reference reference;
+    struct sctx * sctx = create_new_sctx(arguments, environment);
+
+    assert_return_code(create_temporary_reference(sctx, &reference), SCTX_OK);
+    
+    assert_non_null(sctx->global_namespace->temp_entries);
+    assert_int_equal(sctx->global_namespace->temp_length, 1);
+    
+    release_sctx(sctx);
+}
+
+UnitTest(create_temporary_reference_should_populate_reference_with_location_to_store_reference)
+{
+    struct mem_reference reference;
+    struct sctx * sctx = create_new_sctx(arguments, environment);
+    struct sexpression * object = alloc_new_string(sctx, L"REF", 3);
+
+    assert_return_code(create_temporary_reference(sctx, &reference), SCTX_OK);
+    *reference.value = object;
+    
+    assert_ptr_equal(sctx->global_namespace->temp_entries[0], object);
+
+    release_sctx(sctx);
+}
+
+UnitTest(create_temporary_reference_should_store_reference_topmost_stack_entry)
+{
+    struct mem_reference reference;
+    struct shash_namespace * namespace;
+    struct sctx * sctx = create_new_sctx(arguments, environment);
+    enter_namespace(sctx);
+
+    assert_return_code(create_temporary_reference(sctx, &reference), SCTX_OK);
+    
+    namespace = (struct shash_namespace *) sexpr_primitive_ptr(sexpr_peek(&sctx->namespaces));
+    
+    assert_null(sctx->global_namespace->temp_entries);
+    assert_int_equal(sctx->global_namespace->temp_length, 0);
+    
+    assert_non_null(namespace->temp_entries);
+    assert_int_equal(namespace->temp_length, 1);
+    
+    leave_namespace(sctx);
+    release_sctx(sctx);
+}
+
+UnitTest(create_temporary_reference_should_protect_object_when_gc_runs)
+{
+    struct mem_reference reference;
+    int referenced_found = 0;
+    struct sctx * sctx = create_new_sctx(arguments, environment);
+    struct sexpression * referenced_object = alloc_new_string(sctx, L"REF", 3);
+    struct sexpression * unreferenced_object = alloc_new_string(sctx, L"UNREF", 5);
+    
+
+    assert_return_code(create_temporary_reference(sctx, &reference), SCTX_OK);
+    *reference.value = referenced_object;
+    
+    sctx_gc(sctx);
+    
+    /* check the heap for preserved and GC references */
+    for (int i = 0; i < sctx->heap.size; i++) {
+        if (sctx->heap.data[i] == unreferenced_object) {
+            fail_msg("Unexpected reference found in the heap: %p should have been garbage collected", 
+                     (void *) unreferenced_object);
+        }
+        else if (sctx->heap.data[i] == referenced_object) {
+            referenced_found = 1;
+        }
+    }
+    
+    assert_true(referenced_found);
+
     release_sctx(sctx);
 }
 

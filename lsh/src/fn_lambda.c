@@ -2,6 +2,8 @@
 #include "core_functions.h"
 
 static enum sexpression_result 
+_fn_lambda_compiler(struct sctx * sctx, struct sexpression ** result, struct sexpression * closure, struct sexpression * parameters);
+static enum sexpression_result 
 _fn_lambda_evaluator(struct sctx * sctx, struct sexpression ** result, struct sexpression * closure, struct sexpression * parameters);
 static int
 closure_arguments_are_valid(struct sexpression * closure_arguments);
@@ -11,6 +13,10 @@ static int
 bind_argument(struct sctx *, struct sexpression *, struct sexpression *);
 static int 
 bind_remaining_values(struct sctx *, struct sexpression *, struct sexpression *);
+
+
+sexpression_callable fn_lambda = _fn_lambda_compiler;
+
 
 static enum sexpression_result 
 _fn_lambda_compiler(struct sctx * sctx, struct sexpression ** result, struct sexpression * closure, struct sexpression * parameters) {
@@ -197,33 +203,27 @@ static int
 bind_remaining_values(struct sctx * sctx, struct sexpression * argument_name, struct sexpression * arguments) {
     struct mem_reference mem_ref;
     struct sexpression * value;
-    struct sexpression * iter;
-    struct sexpression * values_list = NULL;
+    struct sexpression * iter = arguments;
     
-    iter = arguments;
+    if(create_stack_reference(sctx, sexpr_value(argument_name), sexpr_length(argument_name), &mem_ref)) {
+        return 1;
+    }
+    
+    *mem_ref.value = NULL;
     
     while(iter != NULL) {
         if(fn_procedure_step(sctx, &value, sexpr_car(iter)) != FN_OK) {
             return 1;
         }
         
-        values_list = alloc_new_pair(sctx, value, values_list);
+        *mem_ref.value = alloc_new_pair(sctx, value, *mem_ref.value);
         
         iter = sexpr_cdr(iter);
     }
         
-    values_list = sexpr_reverse(values_list);
-    
-    
-    if(create_stack_reference(sctx, sexpr_value(argument_name), sexpr_length(argument_name), &mem_ref)) {
-        return 1;
-    }
-    
-    *mem_ref.value = values_list;
+    *mem_ref.value = sexpr_reverse(*mem_ref.value);
     
     return 0;
 }
 
 
-
-sexpression_callable fn_lambda = _fn_lambda_compiler;

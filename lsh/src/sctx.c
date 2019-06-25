@@ -252,12 +252,49 @@ create_reference(struct shash_namespace * namespace, struct sexpression * name, 
     
     *reference = (struct mem_reference) {
         .key = &entry->key,
-        .value = &entry->value,
+        .value = (struct sexpression **) &entry->value,
     };
     
     return SCTX_OK;
 }
 
+
+#define TEMP_SEGMENT_SIZE 32
+int
+create_temporary_reference (struct sctx * sctx, struct mem_reference * reference) {
+    struct sexpression * namespace_sexpr;
+    struct shash_namespace * namespace;
+    
+    if (sctx == NULL || reference == NULL) {
+        return SCTX_ERROR;
+    }
+    
+    namespace_sexpr = sexpr_peek(&sctx->namespaces);
+    if(namespace_sexpr == NULL) {
+        return SCTX_ERROR;
+    }
+    
+    namespace = (struct shash_namespace *) sexpr_primitive_ptr(namespace_sexpr);
+    if(namespace == NULL) {
+        return SCTX_ERROR;
+    }
+    
+    if ((namespace->temp_length & TEMP_SEGMENT_SIZE) == 0) {
+        size_t new_size = namespace->temp_length + TEMP_SEGMENT_SIZE;
+        struct sexpression ** entries  = realloc(namespace->temp_entries, sizeof(struct sexpression *) * new_size);
+        if (entries == NULL) {
+            return SCTX_ERROR;
+        }
+        memset(entries + namespace->temp_length, 0, TEMP_SEGMENT_SIZE);
+        namespace->temp_entries = entries;
+    }
+    
+    reference->key = NULL;
+    reference->value = namespace->temp_entries + namespace->temp_length;
+    namespace->temp_length++;
+    
+    return SCTX_OK;
+}
 
 
 void 

@@ -11,9 +11,10 @@ static enum sexpression_result
 compute_referenced_value(struct sctx * sctx, struct sexpression * arguments, struct sexpression ** value);
 static int
 store_value_in_context(struct sctx * sctx, struct sexpression * name_symbol, struct sexpression * value);
+static int 
+create_lambda_expression (struct sctx * sctx, struct sexpression ** expression, struct sexpression * definition, struct sexpression * function_body);
 
 sexpression_callable fn_define = _fn_define;
-
 
 static enum sexpression_result 
 _fn_define(struct sctx * sctx, struct sexpression ** result, struct sexpression * body, struct sexpression * arguments ) {
@@ -114,15 +115,7 @@ compute_referenced_value(struct sctx * sctx, struct sexpression * arguments, str
     if (sexpr_is_symbol( head )) {
         expression = sexpr_car(tail);
     } else {
-        // (define (a b c) ....) => (lambda (b c) ...)
-        struct sexpression * lambda_symbol = alloc_new_symbol(sctx, L"lambda", 6);
-        struct sexpression * function_arguments = sexpr_cdr(head);
-        struct sexpression * function_body = tail;
-        
-        struct sexpression * function_definition = 
-            alloc_new_pair(sctx, lambda_symbol, alloc_new_pair(sctx, function_arguments, function_body));
-        
-        expression = function_definition;
+        create_lambda_expression (sctx, &expression, head, tail);
     }
     
     return fn_procedure_step(sctx, value, expression);
@@ -135,5 +128,40 @@ store_value_in_context(struct sctx * sctx, struct sexpression * name_symbol, str
         return 1;
     }
     *mem_ref.value = value;
+    return 0;
+}
+
+// transform (define (a b c) ....) into (lambda (b c) ...)
+static int 
+create_lambda_expression (struct sctx * sctx, struct sexpression ** expression, struct sexpression * definition, struct sexpression * function_body) {
+    struct mem_reference lambda_reference;
+    struct mem_reference body_reference;
+    struct sexpression * function_arguments = sexpr_cdr( definition );
+    
+    /* create temporary references to create the new lambda expression */
+    if (create_temporary_reference(sctx, &lambda_reference)) {
+        return 1;
+    }
+    if (create_temporary_reference(sctx, &body_reference)) {
+        return 1;
+    }
+    
+    *lambda_reference.value = alloc_new_symbol(sctx, L"lambda", 6);
+    if(*lambda_reference.value == NULL) {
+        return 1;
+    }
+    
+    *body_reference.value = alloc_new_pair(sctx, function_arguments, function_body);
+    if(*body_reference.value == NULL) {
+        return 1;
+    }
+    
+    *body_reference.value = alloc_new_pair(sctx, *lambda_reference.value, *body_reference.value);
+    if(*body_reference.value == NULL) {
+        return 1;
+    }
+    
+    *expression = *body_reference.value;
+    
     return 0;
 }

@@ -32,7 +32,7 @@ struct sctx {
 
 struct mem_reference {
     struct sexpression ** key;
-    void ** value;
+    struct sexpression ** value;
 };
 
 #define HEAP_MIN_SIZE 128
@@ -56,6 +56,9 @@ create_stack_reference (struct sctx * sctx, wchar_t * wcstr, size_t len, struct 
 
 extern int
 create_protected_reference (struct sctx * sctx, wchar_t * wcstr, size_t len, struct mem_reference * reference);
+
+extern int
+create_temporary_reference (struct sctx * sctx, struct mem_reference * reference);
 
 extern struct sexpression * 
 alloc_new_pair(struct sctx * sctx, struct sexpression * car, struct sexpression * cdr);
