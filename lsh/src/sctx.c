@@ -10,6 +10,10 @@
 #include "sctx.h"
 #include "svisitor.h"
 
+#ifdef putwchar
+#   undef putwchar
+#endif
+
 static int load_array_to_sexpr(struct sctx * sctx, struct sexpression ** list, char ** array);
 static void load_primitives(struct sctx * sctx);
 static wchar_t * convert_to_wcstr(const char * src);
@@ -90,7 +94,8 @@ create_new_sctx(char **argv, char **envp) {
             .size = HEAP_MIN_SIZE,
             .load = 0,
             .data = heap,
-        }
+        },
+        .print_char = putwchar
     };
     
     
@@ -172,29 +177,20 @@ static wchar_t * convert_to_wcstr(const char * src) {
     return wcstr;
 }
 
-static void print_boolean_primitive(void * ptr);
-
-static struct sprimitive boolean_primitive_handler = {
-    .print=print_boolean_primitive
-};
-
-static wchar_t * T = L"#t";
-static wchar_t * F = L"#f";
-
-static void print_boolean_primitive(void * ptr) {
-    wprintf(L"%ls", (wchar_t *) ptr);
-}
 
 static void load_primitives(struct sctx * sctx) {
     struct mem_reference reference;
-    struct sexpression * TRUE_PRIMITIVE = alloc_new_primitive(sctx, T, &boolean_primitive_handler);
-    struct sexpression * FALSE_PRIMITIVE = alloc_new_primitive(sctx, F, &boolean_primitive_handler);
+    create_protected_reference (sctx, L"#t", 2, &reference);
+    *reference.value = *reference.key;
+    create_protected_reference (sctx, L"#f", 2, &reference);
+    *reference.value = NULL;
     
-    create_protected_reference (sctx, T, 2, &reference);
-    *reference.value = TRUE_PRIMITIVE;
-    create_protected_reference (sctx, F, 2, &reference);
-    *reference.value = FALSE_PRIMITIVE;
-    
+    create_protected_reference (sctx, L"#nl", 3, &reference);
+#ifdef _WIN32
+    *reference.value = alloc_new_string(sctx, L"\r\n", 2);
+#else
+    *reference.value = alloc_new_string(sctx, L"\n", 1);
+#endif    
 }
 
 int create_protected_reference (struct sctx * sctx, wchar_t * wcstr, size_t len, struct mem_reference * reference) {

@@ -9,7 +9,7 @@ static inline size_t stmin(size_t a, size_t b);
 static unsigned long compute_hashcode(wchar_t * value, size_t len);
 static struct sexpression *
 sexpr_create_value(wchar_t * cstr, size_t len, enum sexpression_type type);
-static void print_fn_ptr(void * ptr);
+static void print_fn_ptr(void * ptr, void (*write_string)(wchar_t *, size_t));
 static int compare_fn_ptr(void * a, void * b);
 
 
@@ -114,7 +114,6 @@ sexpr_create_primitive(void * ptr, struct sprimitive * handler) {
 struct sprimitive function_handler = {
     .destructor = NULL,
     .print = print_fn_ptr,
-    .print = NULL,
     .visit = NULL,
     .mark_reachable = NULL,
     .is_marked = NULL,
@@ -483,8 +482,10 @@ static inline size_t stmin(size_t a, size_t b) {
     return a > b ? b : a;
 }
 
-static void print_fn_ptr(void * ptr) {
-    wprintf(L"#function %p", ptr);
+static void print_fn_ptr(void * ptr, void (*write_string)(wchar_t *, size_t)) {
+    wchar_t buffer[16+sizeof(ptr)*2] = {0};
+    swprintf(buffer, sizeof(buffer), L"#function %p", ptr);
+    write_string(buffer, wcslen(buffer));
 }
 
 static int compare_fn_ptr(void * a, void * b) {

@@ -38,7 +38,7 @@ typedef enum sexpression_result
 
 struct sprimitive {
     void (*destructor)(void *);
-    void (*print)(void *);
+    void (*print)(void *, void (*write_string)(wchar_t *, size_t));
     void (*visit)(void *);
     void (*mark_reachable)(void *, unsigned char);
     int (*is_marked)(void *, unsigned char);

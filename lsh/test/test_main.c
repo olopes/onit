@@ -1,6 +1,8 @@
 #include "test_definitions.h"
+#include <locale.h>
+#include <stdlib.h>
 #include <stdio.h>
-
+#include <wchar.h>
 
 /* injected automatically by the linker script */
 extern struct LshUnitTest __start_lshtest;
@@ -202,7 +204,7 @@ static int _run_group_teardown(void ** state) {
 __attribute__((weak))
 int main (int argc, char ** argv)
 {
-
+    setlocale(LC_CTYPE, "");
     discover_tests();
     
     int num_tests_failed =

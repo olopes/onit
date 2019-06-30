@@ -13,4 +13,6 @@ extern sexpression_callable fn_lambda;
 
 extern sexpression_callable fn_procedure;
 
+extern sexpression_callable fn_echo;
+
 #endif
