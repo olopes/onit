@@ -8,7 +8,7 @@ enum sexpression_result
 fn_procedure_step(struct sctx * sctx, struct sexpression ** result, struct sexpression * expression);
 
 struct core_function {
-    char * name;
+    wchar_t * name;
     sexpression_callable fn_ptr;
 } __attribute__((aligned(64)));
 
@@ -18,7 +18,7 @@ static enum sexpression_result \
 _fn_ ## fn_name(struct sctx *, struct sexpression **, struct sexpression *, struct sexpression *); \
 sexpression_callable fn_ ## fn_name = _fn_ ## fn_name; \
 struct core_function  __attribute__ ((section ("lsh_fn"))) _def ## fn_name = { \
-    .name = #fn_name , \
+    .name = L ## #fn_name , \
     .fn_ptr = _fn_ ## fn_name \
 }; \
 static enum sexpression_result \
