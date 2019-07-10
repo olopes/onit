@@ -9,11 +9,13 @@
 #include "aa_tree.h"
 #include "sctx.h"
 #include "svisitor.h"
+#include "core_functions.h"
 
 #ifdef putwchar
 #   undef putwchar
 #endif
 
+static struct sctx_config coalesce_config(struct sctx_config * configuration);
 static int load_array_to_sexpr(struct sctx * sctx, struct sexpression ** list, char ** array);
 static void load_primitives(struct sctx * sctx);
 static wchar_t * convert_to_wcstr(const char * src);
@@ -21,8 +23,8 @@ static void free_heap_contents (struct mem_heap * heap);
 static int record_new_object(struct sctx * sctx, struct sexpression * obj);
 static void recycle(struct sctx * sctx);
 static void free_unvisited_references(struct mem_heap * heap);
-static void grow_heap_if_necessary(struct mem_heap * heap);
-static inline int heap_should_grow(struct mem_heap * heap);
+static void grow_heap_if_necessary(struct sctx * sctx);
+static inline int heap_should_grow(struct sctx * sctx);
 static void mark_reachable_references_cb (void * sctx_ptr, struct sexpression * key, void * reference);
 static int 
 create_reference(struct shash_namespace * namespace, struct sexpression * name, struct mem_reference * reference);
@@ -56,27 +58,27 @@ static struct sprimitive shash_namespace_handler = {
     .compare=NULL
 };
 
-
-
 struct sctx * 
-create_new_sctx(char **argv, char **envp) {
+create_new_sctx(struct sctx_config * configuration) {
     struct sctx * sctx;
     struct sexpression ** heap;
+    struct sctx_config config = coalesce_config(configuration);
     
     sctx = (struct sctx *) malloc(sizeof(struct sctx));
     if(sctx == NULL) {
         return NULL;
     }
     
-    heap = (struct sexpression **) malloc(sizeof(struct sexpression *) * HEAP_MIN_SIZE);
+    heap = (struct sexpression **) malloc(sizeof(struct sexpression *) * config.heap_min_size);
     if(heap == NULL) {
         free(sctx);
         return NULL;
     }
     
-    memset(heap, 0, sizeof(struct sexpression *) * HEAP_MIN_SIZE);
+    memset(heap, 0, sizeof(struct sexpression *) * config.heap_min_size);
     
     *sctx = (struct sctx) {
+        .configuration = config,
         .protected_namespace = {
             .table = {
                 .size=0,
@@ -91,7 +93,7 @@ create_new_sctx(char **argv, char **envp) {
         .in_load = NULL,
         .heap = (struct mem_heap) {
             .visit = 0,
-            .size = HEAP_MIN_SIZE,
+            .size = config.heap_min_size,
             .load = 0,
             .data = heap,
         },
@@ -113,13 +115,42 @@ create_new_sctx(char **argv, char **envp) {
     /* TODO extract function  ? */
     struct mem_reference reference;
     create_global_reference(sctx, ARGUMENTS_SYMBOL_NAME, ARGUMENTS_SYMBOL_NAME_LENGTH, &reference);
-    load_array_to_sexpr(sctx, (struct sexpression **) reference.value, argv);
+    load_array_to_sexpr(sctx, (struct sexpression **) reference.value, config.argv);
     create_global_reference(sctx, ENVIRONMENT_SYMBOL_NAME, ENVIRONMENT_SYMBOL_NAME_LENGTH, &reference);
-    load_array_to_sexpr(sctx, (struct sexpression **) reference.value, envp);
+    load_array_to_sexpr(sctx, (struct sexpression **) reference.value, config.envp);
     
     return sctx;
 }
 
+static struct sctx_config config_prototype = {
+    .argv = NULL,
+    .envp = NULL,
+    .heap_min_size = 128,
+    .heap_max_size = 131072,
+    .register_static_functions = 1,
+    .register_dynamic_functions = 1
+};    
+
+
+static struct sctx_config coalesce_config(struct sctx_config * configuration) {
+    struct sctx_config normalized;
+    
+    if (configuration == NULL) {
+        return config_prototype;
+    }
+    
+    normalized = *configuration;
+    
+    if (normalized.heap_min_size == 0) {
+        normalized.heap_min_size = config_prototype.heap_min_size;
+    }
+    
+    if (normalized.heap_max_size == 0) {
+        normalized.heap_max_size = config_prototype.heap_max_size;
+    }
+    
+    return normalized;
+}
 
 
 static int load_array_to_sexpr(struct sctx * sctx, struct sexpression ** list_ptr, char ** array) {
@@ -178,7 +209,27 @@ static wchar_t * convert_to_wcstr(const char * src) {
 }
 
 
+
+/* TODO move this to another file? how to preserve the static nature? */
+
+static void register_primitive_symbols(struct sctx * sctx);
+static void discover_static_functions(struct sctx * sctx);
+static void discover_dynamic_loaded_functions(struct sctx * sctx);
+
+
 static void load_primitives(struct sctx * sctx) {
+    register_primitive_symbols(sctx);
+    
+    if (sctx->configuration.register_static_functions) {
+        discover_static_functions(sctx);
+    }
+    
+    if (sctx->configuration.register_dynamic_functions) {
+        discover_dynamic_loaded_functions(sctx);
+    }
+}
+
+static void register_primitive_symbols(struct sctx * sctx) {
     struct mem_reference reference;
     create_protected_reference (sctx, L"#t", 2, &reference);
     *reference.value = *reference.key;
@@ -190,8 +241,37 @@ static void load_primitives(struct sctx * sctx) {
     *reference.value = alloc_new_string(sctx, L"\r\n", 2);
 #else
     *reference.value = alloc_new_string(sctx, L"\n", 1);
-#endif    
+#endif
 }
+
+// load from linker scripts
+
+/* injected automatically by the linker script */
+extern struct core_function_definition __start_lsh_fn;
+extern struct core_function_definition __stop_lsh_fn;
+
+// TODO error checks
+static void discover_static_functions(struct sctx * sctx) {
+    struct core_function_definition const * const start = &__start_lsh_fn;
+    struct core_function_definition const * const end = &__stop_lsh_fn;
+    struct core_function_definition const * ptr;
+    struct mem_reference reference;
+
+    for(ptr = start; ptr < end; ptr++) {
+        create_protected_reference (sctx, ptr->name, wcslen(ptr->name), &reference);
+        *reference.value = alloc_new_function(sctx, ptr->fn_ptr, NULL);
+    }
+}
+
+
+// load from dl_open
+
+static void discover_dynamic_loaded_functions(struct sctx * sctx) {
+    /* TODO not implement */
+}
+
+
+
 
 int create_protected_reference (struct sctx * sctx, wchar_t * wcstr, size_t len, struct mem_reference * reference) {
     struct sexpression * name;
@@ -563,7 +643,7 @@ static void recycle(struct sctx * sctx) {
     free_unvisited_references(&sctx->heap);
     
     /* grow heap  if load >= 50% of the heap size */
-    grow_heap_if_necessary(&sctx->heap);
+    grow_heap_if_necessary(sctx);
     
 }
 
@@ -597,23 +677,23 @@ static void free_unvisited_references(struct mem_heap * heap) {
 }
 
 
-static void grow_heap_if_necessary(struct mem_heap * heap) {
+static void grow_heap_if_necessary(struct sctx * sctx) {
     struct sexpression ** data;
     size_t new_size;
     
-    if(heap_should_grow(heap)) {
-        new_size = heap->size << 1;
-        data = (struct sexpression **) realloc(heap->data, sizeof(struct sexpression *)*new_size);
+    if(heap_should_grow(sctx)) {
+        new_size = sctx->heap.size << 1;
+        data = (struct sexpression **) realloc(sctx->heap.data, sizeof(struct sexpression *)*new_size);
         if(data != NULL) {
-            memset(data, 0, sizeof(struct sexpression *) * (new_size - heap->load ));
-            heap->size = new_size;
-            heap->data = data;
+            memset(data, 0, sizeof(struct sexpression *) * (new_size - sctx->heap.load ));
+            sctx->heap.size = new_size;
+            sctx->heap.data = data;
         }
     }
 }
 
-static inline int heap_should_grow(struct mem_heap * heap) {
-    return (heap->size < HEAP_MIN_SIZE && heap->load*2 > heap->size );
+static inline int heap_should_grow(struct sctx * sctx) {
+    return (sctx->heap.size < sctx->configuration.heap_min_size && sctx->heap.load*2 > sctx->heap.size );
 }
 
 static void mark_reachable_references_cb (void * visitp, struct sexpression * key, void * refp) {

@@ -46,7 +46,7 @@ UnitTest(fn_echo_should_write_hello_world) {
     struct sexpression * result;
     struct sctx * sctx;
     
-    sctx = create_new_sctx(NULL, NULL);
+    sctx = create_new_sctx(NULL);
     arguments = _sxpr(sctx, L"(hello (\"wat\" . \"wat\") \"world\")");
     sctx->print_char = mock_print_char;
     expected_str = L"hello world\n";

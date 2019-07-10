@@ -19,7 +19,7 @@ UnitTest(eval_should_return_null_when_either_parameter_is_null) {
 UnitTest(eval_should_return_parameter_sexpression_when_parameter_sexpression_is_string) {
     struct sexpression dummy_sexpr;
     struct sexpression * result;
-    struct sctx * sctx = create_new_sctx(NULL, NULL);
+    struct sctx * sctx = create_new_sctx(NULL);
     
     dummy_sexpr.type=ST_STRING;
     
@@ -34,7 +34,7 @@ UnitTest(eval_should_return_referenced_value_in_sctx_when_parameter_is_a_symbol)
     struct mem_reference ref1;
     struct sexpression * symbol;
     struct sexpression * result;
-    struct sctx * sctx = create_new_sctx(NULL, NULL);
+    struct sctx * sctx = create_new_sctx(NULL);
 
     create_global_reference(sctx, L"ref", 3, &ref1);
     *ref1.value = alloc_new_string(sctx, L"val", 3);
@@ -54,7 +54,7 @@ UnitTest(eval_should_call_function_when_parameter_is_a_list_and_head_references_
     struct mem_reference ref1;
     struct sexpression * expr;
     struct sexpression * result;
-    struct sctx * sctx = create_new_sctx(NULL, NULL);
+    struct sctx * sctx = create_new_sctx(NULL);
 
     create_global_reference(sctx, L"fn", 2, &ref1);
     *ref1.value = alloc_new_function(sctx, test_function, NULL);
@@ -85,7 +85,7 @@ UnitTest(eval_should_raise_error_when_parameter_is_a_list_and_head_does_not_refe
     struct mem_reference ref1;
     struct sexpression * expr;
     struct sexpression * result;
-    struct sctx * sctx = create_new_sctx(NULL, NULL);
+    struct sctx * sctx = create_new_sctx(NULL);
 
     create_global_reference(sctx, L"ref", 3, &ref1);
     *ref1.value = alloc_new_string(sctx, L"val", 3);

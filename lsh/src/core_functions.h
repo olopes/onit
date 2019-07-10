@@ -7,22 +7,31 @@
 enum sexpression_result 
 fn_procedure_step(struct sctx * sctx, struct sexpression ** result, struct sexpression * expression);
 
-struct core_function {
+struct core_function_definition {
     wchar_t * name;
     sexpression_callable fn_ptr;
 } __attribute__((aligned(64)));
 
 
-#define CoreFunction(fn_name) \
+/**
+ * Signature of the function called after dl_open
+ */
+typedef int (*dl_core_function)(struct core_function_definition *);
+
+
+#define CoreFunctionN(fptr, fname) \
 static enum sexpression_result \
-_fn_ ## fn_name(struct sctx *, struct sexpression **, struct sexpression *, struct sexpression *); \
-sexpression_callable fn_ ## fn_name = _fn_ ## fn_name; \
-struct core_function  __attribute__ ((section ("lsh_fn"))) _def ## fn_name = { \
-    .name = L ## #fn_name , \
-    .fn_ptr = _fn_ ## fn_name \
+_fn_ ## fptr(struct sctx *, struct sexpression **, struct sexpression *, struct sexpression *); \
+sexpression_callable fn_ ## fptr = _fn_ ## fptr; \
+struct core_function_definition  __attribute__ ((section ("lsh_fn"))) _def ## fptr = { \
+    .name = fname , \
+    .fn_ptr = _fn_ ## fptr \
 }; \
 static enum sexpression_result \
-_fn_ ## fn_name(struct sctx * sctx, struct sexpression ** result, struct sexpression * closure, struct sexpression * arguments)
+_fn_ ## fptr(struct sctx * sctx, struct sexpression ** result, struct sexpression * closure, struct sexpression * arguments)
+
+
+#define CoreFunction(fptr) CoreFunctionN(fptr, L ## #fptr)
 
 
 extern sexpression_callable fn_define;

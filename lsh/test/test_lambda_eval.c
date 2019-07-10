@@ -29,7 +29,7 @@ UnitTest(eval_lambda_procedure_should_call_all_nested_functions_and_return_last_
     struct sexpression * result;
     struct sctx * sctx;
     
-    sctx = create_new_sctx(NULL, NULL);
+    sctx = create_new_sctx(NULL);
     
     register_function(sctx, L"lambda", fn_lambda);
     register_function(sctx, L"func1", function1);

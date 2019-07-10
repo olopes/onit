@@ -47,7 +47,7 @@ UnitTest(fn_procedure_should_execute_parameters_in_order_and_return_last_result)
     struct sexpression * result;
     struct sctx * sctx;
     
-    sctx = create_new_sctx(NULL, NULL);
+    sctx = create_new_sctx(NULL);
     
     register_function(sctx, L"lambda", fn_lambda);
     register_function(sctx, L"func1", function1);

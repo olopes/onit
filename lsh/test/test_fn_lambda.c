@@ -22,7 +22,7 @@ static sexpression_callable fn_lambda_closure;
 BeforeAll(extract_lambda_procedure) {
     struct sexpression * result;
     struct sctx * sctx;
-    sctx = create_new_sctx(NULL, NULL);
+    sctx = create_new_sctx(NULL);
     fn_lambda(sctx, &result, NULL, _sxpr(sctx, L"(() \"X\")"));
     fn_lambda_closure = sexpr_function(result);
     release_sctx(sctx);
@@ -61,7 +61,7 @@ UnitTest(fn_lambda_should_return_a_procedural_closure_when_first_argument_is_pai
     struct sexpression * result;
     struct sctx * sctx;
     
-    sctx = create_new_sctx(NULL, NULL);
+    sctx = create_new_sctx(NULL);
     arguments = _sxpr(sctx, L"((arg1 arg2) expr1 expr2)");
 
     assert_return_code(fn_lambda(sctx, &result, NULL, arguments), FN_OK);
@@ -77,7 +77,7 @@ UnitTest(fn_lambda_should_return_a_procedural_closure_when_first_argument_is_sym
     struct sexpression * result;
     struct sctx * sctx;
     
-    sctx = create_new_sctx(NULL, NULL);
+    sctx = create_new_sctx(NULL);
     
     /* arguments stored in the symbol 'args' */
     arguments = _sxpr(sctx, L"(args expr1 expr2)");
@@ -95,7 +95,7 @@ UnitTest(fn_lambda_should_return_a_procedural_closure_when_first_argument_is_nil
     struct sexpression * result;
     struct sctx * sctx;
     
-    sctx = create_new_sctx(NULL, NULL);
+    sctx = create_new_sctx(NULL);
     
     /* no arguments lambda */
     arguments = _sxpr(sctx, L"(() expr1 expr2)");
@@ -114,7 +114,7 @@ UnitTest(fn_lambda_should_raise_error_when_first_argument_is_not_nil_or_symbol_o
     struct sexpression * result;
     struct sctx * sctx;
     
-    sctx = create_new_sctx(NULL, NULL);
+    sctx = create_new_sctx(NULL);
     
     /* string */
     arguments = _sxpr(sctx, L"(\"test\" expr1 expr2)");
@@ -129,7 +129,7 @@ UnitTest(fn_lambda_should_return_a_procedural_closure_when_first_argument_is_lis
     struct sexpression * result;
     struct sctx * sctx;
     
-    sctx = create_new_sctx(NULL, NULL);
+    sctx = create_new_sctx(NULL);
     
     /* capture 1st, 2nd, 4th arguments in specific vars and a list with the remaining */
     arguments = _sxpr(sctx, L"((arg1 arg2 () arg4 . remaining) expr1 expr2)");
@@ -146,7 +146,7 @@ UnitTest(fn_lambda_should_raise_error_when_first_argument_is_list_and_have_eleme
     struct sexpression * result;
     struct sctx * sctx;
     
-    sctx = create_new_sctx(NULL, NULL);
+    sctx = create_new_sctx(NULL);
     
     /* string */
     arguments = _sxpr(sctx, L"((arg1 arg2 () arg3 \"test\") expr1 expr2)");

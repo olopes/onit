@@ -6,6 +6,12 @@
 #include "sparser.h"
 #include "wcstr_sparser_adapter.h"
 
+static struct sctx_config test_config = {
+    .argv = NULL,
+    .envp = NULL,
+    .register_static_functions = 0
+};
+    
 static struct sexpression * _sxpr(struct sctx * sctx, wchar_t * str) {
     struct sexpression * sexpr;
     struct sparser_stream * stream;
@@ -40,7 +46,7 @@ UnitTest(fn_define_should_eval_expression_and_save_the_result_into_global_contex
     struct sexpression * actual_value;
     struct sctx * sctx;
     
-    sctx = create_new_sctx(NULL, NULL);
+    sctx = create_new_sctx(&test_config);
     arguments = _sxpr(sctx, L"(test \"value\")");
     enter_namespace(sctx);
     
@@ -65,7 +71,7 @@ UnitTest(fn_define_should_raise_error_when_first_argument_is_not_symbol) {
     struct sexpression * result;
     struct sctx * sctx;
     
-    sctx = create_new_sctx(NULL, NULL);
+    sctx = create_new_sctx(&test_config);
     
     arguments = _sxpr(sctx, L"(\"test\" \"value\")");
     
@@ -80,7 +86,7 @@ UnitTest(fn_define_should_raise_error_when_there_no_values) {
     struct sexpression * result;
     struct sctx * sctx;
     
-    sctx = create_new_sctx(NULL, NULL);
+    sctx = create_new_sctx(&test_config);
     
     arguments = _sxpr(sctx, L"(\"test\")");
 
@@ -95,7 +101,7 @@ UnitTest(fn_define_should_raise_error_when_there_more_than_one_values) {
     struct sexpression * result;
     struct sctx * sctx;
     
-    sctx = create_new_sctx(NULL, NULL);
+    sctx = create_new_sctx(&test_config);
 
     arguments = _sxpr(sctx, L"(test \"value1\" \"value2\")");
 
@@ -116,7 +122,7 @@ UnitTest(fn_define_should_create_implicit_lambda_when_expression_head_is_a_list)
     struct sexpression * actual_value;
     struct sctx * sctx;
     
-    sctx = create_new_sctx(NULL, NULL);
+    sctx = create_new_sctx(&test_config);
     /* inject mocked lambda */
     create_global_reference (sctx, L"lambda", 6, &mem_ref);
     *mem_ref.value = alloc_new_function(sctx, _mock_lambda, NULL);
@@ -148,7 +154,7 @@ UnitTest(fn_define_should_create_implicit_lambda_when_expression_head_is_a_pair)
     struct sexpression * actual_value;
     struct sctx * sctx;
     
-    sctx = create_new_sctx(NULL, NULL);
+    sctx = create_new_sctx(&test_config);
     /* inject mocked lambda */
     create_global_reference (sctx, L"lambda", 6, &mem_ref);
     *mem_ref.value = alloc_new_function(sctx, _mock_lambda, NULL);

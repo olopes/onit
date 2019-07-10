@@ -1,7 +1,8 @@
 #ifndef __SCTX_H__
 #define __SCTX_H__
 
-#include <stddef.h>
+#include <wchar.h>
+#include <stdint.h>
 #include "sexpr.h"
 #include "ostr.h"
 #include "shash.h"
@@ -22,7 +23,18 @@ struct shash_namespace {
     struct sexpression ** temp_entries;
 };
 
+struct sctx_config {
+    char **argv;
+    char **envp;
+    /* not implemented yet... */
+    size_t heap_min_size;
+    size_t heap_max_size;
+    unsigned int register_static_functions : 1;
+    unsigned int register_dynamic_functions : 1;
+};    
+
 struct sctx {
+    struct sctx_config configuration;
     struct shash_namespace protected_namespace;
     struct shash_namespace * global_namespace;
     struct sexpression * namespaces;
@@ -36,12 +48,9 @@ struct mem_reference {
     struct sexpression ** value;
 };
 
-#define HEAP_MIN_SIZE 128
-#define HEAP_MAX_SIZE 131072
-
 
 extern struct sctx * 
-create_new_sctx(char **argv, char **envp);
+create_new_sctx(struct sctx_config * configuration);
 
 extern void 
 release_sctx(struct sctx * sctx);

@@ -14,9 +14,14 @@ static char * environment[4] = {
     NULL
 };
 
+static struct sctx_config test_config = {
+    .argv = arguments,
+    .envp = environment
+};
+
 UnitTest(sctx_do_nothing)
 {
-    struct sctx * sctx = create_new_sctx(arguments, environment);
+    struct sctx * sctx = create_new_sctx(&test_config);
     release_sctx(sctx);
     assert_true(1);
 }
@@ -26,7 +31,7 @@ UnitTest(sctx_register_new_symbol)
     struct sexpression * key;
     struct sexpression * value;
     struct mem_reference reference;
-    struct sctx * sctx = create_new_sctx(arguments, environment);
+    struct sctx * sctx = create_new_sctx(&test_config);
     
     /* add the new symbol */
     create_stack_reference(sctx, L"VAR_NAME", 8, &reference);
@@ -54,7 +59,7 @@ UnitTest(sctx_should_call_gc_when_heap_is_full)
     struct mem_reference reference;
     int test_symbol_found;
     int last_symbol_found;
-    struct sctx * sctx = create_new_sctx(arguments, environment);
+    struct sctx * sctx = create_new_sctx(&test_config);
     wchar_t value_text[32];
     size_t i;
     
@@ -105,7 +110,7 @@ UnitTest(move_to_heap_should_put_the_give_sexpression_into_the_heap_avoiding_the
     int sexpr1_found;
     int sexpr2_found;
     int sexpr3_found;
-    struct sctx * sctx = create_new_sctx(arguments, environment);
+    struct sctx * sctx = create_new_sctx(&test_config);
     wchar_t value_text[32];
     size_t i;
     
@@ -149,7 +154,7 @@ UnitTest(lookup_name_should_search_primitives_and_all_namespaces) {
     struct mem_reference ref2;
     struct mem_reference ref3;
     
-    struct sctx * sctx = create_new_sctx(arguments, environment);
+    struct sctx * sctx = create_new_sctx(&test_config);
     enter_namespace(sctx);
 
     assert_int_equal( create_protected_reference (sctx, L"pr1", 3, &ref1), SCTX_OK);
@@ -178,7 +183,7 @@ UnitTest(lookup_name_should_return_null_when_reference_out_of_scope) {
     struct mem_reference ref2;
     struct mem_reference ref3;
     
-    struct sctx * sctx = create_new_sctx(arguments, environment);
+    struct sctx * sctx = create_new_sctx(&test_config);
     enter_namespace(sctx);
 
     assert_int_equal( create_protected_reference (sctx, L"pr1", 3, &ref1), SCTX_OK);
@@ -207,7 +212,7 @@ UnitTest(lookup_name_should_search_primitives_first) {
     struct mem_reference ref2;
     struct mem_reference ref3;
     
-    struct sctx * sctx = create_new_sctx(arguments, environment);
+    struct sctx * sctx = create_new_sctx(&test_config);
     enter_namespace(sctx);
 
     assert_int_equal( create_protected_reference (sctx, L"pr1", 3, &ref1), SCTX_OK);
@@ -234,7 +239,7 @@ UnitTest(create_temporary_reference_should_return_SCTX_ERROR_when_sctx_is_NULL)
 
 UnitTest(create_temporary_reference_should_return_SCTX_ERROR_when_reference_is_NULL)
 {
-    struct sctx * sctx = create_new_sctx(arguments, environment);
+    struct sctx * sctx = create_new_sctx(&test_config);
 
     assert_return_code(create_temporary_reference(sctx, NULL), SCTX_ERROR);
 
@@ -244,7 +249,7 @@ UnitTest(create_temporary_reference_should_return_SCTX_ERROR_when_reference_is_N
 UnitTest(create_temporary_reference_should_grow_temporary_references_array_when_new_temporary_reference_is_created)
 {
     struct mem_reference reference;
-    struct sctx * sctx = create_new_sctx(arguments, environment);
+    struct sctx * sctx = create_new_sctx(&test_config);
 
     assert_return_code(create_temporary_reference(sctx, &reference), SCTX_OK);
     
@@ -257,7 +262,7 @@ UnitTest(create_temporary_reference_should_grow_temporary_references_array_when_
 UnitTest(create_temporary_reference_should_populate_reference_with_location_to_store_reference)
 {
     struct mem_reference reference;
-    struct sctx * sctx = create_new_sctx(arguments, environment);
+    struct sctx * sctx = create_new_sctx(&test_config);
     struct sexpression * object = alloc_new_string(sctx, L"REF", 3);
 
     assert_return_code(create_temporary_reference(sctx, &reference), SCTX_OK);
@@ -272,7 +277,7 @@ UnitTest(create_temporary_reference_should_store_reference_topmost_stack_entry)
 {
     struct mem_reference reference;
     struct shash_namespace * namespace;
-    struct sctx * sctx = create_new_sctx(arguments, environment);
+    struct sctx * sctx = create_new_sctx(&test_config);
     enter_namespace(sctx);
 
     assert_return_code(create_temporary_reference(sctx, &reference), SCTX_OK);
@@ -293,7 +298,7 @@ UnitTest(create_temporary_reference_should_protect_object_when_gc_runs)
 {
     struct mem_reference reference;
     int referenced_found = 0;
-    struct sctx * sctx = create_new_sctx(arguments, environment);
+    struct sctx * sctx = create_new_sctx(&test_config);
     struct sexpression * referenced_object = alloc_new_string(sctx, L"REF", 3);
     struct sexpression * unreferenced_object = alloc_new_string(sctx, L"UNREF", 5);
     
@@ -315,6 +320,28 @@ UnitTest(create_temporary_reference_should_protect_object_when_gc_runs)
     }
     
     assert_true(referenced_found);
+
+    release_sctx(sctx);
+}
+
+#include "core_functions.h"
+
+CoreFunctionN(fake, L"fake-fn?") {
+    /* do nothing */
+    return FN_OK;
+}
+
+UnitTest(create_new_sctx_should_locate_and_register_all_core_functions)
+{
+    struct sctx_config register_fn_test_config = {
+        .argv = arguments,
+        .envp = environment,
+        .register_static_functions = 1
+    };
+    struct sctx * sctx = create_new_sctx(&register_fn_test_config);
+    
+    assert_ptr_equal(fn_fake, sexpr_function(lookup_name(sctx, alloc_new_symbol(sctx, L"fake-fn?", 8))));
+    assert_ptr_equal(fn_define, sexpr_function(lookup_name(sctx, alloc_new_symbol(sctx, L"define", 6))));
 
     release_sctx(sctx);
 }
