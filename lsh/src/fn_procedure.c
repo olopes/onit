@@ -2,16 +2,10 @@
 #include "core_functions.h"
 
 static enum sexpression_result 
-_fn_procedure(struct sctx * sctx, struct sexpression ** result, struct sexpression * closure, struct sexpression * parameters);
-static enum sexpression_result 
 apply_sexpr(struct sctx * sctx, struct sexpression ** result, struct sexpression * fn,  struct sexpression * args);
 
 
-sexpression_callable fn_procedure = _fn_procedure;
-
-
-static enum sexpression_result 
-_fn_procedure(struct sctx * sctx, struct sexpression ** result, struct sexpression * closure, struct sexpression * parameters) {
+CoreFunction(procedure) {
     (void) closure;
     enum sexpression_result return_value;
     struct sexpression * iter;
@@ -24,12 +18,12 @@ _fn_procedure(struct sctx * sctx, struct sexpression ** result, struct sexpressi
         return FN_NULL_RESULT;
     }
     
-    if (parameters == NULL) {
+    if (arguments == NULL) {
         /* send pretty error message? */
         return FN_ERROR;
     }
     
-    iter = parameters;
+    iter = arguments;
     
     while(iter) {
         struct sexpression * expression = sexpr_car(iter);

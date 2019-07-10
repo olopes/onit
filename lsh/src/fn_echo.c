@@ -5,18 +5,12 @@
 #include "sexpr.h"
 #include "core_functions.h"
 
-static enum sexpression_result 
-_fn_echo(struct sctx * sctx, struct sexpression ** result, struct sexpression * closure, struct sexpression * parameters);
-
 static size_t
 print_sexpression(struct sctx * sctx, struct sexpression * input, size_t printed);
 static void write_string(struct sctx * sctx, wchar_t * str, size_t length);
 
-sexpression_callable fn_echo = _fn_echo;
-
-static enum sexpression_result 
-_fn_echo(struct sctx * sctx, struct sexpression ** result, struct sexpression * closure, struct sexpression * parameters) {
-    struct sexpression * iter = parameters;
+CoreFunction(echo) {
+    struct sexpression * iter = arguments;
     
     if (sctx == NULL) {
         return FN_NULL_SCTX;

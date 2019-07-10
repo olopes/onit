@@ -3,8 +3,6 @@
 #include "sctx.h"
 #include "eval.h"
 
-static enum sexpression_result 
-_fn_define(struct sctx * sctx, struct sexpression ** result, struct sexpression * body, struct sexpression * arguments );
 static int arguments_are_invalid(struct sexpression * arguments);
 static int get_name_symbol(struct sexpression * arguments, struct sexpression ** name);
 static enum sexpression_result
@@ -14,10 +12,7 @@ store_value_in_context(struct sctx * sctx, struct sexpression * name_symbol, str
 static int 
 create_lambda_expression (struct sctx * sctx, struct sexpression ** expression, struct sexpression * definition, struct sexpression * function_body);
 
-sexpression_callable fn_define = _fn_define;
-
-static enum sexpression_result 
-_fn_define(struct sctx * sctx, struct sexpression ** result, struct sexpression * body, struct sexpression * arguments ) {
+CoreFunction(define) {
     struct sexpression * name_symbol;
     enum sexpression_result return_value;
     

@@ -2,8 +2,6 @@
 #include "core_functions.h"
 
 static enum sexpression_result 
-_fn_lambda_compiler(struct sctx * sctx, struct sexpression ** result, struct sexpression * closure, struct sexpression * parameters);
-static enum sexpression_result 
 _fn_lambda_evaluator(struct sctx * sctx, struct sexpression ** result, struct sexpression * closure, struct sexpression * parameters);
 static int
 closure_arguments_are_valid(struct sexpression * closure_arguments);
@@ -15,11 +13,7 @@ static int
 bind_remaining_values(struct sctx *, struct sexpression *, struct sexpression *);
 
 
-sexpression_callable fn_lambda = _fn_lambda_compiler;
-
-
-static enum sexpression_result 
-_fn_lambda_compiler(struct sctx * sctx, struct sexpression ** result, struct sexpression * closure, struct sexpression * parameters) {
+CoreFunction(lambda) {
     enum sexpression_result return_value;
     
     if (sctx == NULL) {
@@ -30,13 +24,13 @@ _fn_lambda_compiler(struct sctx * sctx, struct sexpression ** result, struct sex
         return FN_NULL_RESULT;
     }
     
-    if (!sexpr_is_cons(parameters)) {
+    if (!sexpr_is_cons(arguments)) {
         /* store descriptive error in result */
         return FN_ERROR;
     }
     
-    if (closure_arguments_are_valid(sexpr_car(parameters))) {
-        *result = alloc_new_function(sctx, _fn_lambda_evaluator, parameters);
+    if (closure_arguments_are_valid(sexpr_car(arguments))) {
+        *result = alloc_new_function(sctx, _fn_lambda_evaluator, arguments);
         return_value = FN_OK;
     } else {
         /* store descriptive error in result */
