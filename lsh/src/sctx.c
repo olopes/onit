@@ -1,3 +1,5 @@
+#define _XOPEN_SOURCE 700
+#include <features.h>
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
@@ -18,6 +20,7 @@
 static struct sctx_config coalesce_config(struct sctx_config * configuration);
 static int load_array_to_sexpr(struct sctx * sctx, struct sexpression ** list, char ** array);
 static void load_primitives(struct sctx * sctx);
+static void discover_functions(struct sctx * sctx, struct core_function_definition const * const start, struct core_function_definition const * const end);
 static wchar_t * convert_to_wcstr(const char * src);
 static void free_heap_contents (struct mem_heap * heap);
 static int record_new_object(struct sctx * sctx, struct sexpression * obj);
@@ -33,7 +36,9 @@ move_to_heap_visitor(struct sexpression * sexpr, struct scallback * callback);
 
 #ifdef UNIT_TESTING
 static void heap_sanity_check(struct mem_heap * heap, struct sexpression * obj);
+#  ifdef DUMP_HEAP_CONTENTS
 static void print_heap_contents(struct mem_heap * heap, char * msg);
+#  endif
 #endif
 
 /* some static/constant names */
@@ -219,7 +224,7 @@ static void discover_dynamic_loaded_functions(struct sctx * sctx);
 
 static void load_primitives(struct sctx * sctx) {
     register_primitive_symbols(sctx);
-    
+
     if (sctx->configuration.register_static_functions) {
         discover_static_functions(sctx);
     }
@@ -252,8 +257,11 @@ extern struct core_function_definition __stop_lsh_fn;
 
 // TODO error checks
 static void discover_static_functions(struct sctx * sctx) {
-    struct core_function_definition const * const start = &__start_lsh_fn;
-    struct core_function_definition const * const end = &__stop_lsh_fn;
+    discover_functions(sctx, &__start_lsh_fn, &__stop_lsh_fn);
+}
+
+
+static void discover_functions(struct sctx * sctx, struct core_function_definition const * const start, struct core_function_definition const * const end) {
     struct core_function_definition const * ptr;
     struct mem_reference reference;
 
@@ -263,15 +271,102 @@ static void discover_static_functions(struct sctx * sctx) {
     }
 }
 
-
 // load from dl_open
+// TODO move somewhere else
+#include <dlfcn.h>
+#include <libgen.h>
+#include <dirent.h>
+#include <errno.h>
+
+struct dynamic_library {
+    void * handle;
+    char * path;
+};
+
+static void load_dynamic_libraries_in_dir (struct sctx * sctx, char * basepath);
+static void discover_functions_in_library(struct sctx * sctx, struct dynamic_library * lib);
 
 static void discover_dynamic_loaded_functions(struct sctx * sctx) {
-    /* TODO not implement */
+
+    /* TODO if stuff according to OS */
+    load_dynamic_libraries_in_dir (sctx, "./lib");
+    load_dynamic_libraries_in_dir (sctx, "~/.lsh/lib");
+    /* ignore (basename)/bin if . is same as (basename) */
+    
+    if (sctx->configuration.argv != NULL && sctx->configuration.argv[0] != NULL) {
+        char * cwd = realpath(".", NULL);
+        size_t cwd_size = strlen(cwd);
+    
+        char * bin_name = realpath(sctx->configuration.argv[0], NULL);
+        char * bin_basedir_end = strrchr(bin_name, '/');
+        size_t bin_size = bin_basedir_end - bin_name;
+    
+        
+        if (bin_size != cwd_size || strncmp(cwd, bin_name, cwd_size) != 0) {
+            char * bin_lib = (char*) malloc(sizeof(char) * (bin_size + 5));
+            snprintf(bin_lib, (bin_size + 5), "%.*s/bin", (int)bin_size, bin_name);
+            load_dynamic_libraries_in_dir (sctx, bin_lib);
+            free(bin_lib);
+        }
+        /* find_dynamic_libraries_in_dir(sctx, "$PREFIX/lib/lsh"); */ 
+        
+        free(bin_name);
+        free(cwd);
+    }
+}
+    
+
+static void load_dynamic_libraries_in_dir (struct sctx * sctx, char * basepath) {
+    DIR *dirp;
+    struct dirent *dp;
+    size_t base_len = strlen(basepath);
+    
+    if ((dirp = opendir(basepath)) == NULL) return; /* couldn't open dir, quit. */
+    
+    do {
+        errno = 0;
+        if ((dp = readdir(dirp)) == NULL) break;
+
+        size_t name_len = strlen(dp->d_name);
+        if (name_len < 4) continue;
+        
+        /* doesn't end with .so */
+        if (strcmp(dp->d_name+(name_len-4), ".so") != 0) continue;
+
+        char * file_name = (char *) malloc(sizeof(char)*(base_len + name_len + 2));
+        
+        snprintf(file_name, (base_len + name_len + 2), "%s/%s", basepath, dp->d_name);
+        
+        struct dynamic_library * lib_reference = (struct dynamic_library*) malloc(sizeof(struct dynamic_library));
+        *lib_reference = (struct dynamic_library){
+            .handle = dlopen(file_name, RTLD_LAZY | RTLD_LOCAL),
+            .path = file_name
+        };
+        
+        discover_functions_in_library(sctx, lib_reference);
+        
+        sexpr_push(&sctx->libraries, (struct sexpression *) lib_reference);
+        
+    } while (dp != NULL);
+    
+    (void) closedir(dirp);
+    return;
+    
+}
+
+static void discover_functions_in_library(struct sctx * sctx, struct dynamic_library * lib) {
+    if(lib->handle == NULL) return;
+    struct core_function_definition * start_lsh_fn = dlsym(lib->handle, "__start_lsh_fn");
+    struct core_function_definition * stop_lsh_fn = dlsym(lib->handle, "__stop_lsh_fn");
+
+    if(start_lsh_fn == NULL || stop_lsh_fn == NULL) return;
+    
+    discover_functions(sctx, start_lsh_fn, stop_lsh_fn);
+
 }
 
 
-
+// end dlopen stuff
 
 int create_protected_reference (struct sctx * sctx, wchar_t * wcstr, size_t len, struct mem_reference * reference) {
     struct sexpression * name;
@@ -651,7 +746,7 @@ static void free_unvisited_references(struct mem_heap * heap) {
     size_t i = 0;
     struct sexpression * sexpr;
 
-#ifdef UNIT_TESTING
+#if defined(UNIT_TESTING) && defined(DUMP_HEAP_CONTENTS)
     print_heap_contents(heap, "Heap before GC");
 #endif
 
@@ -670,7 +765,7 @@ static void free_unvisited_references(struct mem_heap * heap) {
         }
     }
     
-#ifdef UNIT_TESTING
+#if defined(UNIT_TESTING) && defined(DUMP_HEAP_CONTENTS)
     print_heap_contents(heap, "Heap after GC");
 #endif
 
@@ -730,7 +825,7 @@ free_heap_contents (struct mem_heap * heap) {
     heap->load = 0;
 }
 
-#ifdef UNIT_TESTING
+#if defined(UNIT_TESTING) && defined(DUMP_HEAP_CONTENTS)
 static void print_heap_contents(struct mem_heap * heap, char * msg) {
     size_t i;
     struct sexpression ** data = heap->data;

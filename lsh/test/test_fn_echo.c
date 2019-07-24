@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <wchar.h>
+#include <stdlib.h>
 #include "test_definitions.h"
 #include "assert_sexpr.h"
 #include "core_functions.h"

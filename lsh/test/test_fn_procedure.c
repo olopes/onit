@@ -23,7 +23,6 @@ static int function1_called;
 static int function2_called;
 static int function3_called;
 
-
 UnitTest(fn_procedure_should_return_FN_NULL_SCTX_when_sctx_is_null) {
     struct sexpression * ptr;
     assert_return_code(fn_lambda(NULL, &ptr, NULL, NULL), FN_NULL_SCTX);

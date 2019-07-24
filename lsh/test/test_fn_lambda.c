@@ -1,4 +1,7 @@
 #include <stdio.h>
+#include <wchar.h>
+#include <stdlib.h>
+#include <stddef.h>
 #include "test_definitions.h"
 #include "assert_sexpr.h"
 #include "core_functions.h"
@@ -110,6 +113,7 @@ UnitTest(fn_lambda_should_return_a_procedural_closure_when_first_argument_is_nil
 
 
 UnitTest(fn_lambda_should_raise_error_when_first_argument_is_not_nil_or_symbol_or_pair) {
+    (void)(state);
     struct sexpression * arguments;
     struct sexpression * result;
     struct sctx * sctx;

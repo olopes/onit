@@ -39,6 +39,7 @@ struct sctx {
     struct shash_namespace * global_namespace;
     struct sexpression * namespaces;
     struct sexpression * in_load;
+    struct sexpression * libraries;
     struct mem_heap heap;
     wint_t (*print_char)(wchar_t chr);
 };

@@ -23,7 +23,6 @@ static int function1_called;
 static int function2_called;
 static int function3_called;
 
-
 UnitTest(eval_lambda_procedure_should_call_all_nested_functions_and_return_last_result) {
     struct sexpression * expression;
     struct sexpression * result;

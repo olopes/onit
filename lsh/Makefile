@@ -12,12 +12,12 @@ CMOCKA_ROOT=../cmocka
 
 CFLAGS=-O2 -Wall -pedantic -finput-charset=UTF-8 -fPIC $(DEPFLAGS) -DWEAK_FOR_UNIT_TEST=\ 
 #LDFLAGS=-static 
-LDFLAGS =  
+LDFLAGS = -ldl
 PROD_OBJ = $(patsubst %.c,%.o,$(subst src/,build/,$(wildcard src/*.c))) build/main.c
 
 TEST_CFLAGS =-O0 -g -Wall -pedantic -finput-charset=UTF-8 -fPIC $(DEPFLAGS) -Isrc -I$(CMOCKA_ROOT)/include -include test/test_definitions.h --coverage 
 # TEST_LDFLAGS = -lcmocka -L$(CMOCKA_ROOT)/lib
-TEST_LDFLAGS = ../cmocka/lib/cmocka.o --coverage
+TEST_LDFLAGS = ../cmocka/lib/cmocka.o --coverage -ldl
 
 TESTS_PROD_SRC = $(wildcard src/*.c)
 TESTS_PROD_OBJ = $(patsubst %.c,build/%.o,$(subst src/,test/,$(TESTS_PROD_SRC)))
