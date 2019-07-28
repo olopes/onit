@@ -95,8 +95,8 @@ enter_namespace(struct sctx * sctx);
 extern int 
 leave_namespace(struct sctx * sctx);
 
-extern struct sexpression * 
-lookup_name(struct sctx * sctx, struct sexpression * name);
+extern int 
+lookup_name(struct sctx * sctx, struct sexpression * name, struct sexpression ** value);
 
 extern int
 move_to_heap(struct sctx * sctx, struct sexpression * sexpr);

@@ -28,7 +28,7 @@ TESTS_COV = $(patsubst %.t,%.info,$(TESTS))
 #CC=../tcc/bin/tcc
 CC=gcc
 
-all: build/ostr build/sexpr build/sparse build/lsh check
+all: build/ostr build/sexpr build/sparse build/lsh build/parser_poc_main check
 
 build/main.c:
 	echo 'int MAIN(int a, char ** b); int main(int a, char**b) { return MAIN(a,b); }' > build/main.c
@@ -44,6 +44,9 @@ build/sparse: $(PROD_OBJ)
 
 build/lsh: $(PROD_OBJ)
 	$(CC) -DMAIN=lsh_main $(CFLAGS) $(LDFLAGS) -o $@ $^
+
+build/parser_poc: $(PROD_OBJ)
+	$(CC) -DMAIN=parser_poc_main $(CFLAGS) $(LDFLAGS) -o $@ $^
 
 build/%.o: src/%.c
 	$(CC) -c $(CFLAGS) -o $@ $^

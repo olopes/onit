@@ -546,15 +546,16 @@ shash_namespace_mark_reachable(void * shash, unsigned char mark) {
 }
 
 
-struct sexpression * lookup_name(struct sctx * sctx, struct sexpression * name) {
+int lookup_name(struct sctx * sctx, struct sexpression * name, struct sexpression ** value) {
     struct sexpression * namestack;
     struct sexpression * namespace;
-    struct sexpression * value;
+    struct shash_entry * entry;
     
-    value = shash_search(&sctx->protected_namespace.table, name);
+    entry = shash_get_entry(&sctx->protected_namespace.table, name);
     
-    if(value != NULL) {
-        return value;
+    if(entry != NULL) {
+        *value = entry->value;
+        return 1;
     }
     
     namestack = sctx->namespaces;
@@ -562,14 +563,16 @@ struct sexpression * lookup_name(struct sctx * sctx, struct sexpression * name) 
     while(namestack) {
         namespace = sexpr_car(namestack);
         if(namespace == NULL) continue;
-        value = shash_search((struct shash_table*) sexpr_primitive_ptr(namespace), name);
-        if(value != NULL) {
-            return value;
+        entry = shash_get_entry((struct shash_table*) sexpr_primitive_ptr(namespace), name);
+        if(entry != NULL) {
+            *value = entry->value;
+            return 1;
         }
         namestack = sexpr_cdr(namestack);
     }
     
-    return NULL;
+    *value = NULL;
+    return 0;
 }
 
 struct sexpression * 

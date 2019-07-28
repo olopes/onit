@@ -11,6 +11,7 @@ static void write_string(struct sctx * sctx, wchar_t * str, size_t length);
 
 CoreFunction(echo) {
     struct sexpression * iter = arguments;
+    struct sexpression * new_line;
     
     if (sctx == NULL) {
         return FN_NULL_SCTX;
@@ -27,7 +28,7 @@ CoreFunction(echo) {
         iter = sexpr_cdr(iter);
     }
     
-    struct sexpression * new_line = lookup_name(sctx, alloc_new_symbol(sctx, L"#nl", 3));
+    lookup_name(sctx, alloc_new_symbol(sctx, L"#nl", 3), &new_line);
     write_string(sctx, sexpr_value(new_line), sexpr_length(new_line));
     
     *result = NULL;
@@ -41,8 +42,8 @@ print_sexpression(struct sctx * sctx, struct sexpression * input, size_t printed
     wchar_t * str;
     
     while(sexpr_is_symbol(value)) {
-        struct sexpression * bound_value = lookup_name(sctx, value);
-        if(bound_value == NULL) {
+        struct sexpression * bound_value;
+        if(!lookup_name(sctx, value, &bound_value)) {
             break;
         }
         value = bound_value;

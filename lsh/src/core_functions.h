@@ -42,5 +42,7 @@ extern sexpression_callable fn_procedure;
 
 extern sexpression_callable fn_echo;
 
+extern sexpression_callable fn_cond;
+
 
 #endif

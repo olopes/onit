@@ -30,6 +30,7 @@ UnitTest(sctx_register_new_symbol)
 {
     struct sexpression * key;
     struct sexpression * value;
+    struct sexpression * referenced;
     struct mem_reference reference;
     struct sctx * sctx = create_new_sctx(&test_config);
     
@@ -41,7 +42,8 @@ UnitTest(sctx_register_new_symbol)
     /* fetch the value using a different name */
     key = alloc_new_symbol(sctx, L"VAR_NAME", 8);
     
-    assert_ptr_equal(value, lookup_name(sctx, key ));
+    assert_true(lookup_name(sctx, key, &referenced));
+    assert_ptr_equal(value, referenced);
     
     release_sctx(sctx);
 }
@@ -153,13 +155,16 @@ UnitTest(lookup_name_should_search_primitives_and_all_namespaces) {
     struct mem_reference ref1;
     struct mem_reference ref2;
     struct mem_reference ref3;
+    struct sexpression * stored1;
+    struct sexpression * stored2;
+    struct sexpression * stored3;
     
     struct sctx * sctx = create_new_sctx(&test_config);
     enter_namespace(sctx);
 
-    assert_int_equal( create_protected_reference (sctx, L"pr1", 3, &ref1), SCTX_OK);
-    assert_int_equal(create_global_reference(sctx, L"gr2", 3, &ref2), SCTX_OK);
-    assert_int_equal(create_stack_reference(sctx, L"sr3", 3, &ref3), SCTX_OK);
+    assert_return_code(create_protected_reference (sctx, L"pr1", 3, &ref1), SCTX_OK);
+    assert_return_code(create_global_reference(sctx, L"gr2", 3, &ref2), SCTX_OK);
+    assert_return_code(create_stack_reference(sctx, L"sr3", 3, &ref3), SCTX_OK);
     
     enter_namespace(sctx);
     
@@ -168,9 +173,12 @@ UnitTest(lookup_name_should_search_primitives_and_all_namespaces) {
     *ref3.value = alloc_new_string(sctx, L"sv3", 3);
     
     /* query name spaces */
-    assert_ptr_equal(lookup_name(sctx, alloc_new_symbol(sctx, L"pr1", 3)), *ref1.value);
-    assert_ptr_equal(lookup_name(sctx, alloc_new_symbol(sctx, L"gr2", 3)), *ref2.value);
-    assert_ptr_equal(lookup_name(sctx, alloc_new_symbol(sctx, L"sr3", 3)), *ref3.value);
+    assert_true(lookup_name(sctx, alloc_new_symbol(sctx, L"pr1", 3), &stored1));
+    assert_true(lookup_name(sctx, alloc_new_symbol(sctx, L"gr2", 3), &stored2));
+    assert_true(lookup_name(sctx, alloc_new_symbol(sctx, L"sr3", 3), &stored3));
+    assert_ptr_equal(stored1, *ref1.value);
+    assert_ptr_equal(stored2, *ref2.value);
+    assert_ptr_equal(stored3, *ref3.value);
     
     leave_namespace(sctx);
     leave_namespace(sctx);
@@ -182,13 +190,16 @@ UnitTest(lookup_name_should_return_null_when_reference_out_of_scope) {
     struct mem_reference ref1;
     struct mem_reference ref2;
     struct mem_reference ref3;
+    struct sexpression * stored1;
+    struct sexpression * stored2;
+    struct sexpression * stored3;
     
     struct sctx * sctx = create_new_sctx(&test_config);
     enter_namespace(sctx);
 
-    assert_int_equal( create_protected_reference (sctx, L"pr1", 3, &ref1), SCTX_OK);
-    assert_int_equal(create_global_reference(sctx, L"gr2", 3, &ref2), SCTX_OK);
-    assert_int_equal(create_stack_reference(sctx, L"sr3", 3, &ref3), SCTX_OK);
+    assert_return_code(create_protected_reference (sctx, L"pr1", 3, &ref1), SCTX_OK);
+    assert_return_code(create_global_reference(sctx, L"gr2", 3, &ref2), SCTX_OK);
+    assert_return_code(create_stack_reference(sctx, L"sr3", 3, &ref3), SCTX_OK);
     
     enter_namespace(sctx);
     
@@ -200,9 +211,12 @@ UnitTest(lookup_name_should_return_null_when_reference_out_of_scope) {
     leave_namespace(sctx);
     
     /* query name spaces */
-    assert_ptr_equal(lookup_name(sctx, alloc_new_symbol(sctx, L"pr1", 3)), *ref1.value);
-    assert_ptr_equal(lookup_name(sctx, alloc_new_symbol(sctx, L"gr2", 3)), *ref2.value);
-    assert_ptr_equal(lookup_name(sctx, alloc_new_symbol(sctx, L"sr3", 3)), NULL);
+    assert_true(lookup_name(sctx, alloc_new_symbol(sctx, L"pr1", 3), &stored1));
+    assert_true(lookup_name(sctx, alloc_new_symbol(sctx, L"gr2", 3), &stored2));
+    assert_false(lookup_name(sctx, alloc_new_symbol(sctx, L"sr3", 3), &stored3));
+    assert_ptr_equal(stored1, *ref1.value);
+    assert_ptr_equal(stored2, *ref2.value);
+    assert_ptr_equal(stored3, NULL);
     
     release_sctx(sctx);
 }
@@ -211,20 +225,22 @@ UnitTest(lookup_name_should_search_primitives_first) {
     struct mem_reference ref1;
     struct mem_reference ref2;
     struct mem_reference ref3;
+    struct sexpression * stored1;
     
     struct sctx * sctx = create_new_sctx(&test_config);
     enter_namespace(sctx);
 
-    assert_int_equal( create_protected_reference (sctx, L"pr1", 3, &ref1), SCTX_OK);
-    assert_int_equal(create_global_reference(sctx, L"pr1", 3, &ref2), SCTX_OK);
-    assert_int_equal(create_stack_reference(sctx, L"pr1", 3, &ref3), SCTX_OK);
+    assert_return_code(create_protected_reference (sctx, L"pr1", 3, &ref1), SCTX_OK);
+    assert_return_code(create_global_reference(sctx, L"pr1", 3, &ref2), SCTX_OK);
+    assert_return_code(create_stack_reference(sctx, L"pr1", 3, &ref3), SCTX_OK);
     
     *ref1.value = alloc_new_string(sctx, L"gv1", 3);
     *ref2.value = alloc_new_string(sctx, L"gv2", 3);
     *ref3.value = alloc_new_string(sctx, L"sv3", 3);
     
     /* query name spaces */
-    assert_ptr_equal(lookup_name(sctx, alloc_new_symbol(sctx, L"pr1", 3)), *ref1.value);
+    assert_true(lookup_name(sctx, alloc_new_symbol(sctx, L"pr1", 3), &stored1));
+    assert_ptr_equal(stored1, *ref1.value);
     
     leave_namespace(sctx);
     
@@ -338,10 +354,14 @@ UnitTest(create_new_sctx_should_locate_and_register_all_core_functions)
         .envp = environment,
         .register_static_functions = 1
     };
+    struct sexpression * fake_ref;
+    struct sexpression * define_ref;
     struct sctx * sctx = create_new_sctx(&register_fn_test_config);
     
-    assert_ptr_equal(fn_fake, sexpr_function(lookup_name(sctx, alloc_new_symbol(sctx, L"fake-fn?", 8))));
-    assert_ptr_equal(fn_define, sexpr_function(lookup_name(sctx, alloc_new_symbol(sctx, L"define", 6))));
+    assert_true(lookup_name(sctx, alloc_new_symbol(sctx, L"fake-fn?", 8), &fake_ref));
+    assert_true(lookup_name(sctx, alloc_new_symbol(sctx, L"define", 6), &define_ref));
+    assert_ptr_equal(fn_fake, sexpr_function(fake_ref));
+    assert_ptr_equal(fn_define, sexpr_function(define_ref));
 
     release_sctx(sctx);
 }

@@ -3,6 +3,8 @@
 
 static enum sexpression_result 
 apply_sexpr(struct sctx * sctx, struct sexpression ** result, struct sexpression * fn,  struct sexpression * args);
+static struct sexpression * 
+evaluate_symbol(struct sctx * sctx, struct sexpression * symbol);
 
 
 CoreFunction(procedure) {
@@ -57,7 +59,7 @@ fn_procedure_step(struct sctx * sctx, struct sexpression ** result, struct sexpr
         }
         
     } else if(sexpr_is_symbol(expression)) {
-        *result = lookup_name(sctx, expression);
+        *result = evaluate_symbol(sctx, expression);
     } else {
         *result = expression;
     }
@@ -82,6 +84,19 @@ apply_sexpr(struct sctx * sctx, struct sexpression ** result, struct sexpression
 }
 
 
+static struct sexpression *  
+evaluate_symbol(struct sctx * sctx, struct sexpression * symbol) {
+    struct sexpression * result = symbol;
+    
+    while(sexpr_is_symbol(result)) {
+        if(!lookup_name(sctx, result, &result)) {
+            /* symbol doesn't exist - return NULL ?*/
+            return NULL;
+        }
+    }
+
+    return result;
+}
 
 
 
