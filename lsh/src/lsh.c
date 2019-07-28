@@ -36,18 +36,20 @@ int lsh_main(int argc, char ** argv, char ** envp) {
     create_global_reference(sctx, L"ANS", 3, &answer_ref);
     *answer_ref.value = NULL;
     
-    wprintf(L"VM Ready");
+    wprintf(L"VM Ready\n> ");
+    fflush ( stdout );
+    
     stream = create_sparser_stream( FILE_DESCRIPTOR_ADAPTER, stdin);
     
     while((return_value=sparse(stream, &input_object)) != SPARSE_EOF) {
-        wprintf(L"\n> ", return_value);
-        fflush ( stdout );
         if(return_value == SPARSE_OK) {
             move_to_heap(sctx, input_object);
             interpret_input();
         } else {
             wprintf(L"Bad input: %d\n", return_value);
         }
+        wprintf(L"\n> ");
+        fflush ( stdout );
     }
     
     wprintf(L"\nEOF found\n");
@@ -68,12 +70,9 @@ static void interpret_input(void) {
     
 }
 
+#define __FF_SR(symbol) [symbol] = #symbol
+const char* _sr_names[] = { __FF_SR(FN_OK), __FF_SR(FN_NULL_SCTX), __FF_SR(FN_NULL_RESULT), __FF_SR(FN_ERROR) };
+
 static const char* get_sexpression_result_as_str(enum sexpression_result result) {
-   switch (result) {
-      case FN_OK: return "FN_OK";
-      case FN_NULL_SCTX: return "FN_NULL_SCTX";
-      case FN_NULL_RESULT: return "FN_NULL_RESULT";
-      case FN_ERROR: return "FN_ERROR";
-   }
-   return "unexpected sexpression result code";
+    return _sr_names[result];
 }
